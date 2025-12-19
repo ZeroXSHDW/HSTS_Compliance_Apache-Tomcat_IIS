@@ -12,22 +12,31 @@ This directory contains example configuration files for testing HSTS configurati
 
 These files can be used to test the HSTS configuration scripts:
 
-### Tomcat Example
+### Tomcat Example (Unix/Linux)
 ```bash
 # Audit the example file
-./tomcat_hsts.sh --mode audit --config_path examples/test_web.xml
+sudo ./src/unix/Patch/bash/UpdateTomcatHstsUnix.sh --mode audit --custom-conf=examples
 
 # Configure the example file (dry run)
-./tomcat_hsts.sh --mode configure --config_path examples/test_web.xml --dry_run
+sudo ./src/unix/Patch/bash/UpdateTomcatHstsUnix.sh --mode configure --custom-conf=examples --dry-run
 ```
 
-### IIS Example
+### Tomcat Example (Windows)
 ```powershell
 # Audit the example file
-.\iis_hsts.ps1 -Mode audit -ConfigPath "examples\test_web.config"
+.\src\windows\Patch\powershell\UpdateTomcatHstsWin.ps1 -Mode audit -CustomPaths @("examples")
 
 # Configure the example file (dry run)
-.\iis_hsts.ps1 -Mode configure -ConfigPath "examples\test_web.config" -DryRun
+.\src\windows\Patch\powershell\UpdateTomcatHstsWin.ps1 -Mode configure -CustomPaths @("examples") -DryRun
+```
+
+### IIS Example (Windows)
+```powershell
+# Audit the example file
+.\src\windows\Patch\powershell\UpdateIisHstsWin.ps1 -Mode audit -ConfigPath "examples\test_web.config"
+
+# Configure the example file (dry run)
+.\src\windows\Patch\powershell\UpdateIisHstsWin.ps1 -Mode configure -ConfigPath "examples\test_web.config" -DryRun
 ```
 
 ## Note

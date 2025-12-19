@@ -5,8 +5,11 @@
 
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory=$true)]
-    [string[]]$ServerName,
+    [Parameter(Mandatory=$false)]
+    [string[]]$ServerName = @(),
+    
+    [Parameter(Mandatory=$false)]
+    [string]$ServerListFile = $null,
     
     [Parameter(Mandatory=$false)]
     [ValidateSet("audit", "configure")]
@@ -16,6 +19,12 @@ param(
     [string]$TomcatConfPath = $null,
     
     [Parameter(Mandatory=$false)]
+    [string[]]$CustomPaths = @(),
+    
+    [Parameter(Mandatory=$false)]
+    [string]$CustomPathsFile = $null,
+    
+    [Parameter(Mandatory=$false)]
     [switch]$DryRun = $false,
     
     [Parameter(Mandatory=$false)]
@@ -23,7 +32,51 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
-$uniqueServers = $ServerName | Select-Object -Unique
+
+# Function: Load server names from file
+function Get-ServersFromFile {
+    param([string]$ServerFile)
+    
+    $servers = @()
+    if (-not $ServerFile -or -not (Test-Path $ServerFile)) {
+        return $servers
+    }
+    
+    try {
+        $fileContent = Get-Content -Path $ServerFile -ErrorAction Stop
+        foreach ($line in $fileContent) {
+            $trimmedLine = $line.Trim()
+            if ($trimmedLine -and -not $trimmedLine.StartsWith("#")) {
+                $servers += $trimmedLine
+            }
+        }
+        Write-Host "Loaded $($servers.Count) server(s) from file: $ServerFile"
+    } catch {
+        Write-Host "ERROR: Failed to read server list file: $ServerFile - $_" -ForegroundColor Red
+    }
+    
+    return $servers
+}
+
+# Collect servers from parameter and file
+$allServers = @()
+if ($ServerName.Count -gt 0) {
+    $allServers += $ServerName
+}
+if ($ServerListFile) {
+    $fileServers = Get-ServersFromFile -ServerFile $ServerListFile
+    $allServers += $fileServers
+}
+
+if ($allServers.Count -eq 0) {
+    Write-Host "ERROR: No servers specified. Use -ServerName or -ServerListFile parameter." -ForegroundColor Red
+    Write-Host "  Example: -ServerName @('server1', 'server2')" -ForegroundColor Yellow
+    Write-Host "  Example: -ServerListFile 'C:\servers.txt' (one server per line)" -ForegroundColor Yellow
+    exit 1
+}
+
+$uniqueServers = $allServers | Select-Object -Unique
+Write-Host "Processing $($uniqueServers.Count) unique server(s)"
 
 foreach ($server in $uniqueServers) {
     Write-Host "========================================="
@@ -32,7 +85,7 @@ foreach ($server in $uniqueServers) {
     
     try {
         $scriptBlock = {
-            param($Mode, $TomcatConfPath, $DryRun)
+            param($Mode, $TomcatConfPath, $CustomPathsArray, $CustomPathsFile, $DryRun)
             
             $ErrorActionPreference = "Stop"
             $RecommendedHsts = "max-age=31536000; includeSubDomains"
@@ -42,7 +95,8 @@ foreach ($server in $uniqueServers) {
             
             function Log-Message {
                 param([string]$Message)
-                $logEntry = "[$Timestamp] $Message"
+                $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+                $logEntry = "[$timestamp] $Message"
                 Write-Host $logEntry
                 try {
                     Add-Content -Path $LogFile -Value $logEntry -ErrorAction SilentlyContinue
@@ -67,16 +121,79 @@ foreach ($server in $uniqueServers) {
             Log-Message "Mode: $Mode"
             Log-Message "========================================="
             
-            # Auto-detect Tomcat configuration directory
-            function Get-TomcatConfigPath {
-                param([string]$CustomPath)
+            # Function: Load custom paths from file
+            function Get-CustomPathsFromFile {
+                param([string]$PathsFile)
                 
-                if ($CustomPath -and (Test-Path $CustomPath)) {
-                    $serverXml = Join-Path $CustomPath "server.xml"
-                    if (Test-Path $serverXml) {
-                        Log-Message "Found Tomcat configuration at custom path: $CustomPath"
-                        return $CustomPath
+                $paths = @()
+                if (-not $PathsFile -or -not (Test-Path $PathsFile)) {
+                    return $paths
+                }
+                
+                try {
+                    $fileContent = Get-Content -Path $PathsFile -ErrorAction Stop
+                    foreach ($line in $fileContent) {
+                        $trimmedLine = $line.Trim()
+                        if ($trimmedLine -and -not $trimmedLine.StartsWith("#")) {
+                            $paths += $trimmedLine
+                        }
                     }
+                    Log-Message "Loaded $($paths.Count) custom path(s) from file: $PathsFile"
+                } catch {
+                    Log-Error "Failed to read custom paths file: $PathsFile - $_"
+                }
+                
+                return $paths
+            }
+            
+            # Auto-detect Tomcat configuration directories
+            function Get-TomcatConfigPaths {
+                param(
+                    [string]$CustomPath,
+                    [string[]]$CustomPathsArray,
+                    [string]$CustomPathsFile
+                )
+                
+                $allCustomPaths = @()
+                
+                # Add single custom path if provided
+                if ($CustomPath -and (Test-Path $CustomPath)) {
+                    $allCustomPaths += $CustomPath
+                }
+                
+                # Add custom paths from array
+                foreach ($path in $CustomPathsArray) {
+                    if ($path -and (Test-Path $path)) {
+                        $allCustomPaths += $path
+                    }
+                }
+                
+                # Add custom paths from file
+                if ($CustomPathsFile) {
+                    $filePaths = Get-CustomPathsFromFile -PathsFile $CustomPathsFile
+                    foreach ($path in $filePaths) {
+                        if ($path -and (Test-Path $path)) {
+                            $allCustomPaths += $path
+                        }
+                    }
+                }
+                
+                # Deduplicate custom paths (in case same path specified multiple times)
+                $allCustomPaths = $allCustomPaths | Select-Object -Unique
+                
+                # Check custom paths first - collect all valid custom paths
+                $validCustomPaths = @()
+                foreach ($customPath in $allCustomPaths) {
+                    $serverXml = Join-Path $customPath "server.xml"
+                    if (Test-Path $serverXml) {
+                        $validCustomPaths += $customPath
+                        Log-Message "Found Tomcat configuration at custom path: $customPath"
+                    }
+                }
+                
+                # If any valid custom paths were found, return them (don't check auto-detection)
+                if ($validCustomPaths.Count -gt 0) {
+                    return $validCustomPaths
                 }
                 
                 $possiblePaths = @(
@@ -127,17 +244,19 @@ foreach ($server in $uniqueServers) {
                     }
                 }
                 
+                # Check all possible paths and return all found
+                $foundPaths = @()
                 foreach ($path in $possiblePaths) {
                     if (Test-Path $path) {
                         $serverXml = Join-Path $path "server.xml"
                         if (Test-Path $serverXml) {
                             Log-Message "Found Tomcat configuration at: $path"
-                            return $path
+                            $foundPaths += $path
                         }
                     }
                 }
                 
-                return $null
+                return $foundPaths
             }
             
             # Find web.xml files
@@ -199,27 +318,35 @@ foreach ($server in $uniqueServers) {
                 return $xml
             }
             
-            function Test-CompliantHsts {
-                param([xml]$WebXml)
+            function Test-FilterCompliant {
+                param([System.Xml.XmlElement]$Filter)
                 $hasMaxAge = $false
                 $hasIncludeSubDomains = $false
-                $filters = $WebXml.SelectNodes("//filter[filter-name[text()='HstsHeaderFilter' or text()='HttpHeaderSecurityFilter']]")
-                foreach ($filter in $filters) {
-                    $initParams = $filter.SelectNodes("init-param")
-                    foreach ($param in $initParams) {
-                        $name = $param.SelectSingleNode("param-name")
-                        $value = $param.SelectSingleNode("param-value")
-                        if ($name -and $value) {
-                            if ($name.InnerText -eq "hstsMaxAgeSeconds" -and $value.InnerText -eq "31536000") {
-                                $hasMaxAge = $true
-                            }
-                            if ($name.InnerText -eq "hstsIncludeSubDomains" -and $value.InnerText -eq "true") {
-                                $hasIncludeSubDomains = $true
-                            }
+                $initParams = $Filter.SelectNodes("init-param")
+                foreach ($param in $initParams) {
+                    $name = $param.SelectSingleNode("param-name")
+                    $value = $param.SelectSingleNode("param-value")
+                    if ($name -and $value) {
+                        if ($name.InnerText -eq "hstsMaxAgeSeconds" -and $value.InnerText -eq "31536000") {
+                            $hasMaxAge = $true
+                        }
+                        if ($name.InnerText -eq "hstsIncludeSubDomains" -and $value.InnerText -eq "true") {
+                            $hasIncludeSubDomains = $true
                         }
                     }
                 }
                 return ($hasMaxAge -and $hasIncludeSubDomains)
+            }
+            
+            function Test-CompliantHsts {
+                param([xml]$WebXml)
+                $filters = $WebXml.SelectNodes("//filter[filter-name[text()='HstsHeaderFilter' or text()='HttpHeaderSecurityFilter']]")
+                foreach ($filter in $filters) {
+                    if (Test-FilterCompliant -Filter $filter) {
+                        return $true
+                    }
+                }
+                return $false
             }
             
             function Audit-HstsHeaders {
@@ -243,7 +370,7 @@ foreach ($server in $uniqueServers) {
                 }
                 Log-Message "Found $headerCount HSTS filter definition(s)"
                 foreach ($filter in $filters) {
-                    if (Test-CompliantHsts -WebXml $WebXml) {
+                    if (Test-FilterCompliant -Filter $filter) {
                         $compliantCount++
                     } else {
                         $nonCompliantCount++
@@ -286,9 +413,13 @@ foreach ($server in $uniqueServers) {
             function Apply-CompliantHsts {
                 param([xml]$WebXml)
                 Remove-AllHstsConfigs -WebXml $WebXml
+                # Try web-app first (for web.xml), then Context (for context.xml)
                 $webApp = $WebXml.SelectSingleNode("//web-app")
                 if (-not $webApp) {
-                    throw "web-app element not found in web.xml"
+                    $webApp = $WebXml.SelectSingleNode("//Context")
+                    if (-not $webApp) {
+                        throw "Neither web-app nor Context element found in XML file"
+                    }
                 }
                 $filter = $WebXml.CreateElement("filter")
                 $filterName = $WebXml.CreateElement("filter-name")
@@ -390,14 +521,27 @@ foreach ($server in $uniqueServers) {
             }
             
             # Main execution
-            $confPath = Get-TomcatConfigPath -CustomPath $TomcatConfPath
-            if (-not $confPath) {
+            $confPaths = Get-TomcatConfigPaths -CustomPath $TomcatConfPath -CustomPathsArray $CustomPathsArray -CustomPathsFile $CustomPathsFile
+            if ($confPaths.Count -eq 0) {
                 Log-Error "Could not locate Tomcat configuration directory."
+                Log-Error "  - Ensure Tomcat is installed on this Windows Server"
+                Log-Error "  - Or specify a custom path: -TomcatConfPath 'C:\path\to\tomcat\conf'"
+                Log-Error "  - Or specify multiple paths: -CustomPaths @('C:\path1\conf', 'C:\path2\conf')"
+                Log-Error "  - Or specify a paths file: -CustomPathsFile 'C:\paths.txt' (one path per line)"
                 return @{ Success = $false; Message = "Tomcat not found" }
             }
             
-            Log-Message "Tomcat Configuration Directory: $confPath"
-            $webXmlFiles = Find-WebXmlFiles -ConfPath $confPath
+            # Collect all web.xml files from all configuration directories
+            $webXmlFiles = @()
+            foreach ($confPath in $confPaths) {
+                Log-Message "Tomcat Configuration Directory: $confPath"
+                $files = Find-WebXmlFiles -ConfPath $confPath
+                foreach ($file in $files) {
+                    if ($webXmlFiles -notcontains $file) {
+                        $webXmlFiles += $file
+                    }
+                }
+            }
             
             if ($webXmlFiles.Count -eq 0) {
                 Log-Error "No web.xml files found to process"
@@ -440,8 +584,10 @@ foreach ($server in $uniqueServers) {
         $invokeParams = @{
             ComputerName = $server
             ScriptBlock = $scriptBlock
-            ArgumentList = @($Mode, $TomcatConfPath, $DryRun.IsPresent)
+            ArgumentList = @($Mode, $TomcatConfPath, $CustomPaths, $CustomPathsFile, $DryRun.IsPresent)
         }
+        
+        # Note: $CustomPaths is passed as $CustomPathsArray parameter in script block
         
         if ($Credential) {
             $invokeParams.Credential = $Credential

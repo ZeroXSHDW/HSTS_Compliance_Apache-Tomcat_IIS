@@ -1,7 +1,5 @@
 # HTTPS Headers - HSTS Configuration Tools
 
-![Tomcat Configuration Security Auditor Banner](assets/images/banner.jpg)
-
 A comprehensive set of tools for auditing and configuring HTTP Strict Transport Security (HSTS) headers in Apache Tomcat and Microsoft IIS web servers.
 
 ## Table of Contents
@@ -9,6 +7,7 @@ A comprehensive set of tools for auditing and configuring HTTP Strict Transport 
 - [Overview](#overview)
 - [Project Structure](#project-structure)
 - [Prerequisites](#prerequisites)
+- [Installation Instructions](#installation-instructions)
 - [Quick Start](#quick-start)
 - [Usage Examples](#usage-examples-with-output)
 - [Auto-Detection](#auto-detection)
@@ -20,6 +19,7 @@ A comprehensive set of tools for auditing and configuring HTTP Strict Transport 
 - [Advanced Usage](#advanced-usage)
 - [Code Review Summary](#code-review-summary)
 - [License](#license)
+- [Contributing](#contributing)
 
 ## Overview
 
@@ -54,7 +54,9 @@ This implementation follows OWASP recommendations:
 ```
 .
 ├── README.md                    # Main documentation (this file)
+├── INSTALLATION.md              # Installation guide for Tomcat, IIS, and PowerShell Remoting
 ├── LICENSE                      # MIT License
+├── CONTRIBUTING.md              # Contribution guidelines
 ├── .gitignore                   # Git ignore patterns
 ├── src/
 │   ├── unix/
@@ -64,10 +66,10 @@ This implementation follows OWASP recommendations:
 │   └── windows/
 │       └── Patch/
 │           └── powershell/
-│               ├── UpdateTomcatHstsWin.ps1           # Windows Tomcat script (local)
-│               ├── Remote_UpdateTomcatHstsWin.ps1    # Windows Tomcat script (remote)
-│               ├── UpdateIisHstsWin.ps1              # Windows IIS script (local)
-│               └── Remote_UpdateIisHstsWin.ps1       # Windows IIS script (remote)
+│               ├── UpdateTomcatHstsWin.ps1           # Windows Tomcat script (local execution)
+│               ├── Remote_UpdateTomcatHstsWin.ps1    # Windows Tomcat script (remote execution)
+│               ├── UpdateIisHstsWin.ps1              # Windows IIS script (local execution)
+│               └── Remote_UpdateIisHstsWin.ps1       # Windows IIS script (remote execution)
 └── examples/                    # Example configuration files
     ├── README.md
     ├── test_web.xml       # Example Tomcat web.xml
@@ -83,11 +85,29 @@ This implementation follows OWASP recommendations:
 - Optional: `xmllint` for XML validation, `diff` for dry-run preview
 - **Note:** Scripts are designed for Linux/Unix server environments only (not macOS)
 
-### For IIS (Windows)
+### For Tomcat (Windows Server)
+- PowerShell 5.1 or later
+- Apache Tomcat installed (version 7.0 or later)
+- Administrator privileges
+- For remote execution: PowerShell Remoting (WinRM) enabled and configured
+
+### For IIS (Windows Server)
 - PowerShell 5.1 or later
 - IIS installed (version 7.0 or later)
 - Administrator privileges
+- For remote execution: PowerShell Remoting (WinRM) enabled and configured
 
+## Installation Instructions
+
+For detailed installation instructions for Apache Tomcat, IIS, and PowerShell Remoting configuration, please see the **[INSTALLATION.md](INSTALLATION.md)** file.
+
+**Quick Summary:**
+- **Apache Tomcat**: Download Windows Service Installer from https://tomcat.apache.org
+- **IIS**: Install via PowerShell: `Install-WindowsFeature -Name Web-Server -IncludeManagementTools`
+- **PowerShell Remoting**: Enable on target servers: `Enable-PSRemoting -Force` and configure firewall rules
+
+See [INSTALLATION.md](INSTALLATION.md) for complete step-by-step instructions, troubleshooting guides, and verification checklists.
+    
 ## Quick Start
 
 ### Apache Tomcat (Unix/Linux)
@@ -107,6 +127,24 @@ sudo ./src/unix/Patch/bash/UpdateTomcatHstsUnix.sh --mode configure
 sudo ./src/unix/Patch/bash/UpdateTomcatHstsUnix.sh --mode configure --custom-conf=/opt/tomcat/conf
 ```
 
+**With Multiple Custom Paths:**
+```bash
+sudo ./src/unix/Patch/bash/UpdateTomcatHstsUnix.sh --mode configure \
+  --custom-conf=/opt/tomcat1/conf \
+  --custom-conf=/opt/tomcat2/conf
+```
+
+**With Custom Paths File:**
+```bash
+# Create paths file: /etc/tomcat-paths.txt
+# /opt/tomcat1/conf
+# /opt/tomcat2/conf
+# /opt/tomcat3/conf
+
+sudo ./src/unix/Patch/bash/UpdateTomcatHstsUnix.sh --mode configure \
+  --custom-paths-file=/etc/tomcat-paths.txt
+```
+
 ### Apache Tomcat (Windows)
 
 **Local - Auto-detect and Configure:**
@@ -114,10 +152,51 @@ sudo ./src/unix/Patch/bash/UpdateTomcatHstsUnix.sh --mode configure --custom-con
 .\src\windows\Patch\powershell\UpdateTomcatHstsWin.ps1 -Mode configure
 ```
 
-**Remote - Multiple Servers:**
+**Local - With Custom Paths:**
+```powershell
+.\src\windows\Patch\powershell\UpdateTomcatHstsWin.ps1 -Mode configure `
+  -CustomPaths @("C:\Tomcat1\conf", "C:\Tomcat2\conf")
+```
+
+**Local - With Custom Paths File:**
+```powershell
+# Create paths file: C:\tomcat-paths.txt
+# C:\Tomcat1\conf
+# C:\Tomcat2\conf
+
+.\src\windows\Patch\powershell\UpdateTomcatHstsWin.ps1 -Mode configure `
+  -CustomPathsFile "C:\tomcat-paths.txt"
+```
+
+**Remote - Multiple Servers (Command Line):**
+```powershell
+# Ensure PowerShell Remoting is configured (see INSTALLATION.md)
+$cred = Get-Credential
+.\src\windows\Patch\powershell\Remote_UpdateTomcatHstsWin.ps1 `
+  -ServerName @("server1", "server2", "server3") `
+  -Mode configure -Credential $cred
+```
+
+**Remote - Multiple Servers (Server List File):**
+```powershell
+# Create server list file: C:\servers.txt
+# server1.example.com
+# server2.example.com
+# server3.example.com
+
+$cred = Get-Credential
+.\src\windows\Patch\powershell\Remote_UpdateTomcatHstsWin.ps1 `
+  -ServerListFile "C:\servers.txt" `
+  -Mode configure -Credential $cred
+```
+
+**Remote - With Custom Paths:**
 ```powershell
 $cred = Get-Credential
-.\src\windows\Patch\powershell\Remote_UpdateTomcatHstsWin.ps1 -ServerName @("server1", "server2") -Mode configure -Credential $cred
+.\src\windows\Patch\powershell\Remote_UpdateTomcatHstsWin.ps1 `
+  -ServerName @("server1", "server2") `
+  -CustomPaths @("C:\Tomcat\conf", "D:\Apache\Tomcat\conf") `
+  -Mode configure -Credential $cred
 ```
 
 ### Microsoft IIS (Windows)
@@ -127,15 +206,52 @@ $cred = Get-Credential
 .\src\windows\Patch\powershell\UpdateIisHstsWin.ps1 -Mode configure
 ```
 
-**With Custom Path:**
+**Local - With Custom Paths:**
 ```powershell
-.\src\windows\Patch\powershell\UpdateIisHstsWin.ps1 -Mode configure -ConfigPath "C:\inetpub\wwwroot\web.config"
+.\src\windows\Patch\powershell\UpdateIisHstsWin.ps1 -Mode configure `
+  -CustomPaths @("C:\inetpub\wwwroot\web.config", "C:\MyApp\web.config")
 ```
 
-**Remote - Multiple Servers:**
+**Local - With Custom Paths File:**
+```powershell
+# Create paths file: C:\iis-paths.txt
+# C:\inetpub\wwwroot\web.config
+# C:\MyApp\web.config
+# C:\AnotherApp
+
+.\src\windows\Patch\powershell\UpdateIisHstsWin.ps1 -Mode configure `
+  -CustomPathsFile "C:\iis-paths.txt"
+```
+
+**Remote - Multiple Servers (Command Line):**
+```powershell
+# Ensure PowerShell Remoting is configured (see INSTALLATION.md)
+$cred = Get-Credential
+.\src\windows\Patch\powershell\Remote_UpdateIisHstsWin.ps1 `
+  -ServerName @("server1", "server2", "server3") `
+  -Mode configure -Credential $cred
+```
+
+**Remote - Multiple Servers (Server List File):**
+```powershell
+# Create server list file: C:\servers.txt
+# server1.example.com
+# server2.example.com
+# server3.example.com
+
+$cred = Get-Credential
+.\src\windows\Patch\powershell\Remote_UpdateIisHstsWin.ps1 `
+  -ServerListFile "C:\servers.txt" `
+  -Mode configure -Credential $cred
+```
+
+**Remote - With Custom Paths:**
 ```powershell
 $cred = Get-Credential
-.\src\windows\Patch\powershell\Remote_UpdateIisHstsWin.ps1 -ServerName @("server1", "server2") -Mode configure -Credential $cred
+.\src\windows\Patch\powershell\Remote_UpdateIisHstsWin.ps1 `
+  -ServerName @("server1", "server2") `
+  -CustomPaths @("C:\inetpub\wwwroot\web.config", "C:\MyApp\web.config") `
+  -Mode configure -Credential $cred
 ```
 
 ## Usage Examples with Output
@@ -497,12 +613,13 @@ All scripts include automatic detection capabilities to simplify deployment:
 
 **Syntax:**
 ```bash
-sudo ./src/unix/Patch/bash/UpdateTomcatHstsUnix.sh [--mode audit|configure] [--custom-conf=/path/to/conf] [--dry-run]
+sudo ./src/unix/Patch/bash/UpdateTomcatHstsUnix.sh [--mode audit|configure] [--custom-conf=/path/to/conf] [--custom-paths-file=/path/to/file] [--dry-run]
 ```
 
 **Options:**
 - `--mode` (optional, default: configure): Operation mode - `audit` or `configure`
-- `--custom-conf` (optional): Custom Tomcat conf directory path (auto-detects if not provided)
+- `--custom-conf` (optional, repeatable): Custom Tomcat conf directory path (can be specified multiple times)
+- `--custom-paths-file` (optional): File containing custom paths (one path per line, lines starting with # are comments)
 - `--dry-run` (optional): Preview changes without applying (configure mode only)
 
 **Auto-Detection:**
@@ -514,13 +631,44 @@ sudo ./src/unix/Patch/bash/UpdateTomcatHstsUnix.sh [--mode audit|configure] [--c
 
 **Syntax:**
 ```powershell
-.\src\windows\Patch\powershell\UpdateTomcatHstsWin.ps1 [-Mode audit|configure] [-TomcatConfPath <path>] [-DryRun]
+.\src\windows\Patch\powershell\UpdateTomcatHstsWin.ps1 [-Mode audit|configure] [-TomcatConfPath <path>] [-CustomPaths <string[]>] [-CustomPathsFile <path>] [-DryRun]
 ```
 
 **Parameters:**
 - `-Mode` (optional, default: configure): Operation mode - `audit` or `configure`
-- `-TomcatConfPath` (optional): Custom Tomcat conf directory path (auto-detects if not provided)
+- `-TomcatConfPath` (optional): Single custom Tomcat conf directory path (auto-detects if not provided)
+- `-CustomPaths` (optional): Array of custom Tomcat conf directory paths (e.g., `@("C:\Tomcat1\conf", "C:\Tomcat2\conf")`)
+- `-CustomPathsFile` (optional): File containing custom paths (one path per line, lines starting with # are comments)
 - `-DryRun` (optional): Preview changes without applying
+
+**Auto-Detection:**
+- Searches common Windows Server paths: `C:\Program Files\Apache Software Foundation\Tomcat*\conf`, `C:\Tomcat*\conf`, etc.
+- Finds all `web.xml` files (global and application-specific)
+
+### Remote_UpdateTomcatHstsWin.ps1
+
+**Syntax:**
+```powershell
+.\src\windows\Patch\powershell\Remote_UpdateTomcatHstsWin.ps1 [-ServerName <string[]>] [-ServerListFile <path>] [-Mode audit|configure] [-TomcatConfPath <path>] [-CustomPaths <string[]>] [-CustomPathsFile <path>] [-DryRun] [-Credential <PSCredential>]
+```
+
+**Parameters:**
+- `-ServerName` (optional): Array of server names to process (e.g., `@("server1", "server2")`)
+- `-ServerListFile` (optional): File containing server names (one per line, lines starting with # are comments)
+- `-Mode` (optional, default: configure): Operation mode - `audit` or `configure`
+- `-TomcatConfPath` (optional): Single custom Tomcat conf directory path (auto-detects if not provided)
+- `-CustomPaths` (optional): Array of custom Tomcat conf directory paths (e.g., `@("C:\Tomcat1\conf", "C:\Tomcat2\conf")`)
+- `-CustomPathsFile` (optional): File containing custom paths (one path per line, lines starting with # are comments)
+- `-DryRun` (optional): Preview changes without applying
+- `-Credential` (optional): PSCredential object for remote authentication (use `Get-Credential`)
+
+**Note:** Either `-ServerName` or `-ServerListFile` (or both) must be provided.
+
+**Prerequisites:**
+- PowerShell Remoting (WinRM) must be enabled on target servers
+- Firewall rules must allow WinRM traffic (ports 5985/5986)
+- Credentials must have administrator privileges on target servers
+- See [INSTALLATION.md](INSTALLATION.md) for detailed setup instructions
 
 **Auto-Detection:**
 - Searches common Windows Server paths: `C:\Program Files\Apache Software Foundation\Tomcat*\conf`, `C:\Tomcat*\conf`, etc.
@@ -530,13 +678,46 @@ sudo ./src/unix/Patch/bash/UpdateTomcatHstsUnix.sh [--mode audit|configure] [--c
 
 **Syntax:**
 ```powershell
-.\src\windows\Patch\powershell\UpdateIisHstsWin.ps1 [-Mode audit|configure] [-ConfigPath <path>] [-DryRun]
+.\src\windows\Patch\powershell\UpdateIisHstsWin.ps1 [-Mode audit|configure] [-ConfigPath <path>] [-CustomPaths <string[]>] [-CustomPathsFile <path>] [-DryRun]
 ```
 
 **Parameters:**
 - `-Mode` (optional, default: configure): Operation mode - `audit` or `configure`
-- `-ConfigPath` (optional): Path to specific web.config file (auto-detects if not provided)
+- `-ConfigPath` (optional): Single path to web.config file or directory containing web.config (auto-detects if not provided)
+- `-CustomPaths` (optional): Array of web.config file paths or directories (e.g., `@("C:\path1\web.config", "C:\path2")`)
+- `-CustomPathsFile` (optional): File containing custom paths (one path per line, lines starting with # are comments)
 - `-DryRun` (optional): Preview changes without applying
+
+**Note:** For directories, the script will look for `web.config` files within them.
+
+**Auto-Detection:**
+- Searches `C:\inetpub\wwwroot\web.config` and application-specific web.config files
+- Uses IIS WebAdministration module to find all IIS sites and their web.config files
+
+### Remote_UpdateIisHstsWin.ps1
+
+**Syntax:**
+```powershell
+.\src\windows\Patch\powershell\Remote_UpdateIisHstsWin.ps1 [-ServerName <string[]>] [-ServerListFile <path>] [-Mode audit|configure] [-ConfigPath <path>] [-CustomPaths <string[]>] [-CustomPathsFile <path>] [-DryRun] [-Credential <PSCredential>]
+```
+
+**Parameters:**
+- `-ServerName` (optional): Array of server names to process (e.g., `@("server1", "server2")`)
+- `-ServerListFile` (optional): File containing server names (one per line, lines starting with # are comments)
+- `-Mode` (optional, default: configure): Operation mode - `audit` or `configure`
+- `-ConfigPath` (optional): Single path to web.config file or directory containing web.config (auto-detects if not provided)
+- `-CustomPaths` (optional): Array of web.config file paths or directories (e.g., `@("C:\path1\web.config", "C:\path2")`)
+- `-CustomPathsFile` (optional): File containing custom paths (one path per line, lines starting with # are comments)
+- `-DryRun` (optional): Preview changes without applying
+- `-Credential` (optional): PSCredential object for remote authentication (use `Get-Credential`)
+
+**Note:** Either `-ServerName` or `-ServerListFile` (or both) must be provided. For directories, the script will look for `web.config` files within them.
+
+**Prerequisites:**
+- PowerShell Remoting (WinRM) must be enabled on target servers
+- Firewall rules must allow WinRM traffic (ports 5985/5986)
+- Credentials must have administrator privileges on target servers
+- See [INSTALLATION.md](INSTALLATION.md) for detailed setup instructions
 
 **Auto-Detection:**
 - Searches `C:\inetpub\wwwroot\web.config` and application-specific web.config files
@@ -544,17 +725,42 @@ sudo ./src/unix/Patch/bash/UpdateTomcatHstsUnix.sh [--mode audit|configure] [--c
 
 ### Remote Scripts
 
-**Remote_UpdateTomcatHstsWin.ps1** and **Remote_UpdateIisHstsWin.ps1** support remote execution:
+**Remote_UpdateTomcatHstsWin.ps1** and **Remote_UpdateIisHstsWin.ps1** support remote execution across multiple servers:
 
 ```powershell
-.\src\windows\Patch\powershell\Remote_UpdateTomcatHstsWin.ps1 -ServerName @("server1", "server2") -Mode configure -Credential $cred
+# Example: Remote Tomcat execution on multiple servers (command line)
+$cred = Get-Credential
+.\src\windows\Patch\powershell\Remote_UpdateTomcatHstsWin.ps1 -ServerName @("server1", "server2", "server3") -Mode configure -Credential $cred
+
+# Example: Remote Tomcat execution using server list file
+# Create C:\servers.txt:
+# server1.example.com
+# server2.example.com
+# server3.example.com
+$cred = Get-Credential
+.\src\windows\Patch\powershell\Remote_UpdateTomcatHstsWin.ps1 -ServerListFile "C:\servers.txt" -Mode configure -Credential $cred
+
+# Example: Remote IIS execution on multiple servers
+$cred = Get-Credential
+.\src\windows\Patch\powershell\Remote_UpdateIisHstsWin.ps1 -ServerName @("server1", "server2", "server3") -Mode configure -Credential $cred
+
+# Example: Remote execution with custom paths
+$cred = Get-Credential
+.\src\windows\Patch\powershell\Remote_UpdateTomcatHstsWin.ps1 `
+  -ServerListFile "C:\servers.txt" `
+  -CustomPaths @("C:\Tomcat1\conf", "C:\Tomcat2\conf") `
+  -Mode configure -Credential $cred
+
+# Example: Remote audit without credentials (if using same account)
+.\src\windows\Patch\powershell\Remote_UpdateTomcatHstsWin.ps1 -ServerName @("server1") -Mode audit
+.\src\windows\Patch\powershell\Remote_UpdateIisHstsWin.ps1 -ServerName @("server1") -Mode audit
 ```
 
-**Parameters:**
-- `-ServerName` (required): Array of server names
-- `-Mode` (optional, default: configure): Operation mode
-- `-Credential` (optional): PSCredential for remote authentication
-- `-DryRun` (optional): Preview changes without applying
+**Important:** Before using remote scripts, ensure:
+1. PowerShell Remoting (WinRM) is enabled on all target servers
+2. Firewall rules allow WinRM traffic (see [INSTALLATION.md](INSTALLATION.md))
+3. Credentials have administrator privileges on target servers
+4. Network connectivity and DNS resolution work correctly
 
 ## Exit Codes
 
@@ -871,9 +1077,26 @@ The scripts have been verified against the OWASP HSTS Cheat Sheet:
   - MITM attacker with invalid certificate → Prevents user override
 
 
+## Quick Reference: Installation & Remote Setup Checklist
+
+For a complete installation and setup guide, see **[INSTALLATION.md](INSTALLATION.md)**.
+
+**Quick Checklist:**
+- [ ] Apache Tomcat or IIS installed on Windows Server
+- [ ] PowerShell Remoting (WinRM) enabled on target servers: `Enable-PSRemoting -Force`
+- [ ] Firewall rules configured: `Enable-NetFirewallRule -DisplayGroup "Windows Remote Management"`
+- [ ] Remote connectivity tested: `Test-WSMan -ComputerName targetserver`
+- [ ] Credentials have administrator privileges on target servers
+
+See [INSTALLATION.md](INSTALLATION.md) for detailed instructions and troubleshooting.
+
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## Acknowledgments
 

@@ -30,6 +30,8 @@ set -euo pipefail
 MODE="configure"  # Default to configure mode
 CONFIG_PATH=""
 CUSTOM_CONF_PATH=""
+CUSTOM_CONF_PATHS=()  # Array for multiple custom paths
+CUSTOM_PATHS_FILE=""
 LOG_FILE="/tmp/TomcatHsts.log"
 DRY_RUN=false
 SCRIPT_NAME=$(basename "$0")
@@ -56,21 +58,25 @@ trap cleanup_temp_files ERR INT TERM
 
 # Function: Print usage information
 usage() {
-    echo "Usage: sudo $SCRIPT_NAME [--mode audit|configure] [--custom-conf=/path/to/conf] [--dry-run]"
+    echo "Usage: sudo $SCRIPT_NAME [--mode audit|configure] [--custom-conf=/path/to/conf] [--custom-paths-file=/path/to/file] [--dry-run]"
     echo ""
     echo "Options:"
-    echo "  --mode <audit|configure>  Operation mode (default: configure)"
-    echo "                            audit: Check HSTS configuration compliance"
-    echo "                            configure: Fix HSTS configuration to be compliant"
-    echo "  --custom-conf <path>       Optional: Custom Tomcat conf directory path"
-    echo "                            If not provided, script will auto-detect Tomcat installation"
-    echo "  --dry-run                  Show what would be changed without making changes (configure mode only)"
+    echo "  --mode <audit|configure>     Operation mode (default: configure)"
+    echo "                               audit: Check HSTS configuration compliance"
+    echo "                               configure: Fix HSTS configuration to be compliant"
+    echo "  --custom-conf <path>         Optional: Custom Tomcat conf directory path (can be specified multiple times)"
+    echo "                               If not provided, script will auto-detect Tomcat installation"
+    echo "  --custom-paths-file <file>   Optional: File containing custom paths (one path per line)"
+    echo "                               Lines starting with # are treated as comments"
+    echo "  --dry-run                    Show what would be changed without making changes (configure mode only)"
     echo ""
     echo "Examples:"
-    echo "  sudo $SCRIPT_NAME                    # Auto-detect and configure"
-    echo "  sudo $SCRIPT_NAME --mode audit       # Auto-detect and audit only"
-    echo "  sudo $SCRIPT_NAME --custom-conf=/opt/tomcat/conf  # Use custom path"
-    echo "  sudo $SCRIPT_NAME --mode configure --dry-run  # Preview changes"
+    echo "  sudo $SCRIPT_NAME                                    # Auto-detect and configure"
+    echo "  sudo $SCRIPT_NAME --mode audit                       # Auto-detect and audit only"
+    echo "  sudo $SCRIPT_NAME --custom-conf=/opt/tomcat/conf     # Use custom path"
+    echo "  sudo $SCRIPT_NAME --custom-conf=/opt/tomcat1/conf --custom-conf=/opt/tomcat2/conf  # Multiple paths"
+    echo "  sudo $SCRIPT_NAME --custom-paths-file=/etc/tomcat-paths.txt  # Use paths file"
+    echo "  sudo $SCRIPT_NAME --mode configure --dry-run         # Preview changes"
     exit 2
 }
 
@@ -647,25 +653,71 @@ confirm_configure() {
     esac
 }
 
-# Function: Auto-detect Tomcat configuration directory
-# Returns: Path to conf directory or empty string
-get_tomcat_conf_path() {
-    local custom_conf_path="$1"
+# Function: Load custom paths from file
+load_custom_paths_from_file() {
+    local paths_file="$1"
+    local paths=()
+    
+    if [[ -z "$paths_file" ]] || [[ ! -f "$paths_file" ]]; then
+        echo ""
+        return 0
+    fi
+    
+    while IFS= read -r line || [[ -n "$line" ]]; do
+        # Trim whitespace
+        line=$(echo "$line" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+        # Skip empty lines and comments
+        if [[ -n "$line" ]] && [[ ! "$line" =~ ^# ]]; then
+            paths+=("$line")
+        fi
+    done < "$paths_file"
+    
+    if [[ ${#paths[@]} -gt 0 ]]; then
+        log_message "Loaded ${#paths[@]} custom path(s) from file: $paths_file"
+        printf '%s\n' "${paths[@]}"
+    fi
+    
+    return 0
+}
+
+# Function: Auto-detect Tomcat configuration directories
+# Returns: Newline-separated list of conf directory paths
+get_tomcat_conf_paths() {
+    local custom_conf_paths=("$@")
+    local conf_paths=()
     local conf_path=""
     
-    # Check custom path provided as argument
-    if [[ -n "$custom_conf_path" ]]; then
-        log_message "Checking custom configuration path: $custom_conf_path"
-        if [[ -d "$custom_conf_path" ]] && [[ -f "$custom_conf_path/server.xml" ]]; then
-            conf_path="$custom_conf_path"
-            log_message "Found valid Tomcat configuration at custom path: $conf_path"
-            echo "$conf_path"
-            return 0
-        else
-            log_error "Invalid custom configuration path: $custom_conf_path"
-            log_error "  - Missing server.xml or directory does not exist"
-            return 1
+    # Check custom paths provided as arguments (deduplicate)
+    local seen_paths=()
+    for custom_path in "${custom_conf_paths[@]}"; do
+        if [[ -n "$custom_path" ]]; then
+            # Check if we've already seen this path
+            local seen=0
+            for seen_path in "${seen_paths[@]}"; do
+                if [[ "$seen_path" == "$custom_path" ]]; then
+                    seen=1
+                    break
+                fi
+            done
+            
+            if [[ $seen -eq 0 ]]; then
+                seen_paths+=("$custom_path")
+                log_message "Checking custom configuration path: $custom_path"
+                if [[ -d "$custom_path" ]] && [[ -f "$custom_path/server.xml" ]]; then
+                    conf_paths+=("$custom_path")
+                    log_message "Found valid Tomcat configuration at custom path: $custom_path"
+                else
+                    log_error "Invalid custom configuration path: $custom_path"
+                    log_error "  - Missing server.xml or directory does not exist"
+                fi
+            fi
         fi
+    done
+    
+    # If custom paths were found, return them
+    if [[ ${#conf_paths[@]} -gt 0 ]]; then
+        printf '%s\n' "${conf_paths[@]}"
+        return 0
     fi
     
     # Check CATALINA_BASE
@@ -732,23 +784,42 @@ get_tomcat_conf_path() {
         fi
     fi
     
-    if [[ -z "$conf_path" ]]; then
+    # If auto-detection found a path, add it to conf_paths array (if not already present)
+    if [[ -n "$conf_path" ]]; then
+        # Validate the path
+        if [[ -d "$conf_path" ]] && [[ -f "$conf_path/server.xml" ]]; then
+            # Check if this path is already in conf_paths (avoid duplicates)
+            local already_exists=0
+            for existing_path in "${conf_paths[@]}"; do
+                if [[ "$existing_path" == "$conf_path" ]]; then
+                    already_exists=1
+                    break
+                fi
+            done
+            
+            if [[ $already_exists -eq 0 ]]; then
+                conf_paths+=("$conf_path")
+            fi
+        else
+            log_error "Invalid configuration directory: $conf_path"
+            log_error "  - Missing server.xml"
+            conf_path=""
+        fi
+    fi
+    
+    if [[ ${#conf_paths[@]} -eq 0 ]]; then
         log_error "Could not locate Tomcat configuration directory."
         log_error "  - Ensure Tomcat is installed on this Linux/Unix server"
         log_error "  - Check for server.xml: sudo find /opt /usr/local /var/lib -name server.xml"
         log_error "  - Set CATALINA_HOME or CATALINA_BASE environment variables"
         log_error "  - Or specify a custom path: $SCRIPT_NAME --custom-conf=/path/to/conf"
+        log_error "  - Or specify multiple paths: $SCRIPT_NAME --custom-conf=/path1 --custom-conf=/path2"
+        log_error "  - Or specify a paths file: $SCRIPT_NAME --custom-paths-file=/path/to/file"
         return 1
     fi
     
-    # Validate the path
-    if [[ ! -d "$conf_path" ]] || [[ ! -f "$conf_path/server.xml" ]]; then
-        log_error "Invalid configuration directory: $conf_path"
-        log_error "  - Missing server.xml"
-        return 1
-    fi
-    
-    echo "$conf_path"
+    # Return all found paths as newline-separated list
+    printf '%s\n' "${conf_paths[@]}"
     return 0
 }
 
@@ -894,11 +965,23 @@ main() {
                     log_error "Missing value for --custom-conf"
                     usage
                 fi
-                CUSTOM_CONF_PATH="$2"
+                CUSTOM_CONF_PATHS+=("$2")
                 shift 2
                 ;;
             --custom-conf=*)
-                CUSTOM_CONF_PATH="${1#*=}"
+                CUSTOM_CONF_PATHS+=("${1#*=}")
+                shift
+                ;;
+            --custom-paths-file)
+                if [[ $# -lt 2 ]]; then
+                    log_error "Missing value for --custom-paths-file"
+                    usage
+                fi
+                CUSTOM_PATHS_FILE="$2"
+                shift 2
+                ;;
+            --custom-paths-file=*)
+                CUSTOM_PATHS_FILE="${1#*=}"
                 shift
                 ;;
             --dry-run|--dry_run)
@@ -937,18 +1020,67 @@ main() {
     log_message "Mode: $MODE"
     log_message "========================================="
     
-    # Auto-detect Tomcat configuration directory
-    local conf_path
-    if ! conf_path=$(get_tomcat_conf_path "$CUSTOM_CONF_PATH"); then
+    # Collect all custom paths
+    local all_custom_paths=("${CUSTOM_CONF_PATHS[@]}")
+    
+    # Add legacy single custom path if set
+    if [[ -n "$CUSTOM_CONF_PATH" ]]; then
+        all_custom_paths+=("$CUSTOM_CONF_PATH")
+    fi
+    
+    # Load paths from file if specified
+    if [[ -n "$CUSTOM_PATHS_FILE" ]]; then
+        local file_paths
+        file_paths=$(load_custom_paths_from_file "$CUSTOM_PATHS_FILE")
+        if [[ -n "$file_paths" ]]; then
+            while IFS= read -r path; do
+                if [[ -n "$path" ]]; then
+                    all_custom_paths+=("$path")
+                fi
+            done <<< "$file_paths"
+        fi
+    fi
+    
+    # Auto-detect Tomcat configuration directories
+    local conf_paths_output
+    if ! conf_paths_output=$(get_tomcat_conf_paths "${all_custom_paths[@]}"); then
         log_error "Failed to locate Tomcat configuration"
         exit 2
     fi
     
-    log_message "Tomcat Configuration Directory: $conf_path"
+    # Convert output to array
+    local conf_paths=()
+    while IFS= read -r path; do
+        if [[ -n "$path" ]]; then
+            conf_paths+=("$path")
+        fi
+    done <<< "$conf_paths_output"
     
-    # Find all web.xml files
-    local web_xml_files
-    read -ra web_xml_files <<< "$(find_web_xml_files "$conf_path")"
+    if [[ ${#conf_paths[@]} -eq 0 ]]; then
+        log_error "No Tomcat configuration directories found"
+        exit 2
+    fi
+    
+    # Find all web.xml files from all configuration directories
+    local web_xml_files=()
+    for conf_path in "${conf_paths[@]}"; do
+        log_message "Tomcat Configuration Directory: $conf_path"
+        local files
+        read -ra files <<< "$(find_web_xml_files "$conf_path")"
+        for file in "${files[@]}"; do
+            # Avoid duplicates
+            local found=0
+            for existing in "${web_xml_files[@]}"; do
+                if [[ "$existing" == "$file" ]]; then
+                    found=1
+                    break
+                fi
+            done
+            if [[ $found -eq 0 ]]; then
+                web_xml_files+=("$file")
+            fi
+        done
+    done
     
     if [[ ${#web_xml_files[@]} -eq 0 ]]; then
         log_error "No web.xml files found to process"

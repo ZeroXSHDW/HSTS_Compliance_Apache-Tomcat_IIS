@@ -13,6 +13,12 @@ param(
     [string]$ConfigPath = $null,
     
     [Parameter(Mandatory=$false)]
+    [string[]]$CustomPaths = @(),
+    
+    [Parameter(Mandatory=$false)]
+    [string]$CustomPathsFile = $null,
+    
+    [Parameter(Mandatory=$false)]
     [string]$LogFile = "$env:LOCALAPPDATA\Temp\IisHsts.log",
     
     [Parameter(Mandatory=$false)]
@@ -32,63 +38,6 @@ try {
     $null = New-Item -Path $LogFile -ItemType File -Force -ErrorAction Stop
 } catch {
     Write-Host "WARNING: Cannot create log file: $LogFile"
-}
-
-Log-Message "========================================="
-Log-Message "IIS HSTS Configuration Tool"
-Log-Message "Hostname: $Hostname"
-Log-Message "Execution Time: $Timestamp"
-Log-Message "Mode: $Mode"
-Log-Message "========================================="
-
-# Function: Auto-detect IIS web.config files
-function Find-IisWebConfigFiles {
-    $webConfigFiles = @()
-    
-    # Check default wwwroot
-    $defaultWebConfig = "C:\inetpub\wwwroot\web.config"
-    if (Test-Path $defaultWebConfig) {
-        $webConfigFiles += $defaultWebConfig
-        Log-Message "Found: $defaultWebConfig (default wwwroot)"
-    }
-    
-    # Check application-specific web.config files in wwwroot
-    $wwwrootPath = "C:\inetpub\wwwroot"
-    if (Test-Path $wwwrootPath) {
-        $appDirs = Get-ChildItem -Path $wwwrootPath -Directory -ErrorAction SilentlyContinue
-        foreach ($appDir in $appDirs) {
-            $appWebConfig = Join-Path $appDir.FullName "web.config"
-            if (Test-Path $appWebConfig) {
-                $webConfigFiles += $appWebConfig
-                Log-Message "Found: $appWebConfig (application-specific)"
-            }
-        }
-    }
-    
-    # Use IIS WebAdministration module if available
-    if (Get-Module -ListAvailable -Name WebAdministration) {
-        try {
-            Import-Module WebAdministration -ErrorAction SilentlyContinue
-            $sites = Get-WebSite -ErrorAction SilentlyContinue
-            foreach ($site in $sites) {
-                $sitePath = $site.PhysicalPath
-                if ($sitePath -and (Test-Path $sitePath)) {
-                    $siteWebConfig = Join-Path $sitePath "web.config"
-                    if (Test-Path $siteWebConfig) {
-                        if ($webConfigFiles -notcontains $siteWebConfig) {
-                            $webConfigFiles += $siteWebConfig
-                            Log-Message "Found: $siteWebConfig (IIS site: $($site.Name))"
-                        }
-                    }
-                }
-            }
-        } catch {
-            Log-Message "WARNING: Could not query IIS sites: $_"
-        }
-    }
-    
-    Log-Message "Found $($webConfigFiles.Count) web.config file(s) to process"
-    return $webConfigFiles
 }
 
 # Function: Log message to console and optionally to file
@@ -118,6 +67,168 @@ function Log-Error {
     )
     
     Log-Message "ERROR: $Message"
+}
+
+Log-Message "========================================="
+Log-Message "IIS HSTS Configuration Tool"
+Log-Message "Hostname: $Hostname"
+Log-Message "Execution Time: $Timestamp"
+Log-Message "Mode: $Mode"
+Log-Message "========================================="
+
+# Function: Load custom paths from file
+function Get-CustomPathsFromFile {
+    param([string]$PathsFile)
+    
+    $paths = @()
+    if (-not $PathsFile -or -not (Test-Path $PathsFile)) {
+        return $paths
+    }
+    
+    try {
+        $fileContent = Get-Content -Path $PathsFile -ErrorAction Stop
+        foreach ($line in $fileContent) {
+            $trimmedLine = $line.Trim()
+            if ($trimmedLine -and -not $trimmedLine.StartsWith("#")) {
+                $paths += $trimmedLine
+            }
+        }
+        Log-Message "Loaded $($paths.Count) custom path(s) from file: $PathsFile"
+    } catch {
+        Log-Error "Failed to read custom paths file: $PathsFile - $_"
+    }
+    
+    return $paths
+}
+
+# Function: Auto-detect IIS web.config files
+function Find-IisWebConfigFiles {
+    param(
+        [string]$CustomConfigPath,
+        [string[]]$CustomPathsArray,
+        [string]$CustomPathsFile
+    )
+    
+    $webConfigFiles = @()
+    
+    # Add custom paths first
+    $allCustomPaths = @()
+    
+    # Add single custom path if provided
+    if ($CustomConfigPath) {
+        if ((Test-Path $CustomConfigPath) -and (Test-Path $CustomConfigPath -PathType Leaf)) {
+            # It's a file
+            if ($webConfigFiles -notcontains $CustomConfigPath) {
+                $webConfigFiles += $CustomConfigPath
+                Log-Message "Found: $CustomConfigPath (custom file path)"
+            }
+        } elseif ((Test-Path $CustomConfigPath) -and (Test-Path $CustomConfigPath -PathType Container)) {
+            # It's a directory, look for web.config
+            $customWebConfig = Join-Path $CustomConfigPath "web.config"
+            if (Test-Path $customWebConfig) {
+                if ($webConfigFiles -notcontains $customWebConfig) {
+                    $webConfigFiles += $customWebConfig
+                    Log-Message "Found: $customWebConfig (custom directory path)"
+                }
+            }
+        }
+    }
+    
+    # Add custom paths from array
+    foreach ($path in $CustomPathsArray) {
+        if ($path) {
+            if ((Test-Path $path) -and (Test-Path $path -PathType Leaf)) {
+                # It's a file
+                if ($webConfigFiles -notcontains $path) {
+                    $webConfigFiles += $path
+                    Log-Message "Found: $path (custom file path)"
+                }
+            } elseif ((Test-Path $path) -and (Test-Path $path -PathType Container)) {
+                # It's a directory, look for web.config
+                $customWebConfig = Join-Path $path "web.config"
+                if (Test-Path $customWebConfig) {
+                    if ($webConfigFiles -notcontains $customWebConfig) {
+                        $webConfigFiles += $customWebConfig
+                        Log-Message "Found: $customWebConfig (custom directory path)"
+                    }
+                }
+            }
+        }
+    }
+    
+    # Add custom paths from file
+    if ($CustomPathsFile) {
+        $filePaths = Get-CustomPathsFromFile -PathsFile $CustomPathsFile
+        foreach ($path in $filePaths) {
+            if ($path) {
+                if ((Test-Path $path) -and (Test-Path $path -PathType Leaf)) {
+                    # It's a file
+                    if ($webConfigFiles -notcontains $path) {
+                        $webConfigFiles += $path
+                        Log-Message "Found: $path (custom file path from file)"
+                    }
+                } elseif ((Test-Path $path) -and (Test-Path $path -PathType Container)) {
+                    # It's a directory, look for web.config
+                    $customWebConfig = Join-Path $path "web.config"
+                    if (Test-Path $customWebConfig) {
+                        if ($webConfigFiles -notcontains $customWebConfig) {
+                            $webConfigFiles += $customWebConfig
+                            Log-Message "Found: $customWebConfig (custom directory path from file)"
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    # Check default wwwroot
+    $defaultWebConfig = "C:\inetpub\wwwroot\web.config"
+    if (Test-Path $defaultWebConfig) {
+        if ($webConfigFiles -notcontains $defaultWebConfig) {
+            $webConfigFiles += $defaultWebConfig
+            Log-Message "Found: $defaultWebConfig (default wwwroot)"
+        }
+    }
+    
+    # Check application-specific web.config files in wwwroot
+    $wwwrootPath = "C:\inetpub\wwwroot"
+    if (Test-Path $wwwrootPath) {
+        $appDirs = Get-ChildItem -Path $wwwrootPath -Directory -ErrorAction SilentlyContinue
+        foreach ($appDir in $appDirs) {
+            $appWebConfig = Join-Path $appDir.FullName "web.config"
+            if (Test-Path $appWebConfig) {
+                if ($webConfigFiles -notcontains $appWebConfig) {
+                    $webConfigFiles += $appWebConfig
+                    Log-Message "Found: $appWebConfig (application-specific)"
+                }
+            }
+        }
+    }
+    
+    # Use IIS WebAdministration module if available
+    if (Get-Module -ListAvailable -Name WebAdministration) {
+        try {
+            Import-Module WebAdministration -ErrorAction SilentlyContinue
+            $sites = Get-WebSite -ErrorAction SilentlyContinue
+            foreach ($site in $sites) {
+                $sitePath = $site.PhysicalPath
+                if ($sitePath -and (Test-Path $sitePath)) {
+                    $siteWebConfig = Join-Path $sitePath "web.config"
+                    if (Test-Path $siteWebConfig) {
+                        if ($webConfigFiles -notcontains $siteWebConfig) {
+                            $webConfigFiles += $siteWebConfig
+                            Log-Message "Found: $siteWebConfig (IIS site: $($site.Name))"
+                        }
+                    }
+                }
+            }
+        } catch {
+            Log-Message "WARNING: Could not query IIS sites: $_"
+        }
+    }
+    
+    Log-Message "Found $($webConfigFiles.Count) web.config file(s) to process"
+    return $webConfigFiles
 }
 
 # Function: Validate XML file
@@ -757,28 +868,16 @@ function Process-WebConfig {
 
 # Main execution
 try {
-    # Auto-detect or use provided path
-    $webConfigFiles = @()
+    # Auto-detect or use provided paths
+    $webConfigFiles = Find-IisWebConfigFiles -CustomConfigPath $ConfigPath -CustomPathsArray $CustomPaths -CustomPathsFile $CustomPathsFile
     
-    if ($ConfigPath) {
-        $ConfigPath = $ConfigPath.Trim()
-        if (Test-Path $ConfigPath) {
-            $webConfigFiles += $ConfigPath
-            Log-Message "Using provided web.config path: $ConfigPath"
-        } else {
-            Log-Error "Provided web.config path not found: $ConfigPath"
-            exit 2
-        }
-    } else {
-        # Auto-detect web.config files
-        $webConfigFiles = Find-IisWebConfigFiles
-        
-        if ($webConfigFiles.Count -eq 0) {
-            Log-Error "No web.config files found to process"
-            Log-Error "  - Ensure IIS is installed on this Windows Server"
-            Log-Error "  - Or specify a custom path: -ConfigPath 'C:\path\to\web.config'"
-            exit 1
-        }
+    if ($webConfigFiles.Count -eq 0) {
+        Log-Error "No web.config files found to process"
+        Log-Error "  - Ensure IIS is installed on this Windows Server"
+        Log-Error "  - Or specify a custom path: -ConfigPath 'C:\path\to\web.config'"
+        Log-Error "  - Or specify multiple paths: -CustomPaths @('C:\path1\web.config', 'C:\path2')"
+        Log-Error "  - Or specify a paths file: -CustomPathsFile 'C:\paths.txt' (one path per line)"
+        exit 1
     }
     
     # Process each web.config file
