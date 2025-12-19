@@ -1,5 +1,7 @@
 # HTTPS Headers - HSTS Configuration Tools
 
+![Tomcat Configuration Security Auditor Banner](assets/images/banner.jpg)
+
 A comprehensive set of tools for auditing and configuring HTTP Strict Transport Security (HSTS) headers in Apache Tomcat and Microsoft IIS web servers.
 
 ## Table of Contents
@@ -18,7 +20,6 @@ A comprehensive set of tools for auditing and configuring HTTP Strict Transport 
 - [Advanced Usage](#advanced-usage)
 - [Code Review Summary](#code-review-summary)
 - [License](#license)
-- [Contributing](#contributing)
 
 ## Overview
 
@@ -54,7 +55,6 @@ This implementation follows OWASP recommendations:
 .
 ├── README.md                    # Main documentation (this file)
 ├── LICENSE                      # MIT License
-├── CONTRIBUTING.md              # Contribution guidelines
 ├── .gitignore                   # Git ignore patterns
 ├── src/
 │   ├── unix/
@@ -874,10 +874,6 @@ The scripts have been verified against the OWASP HSTS Cheat Sheet:
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## Acknowledgments
 
