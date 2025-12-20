@@ -1443,15 +1443,28 @@ Get-Item WSMan:\localhost\Client\TrustedHosts
 # Run PowerShell as Administrator on the TARGET server
 Enable-PSRemoting -Force
 
+# IMPORTANT: Enable multiple authentication methods for maximum compatibility
+# Enable Basic authentication (required for workgroup environments with credentials)
+winrm set winrm/config/service/auth @{Basic="true"}
+# Enable Negotiate (works in both domain and workgroup)
+winrm set winrm/config/service/auth @{Negotiate="true"}
+# Enable Kerberos (for domain environments)
+winrm set winrm/config/service/auth @{Kerberos="true"}
+
 # Configure firewall to allow WinRM
 Enable-NetFirewallRule -DisplayGroup "Windows Remote Management"
 
 # Verify WinRM is running
 Get-Service WinRM
 
+# Verify Basic authentication is enabled
+winrm get winrm/config/service/auth
+
 # Test WinRM locally on target server
 Test-WSMan -ComputerName localhost
 ```
+
+**Note:** The remote scripts automatically try multiple authentication methods in order. For workgroup environments, Basic authentication must be enabled on the target server. In domain environments, Kerberos/Negotiate is preferred but scripts will try all available methods automatically.
 
 ### Step 4: Test Remote Connectivity
 
@@ -1465,6 +1478,12 @@ Test-WSMan -ComputerName "webserver01.example.com"
 $cred = Get-Credential
 Invoke-Command -ComputerName "webserver01.example.com" -Credential $cred -ScriptBlock { $env:COMPUTERNAME }
 ```
+
+**Note:** The remote scripts (`Remote_UpdateTomcatHstsWin.ps1` and `Remote_UpdateIisHstsWin.ps1`) automatically try multiple authentication methods in order until one succeeds:
+- **With credentials:** Negotiate → Basic → Kerberos → CredSSP
+- **Without credentials:** Default → Negotiate → Kerberos
+
+This ensures maximum compatibility across different environments (domain, workgroup, etc.).
 
 ### Troubleshooting Common Errors
 
@@ -1486,10 +1505,30 @@ Set-Item WSMan:\localhost\Client\TrustedHosts -Value "server1.domain.com" -Force
 #### Error: "Access Denied" or "Authentication Failed"
 
 **Solutions:**
-1. Verify credentials have administrator privileges on target server
-2. Check if account is locked or disabled
-3. For domain environments, ensure Kerberos authentication is working
-4. Try using FQDN (fully qualified domain name) instead of hostname
+1. **Enable Basic authentication on target server (REQUIRED for workgroup environments):**
+   ```powershell
+   # On TARGET server, run as Administrator
+   winrm set winrm/config/service/auth @{Basic="true"}
+   ```
+   
+2. Verify credentials have administrator privileges on target server
+
+3. Check if account is locked or disabled
+
+4. For domain environments, ensure Kerberos authentication is working:
+   ```powershell
+   # On TARGET server
+   winrm set winrm/config/service/auth @{Kerberos="true"}
+   ```
+
+5. Try using FQDN (fully qualified domain name) instead of hostname
+
+6. Verify authentication methods are enabled:
+   ```powershell
+   # On TARGET server
+   winrm get winrm/config/service/auth
+   ```
+   You should see `Basic="true"` for workgroup environments or `Kerberos="true"` for domain environments.
 
 #### Error: "Cannot connect to remote server"
 
@@ -1567,16 +1606,19 @@ $cred = Get-Credential
 ### Domain vs Workgroup Environments
 
 **Domain Environment (Recommended):**
-- Uses Kerberos authentication automatically
+- Uses Kerberos/Negotiate authentication automatically
 - No need to configure TrustedHosts
 - More secure
 - Just enable WinRM on both client and target servers
+- Scripts automatically try: Default → Negotiate → Kerberos (in order)
 
 **Workgroup Environment:**
 - Must configure TrustedHosts on client machine
-- Uses Basic authentication (credentials sent in plain text)
+- **MUST enable Basic authentication on target server:** `winrm set winrm/config/service/auth @{Basic="true"}`
+- Uses Basic authentication (credentials sent in plain text over HTTP)
 - Less secure - use only in trusted networks
 - Consider using HTTPS (port 5986) for better security
+- Scripts automatically use `-Authentication Basic` when credentials are provided
 
 For more detailed information, see [INSTALLATION.md](INSTALLATION.md).
 

@@ -170,12 +170,24 @@ PowerShell Remoting (WinRM) is required for the remote scripts to work. Follow t
    Enable-PSRemoting -Force
    ```
 
-2. **Verify WinRM is Running:**
+2. **Enable Basic Authentication (REQUIRED for workgroup environments):**
+   ```powershell
+   # This is required when using credentials for authentication in workgroup environments
+   winrm set winrm/config/service/auth @{Basic="true"}
+   ```
+
+3. **Verify WinRM is Running:**
    ```powershell
    Get-Service -Name WinRM
    ```
 
-3. **Check WinRM Listener:**
+4. **Verify Authentication Methods:**
+   ```powershell
+   # Check which authentication methods are enabled
+   winrm get winrm/config/service/auth
+   ```
+
+5. **Check WinRM Listener:**
    ```powershell
    winrm enumerate winrm/config/Listener
    ```

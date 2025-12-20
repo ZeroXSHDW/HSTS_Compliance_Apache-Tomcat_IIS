@@ -787,25 +787,76 @@ foreach ($server in $uniqueServers) {
             }
         }
         
-        $invokeParams = @{
-            ComputerName = $server
-            ScriptBlock = $scriptBlock
-            ArgumentList = @($Mode, $ConfigPath, $CustomPaths, $CustomPathsFile, $DryRun.IsPresent)
-        }
-        
+        # Try multiple authentication methods in order of preference
+        $authMethods = @()
         if ($Credential) {
-            $invokeParams.Credential = $Credential
+            # When credentials are provided, try these methods in order:
+            # 1. Negotiate (tries Kerberos first, then NTLM) - works in both domain and workgroup
+            # 2. Basic - required for workgroup environments
+            # 3. Kerberos - for domain environments
+            # 4. CredSSP - for multi-hop scenarios
+            $authMethods = @("Negotiate", "Basic", "Kerberos", "CredSSP")
+        } else {
+            # When no credentials provided, try these methods:
+            # 1. Default (Negotiate/Kerberos) - uses current user credentials
+            # 2. Negotiate - explicit negotiate
+            # 3. Kerberos - for domain environments
+            $authMethods = @("Default", "Negotiate", "Kerberos")
         }
         
-        $result = Invoke-Command @invokeParams
+        $result = $null
+        $lastError = $null
+        $success = $false
         
-        Write-Host "Result from $server :"
-        Write-Host "  Success: $($result.Success)"
-        Write-Host "  Processed: $($result.ProcessedCount)"
-        Write-Host "  Successful: $($result.SuccessCount)"
-        Write-Host "  Failed: $($result.FailureCount)"
-        if ($result.LogFile) {
-            Write-Host "  Log file: $($result.LogFile)"
+        foreach ($authMethod in $authMethods) {
+            try {
+                Write-Host "  Trying authentication method: $authMethod" -ForegroundColor Cyan
+                
+                $invokeParams = @{
+                    ComputerName = $server
+                    ScriptBlock = $scriptBlock
+                    ArgumentList = @($Mode, $ConfigPath, $CustomPaths, $CustomPathsFile, $DryRun.IsPresent)
+                    Authentication = $authMethod
+                    ErrorAction = "Stop"
+                }
+                
+                if ($Credential) {
+                    $invokeParams.Credential = $Credential
+                }
+                
+                $result = Invoke-Command @invokeParams
+                $success = $true
+                Write-Host "  ✓ Authentication successful using: $authMethod" -ForegroundColor Green
+                break
+                
+            } catch {
+                $lastError = $_
+                Write-Host "  ✗ Authentication failed with $authMethod : $($_.Exception.Message)" -ForegroundColor Yellow
+                continue
+            }
+        }
+        
+        if (-not $success) {
+            Write-Host "ERROR: Failed to authenticate to $server using all available methods" -ForegroundColor Red
+            Write-Host "Last error: $lastError" -ForegroundColor Red
+            Write-Host "Please ensure:" -ForegroundColor Yellow
+            Write-Host "  1. WinRM is enabled on target server: Enable-PSRemoting -Force" -ForegroundColor Yellow
+            Write-Host "  2. Basic authentication is enabled (for workgroup): winrm set winrm/config/service/auth @{Basic='true'}" -ForegroundColor Yellow
+            Write-Host "  3. Credentials have administrator privileges on target server" -ForegroundColor Yellow
+            Write-Host "  4. Trusted hosts are configured (if workgroup): Set-Item WSMan:\localhost\Client\TrustedHosts -Value '$server' -Force" -ForegroundColor Yellow
+            continue
+        }
+        
+        # Only display results if authentication was successful
+        if ($result) {
+            Write-Host "Result from $server :"
+            Write-Host "  Success: $($result.Success)"
+            Write-Host "  Processed: $($result.ProcessedCount)"
+            Write-Host "  Successful: $($result.SuccessCount)"
+            Write-Host "  Failed: $($result.FailureCount)"
+            if ($result.LogFile) {
+                Write-Host "  Log file: $($result.LogFile)"
+            }
         }
         
     } catch {
