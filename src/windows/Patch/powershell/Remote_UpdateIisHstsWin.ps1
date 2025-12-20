@@ -235,25 +235,169 @@ foreach ($server in $uniqueServers) {
                     }
                 }
                 
-                # Check default wwwroot
-                $defaultWebConfig = "C:\inetpub\wwwroot\web.config"
-                if (Test-Path $defaultWebConfig) {
-                    if ($webConfigFiles -notcontains $defaultWebConfig) {
-                        $webConfigFiles += $defaultWebConfig
-                        Log-Message "Found: $defaultWebConfig (default wwwroot)"
+                # Build comprehensive list of possible wwwroot paths (similar to Tomcat approach)
+                $possibleWwwrootPaths = @(
+                    "C:\inetpub\wwwroot",
+                    "D:\inetpub\wwwroot",
+                    "E:\inetpub\wwwroot",
+                    "F:\inetpub\wwwroot",
+                    "C:\wwwroot",
+                    "D:\wwwroot",
+                    "E:\wwwroot",
+                    "F:\wwwroot",
+                    "C:\WebSites",
+                    "D:\WebSites",
+                    "E:\WebSites",
+                    "C:\IIS\wwwroot",
+                    "D:\IIS\wwwroot",
+                    "E:\IIS\wwwroot"
+                )
+                
+                # Check inetpub root and scan for wwwroot subdirectories
+                $inetpubRoots = @("C:\inetpub", "D:\inetpub", "E:\inetpub", "F:\inetpub")
+                foreach ($inetpubRoot in $inetpubRoots) {
+                    if (Test-Path $inetpubRoot) {
+                        $subDirs = Get-ChildItem -Path $inetpubRoot -Directory -ErrorAction SilentlyContinue
+                        foreach ($dir in $subDirs) {
+                            $wwwrootPath = $dir.FullName
+                            if ($possibleWwwrootPaths -notcontains $wwwrootPath) {
+                                $possibleWwwrootPaths += $wwwrootPath
+                            }
+                        }
                     }
                 }
                 
-                # Check application-specific web.config files in wwwroot
-                $wwwrootPath = "C:\inetpub\wwwroot"
-                if (Test-Path $wwwrootPath) {
-                    $appDirs = Get-ChildItem -Path $wwwrootPath -Directory -ErrorAction SilentlyContinue
-                    foreach ($appDir in $appDirs) {
-                        $appWebConfig = Join-Path $appDir.FullName "web.config"
-                        if (Test-Path $appWebConfig) {
-                            if ($webConfigFiles -notcontains $appWebConfig) {
-                                $webConfigFiles += $appWebConfig
-                                Log-Message "Found: $appWebConfig (application-specific)"
+                # Check environment variables for IIS paths
+                $iisPath = $env:IIS_PATH
+                if ($iisPath -and (Test-Path $iisPath)) {
+                    if ($possibleWwwrootPaths -notcontains $iisPath) {
+                        $possibleWwwrootPaths += $iisPath
+                        Log-Message "Added IIS_PATH environment variable to search paths: $iisPath"
+                    }
+                }
+                
+                $wwwrootEnv = $env:WWWROOT
+                if ($wwwrootEnv -and (Test-Path $wwwrootEnv)) {
+                    if ($possibleWwwrootPaths -notcontains $wwwrootEnv) {
+                        $possibleWwwrootPaths += $wwwrootEnv
+                        Log-Message "Added WWWROOT environment variable to search paths: $wwwrootEnv"
+                    }
+                }
+                
+                $iisHome = $env:IIS_HOME
+                if ($iisHome -and (Test-Path $iisHome)) {
+                    $iisHomeWwwroot = Join-Path $iisHome "wwwroot"
+                    if (Test-Path $iisHomeWwwroot) {
+                        if ($possibleWwwrootPaths -notcontains $iisHomeWwwroot) {
+                            $possibleWwwrootPaths += $iisHomeWwwroot
+                            Log-Message "Added IIS_HOME/wwwroot to search paths: $iisHomeWwwroot"
+                        }
+                    }
+                }
+                
+                # Check registry for IIS installation paths
+                try {
+                    $iisRegPath = "HKLM:\SOFTWARE\Microsoft\InetStp"
+                    if (Test-Path $iisRegPath) {
+                        $iisPathValue = (Get-ItemProperty -Path $iisRegPath -Name "PathWWWRoot" -ErrorAction SilentlyContinue).PathWWWRoot
+                        if ($iisPathValue -and (Test-Path $iisPathValue)) {
+                            if ($possibleWwwrootPaths -notcontains $iisPathValue) {
+                                $possibleWwwrootPaths += $iisPathValue
+                                Log-Message "Added registry PathWWWRoot to search paths: $iisPathValue"
+                            }
+                        }
+                        
+                        # Check for other registry values
+                        $majorVersion = (Get-ItemProperty -Path $iisRegPath -Name "MajorVersion" -ErrorAction SilentlyContinue).MajorVersion
+                        if ($majorVersion) {
+                            Log-Message "Detected IIS version: $majorVersion"
+                        }
+                    }
+                    
+                    # Check WOW64 registry path (32-bit on 64-bit systems)
+                    $iisRegPath32 = "HKLM:\SOFTWARE\WOW6432Node\Microsoft\InetStp"
+                    if (Test-Path $iisRegPath32) {
+                        $iisPathValue32 = (Get-ItemProperty -Path $iisRegPath32 -Name "PathWWWRoot" -ErrorAction SilentlyContinue).PathWWWRoot
+                        if ($iisPathValue32 -and (Test-Path $iisPathValue32)) {
+                            if ($possibleWwwrootPaths -notcontains $iisPathValue32) {
+                                $possibleWwwrootPaths += $iisPathValue32
+                                Log-Message "Added registry PathWWWRoot (32-bit) to search paths: $iisPathValue32"
+                            }
+                        }
+                    }
+                } catch {
+                    # Ignore registry errors
+                }
+                
+                # Check IIS services to find installation paths
+                try {
+                    $iisServices = Get-Service -ErrorAction SilentlyContinue | Where-Object { 
+                        $_.Name -like "*W3SVC*" -or $_.Name -like "*IIS*" -or $_.DisplayName -like "*IIS*" -or $_.DisplayName -like "*World Wide Web*"
+                    }
+                    foreach ($iisService in $iisServices) {
+                        try {
+                            $servicePath = (Get-WmiObject Win32_Service -Filter "Name='$($iisService.Name)'" -ErrorAction SilentlyContinue).PathName
+                            if ($servicePath) {
+                                # Extract path from service executable path
+                                # Service path format: C:\Windows\System32\inetsrv\w3wp.exe or similar
+                                $serviceDir = Split-Path $servicePath -Parent
+                                $systemRoot = $env:SystemRoot
+                                if ($serviceDir -like "*\inetsrv*") {
+                                    # Found inetsrv, go up to Windows, then check for inetpub
+                                    $windowsDir = Split-Path $serviceDir -Parent
+                                    if ($windowsDir -and (Test-Path $windowsDir)) {
+                                        $parentDir = Split-Path $windowsDir -Parent
+                                        $serviceWwwroot = Join-Path $parentDir "inetpub\wwwroot"
+                                        if (Test-Path $serviceWwwroot) {
+                                            if ($possibleWwwrootPaths -notcontains $serviceWwwroot) {
+                                                $possibleWwwrootPaths += $serviceWwwroot
+                                                Log-Message "Added service-based path to search paths: $serviceWwwroot (from service: $($iisService.Name))"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        } catch {
+                            # Ignore errors for individual services
+                        }
+                    }
+                } catch {
+                    # Ignore errors if service query fails
+                }
+                
+                # Now check all possible wwwroot paths for web.config files
+                foreach ($wwwrootPath in $possibleWwwrootPaths) {
+                    if (Test-Path $wwwrootPath) {
+                        # Check root web.config
+                        $rootWebConfig = Join-Path $wwwrootPath "web.config"
+                        if (Test-Path $rootWebConfig) {
+                            if ($webConfigFiles -notcontains $rootWebConfig) {
+                                $webConfigFiles += $rootWebConfig
+                                Log-Message "Found: $rootWebConfig (wwwroot: $wwwrootPath)"
+                            }
+                        }
+                        
+                        # Check application-specific web.config files in subdirectories
+                        $appDirs = Get-ChildItem -Path $wwwrootPath -Directory -ErrorAction SilentlyContinue
+                        foreach ($appDir in $appDirs) {
+                            $appWebConfig = Join-Path $appDir.FullName "web.config"
+                            if (Test-Path $appWebConfig) {
+                                if ($webConfigFiles -notcontains $appWebConfig) {
+                                    $webConfigFiles += $appWebConfig
+                                    Log-Message "Found: $appWebConfig (application in $wwwrootPath)"
+                                }
+                            }
+                            
+                            # Also check nested subdirectories (up to 2 levels deep for performance)
+                            $nestedDirs = Get-ChildItem -Path $appDir.FullName -Directory -ErrorAction SilentlyContinue
+                            foreach ($nestedDir in $nestedDirs) {
+                                $nestedWebConfig = Join-Path $nestedDir.FullName "web.config"
+                                if (Test-Path $nestedWebConfig) {
+                                    if ($webConfigFiles -notcontains $nestedWebConfig) {
+                                        $webConfigFiles += $nestedWebConfig
+                                        Log-Message "Found: $nestedWebConfig (nested application)"
+                                    }
+                                }
                             }
                         }
                     }
@@ -276,6 +420,29 @@ foreach ($server in $uniqueServers) {
                                 }
                             }
                         }
+                        
+                        # Also check application pools and their paths
+                        try {
+                            $appPools = Get-WebAppPoolState -ErrorAction SilentlyContinue
+                            foreach ($pool in $appPools) {
+                                try {
+                                    $poolPath = (Get-ItemProperty "IIS:\AppPools\$($pool.Name)" -ErrorAction SilentlyContinue).applicationPool
+                                    if ($poolPath -and (Test-Path $poolPath)) {
+                                        $poolWebConfig = Join-Path $poolPath "web.config"
+                                        if (Test-Path $poolWebConfig) {
+                                            if ($webConfigFiles -notcontains $poolWebConfig) {
+                                                $webConfigFiles += $poolWebConfig
+                                                Log-Message "Found: $poolWebConfig (IIS app pool: $($pool.Name))"
+                                            }
+                                        }
+                                    }
+                                } catch {
+                                    # Ignore errors for individual app pools
+                                }
+                            }
+                        } catch {
+                            # Ignore errors if app pool query fails
+                        }
                     } catch {
                         Log-Message "WARNING: Could not query IIS sites: $_"
                     }
@@ -297,13 +464,43 @@ foreach ($server in $uniqueServers) {
                 }
             }
             
+            # Function: Validate file path
+            function Test-ValidFilePath {
+                param([string]$FilePath)
+                
+                # Check for path traversal attempts
+                if ($FilePath -match '\.\.') {
+                    Log-Error "Invalid path: contains '..' (path traversal attempt)"
+                    return $false
+                }
+                
+                # Check for null bytes
+                if ($FilePath -match '\0') {
+                    Log-Error "Invalid path: contains null byte"
+                    return $false
+                }
+                
+                return $true
+            }
+            
             # Function: Load and parse IIS web.config file
             function Load-Config {
                 param([string]$ConfigPath)
                 
+                # Validate path first
+                if (-not (Test-ValidFilePath -FilePath $ConfigPath)) {
+                    throw "Invalid path"
+                }
+                
                 if (-not (Test-Path -Path $ConfigPath)) {
                     Log-Error "Configuration file not found: $ConfigPath"
                     throw "File not found"
+                }
+                
+                # Check if it's a symlink/junction (warn but allow)
+                $item = Get-Item -Path $ConfigPath -ErrorAction SilentlyContinue
+                if ($null -ne $item -and $item.LinkType) {
+                    Log-Message "WARNING: Configuration path is a $($item.LinkType): $ConfigPath"
                 }
                 
                 # Check if file is empty
@@ -436,6 +633,8 @@ foreach ($server in $uniqueServers) {
                             HeaderCount = 0
                             CompliantCount = 0
                             NonCompliantCount = 0
+                            CompliantHeaders = @()
+                            NonCompliantHeaders = @()
                         }
                     }
                     
@@ -498,6 +697,8 @@ foreach ($server in $uniqueServers) {
                     HeaderCount = $headerCount
                     CompliantCount = $compliantCount
                     NonCompliantCount = $nonCompliantCount
+                    CompliantHeaders = $compliantHeaders
+                    NonCompliantHeaders = $nonCompliantHeaders
                 }
             }
             

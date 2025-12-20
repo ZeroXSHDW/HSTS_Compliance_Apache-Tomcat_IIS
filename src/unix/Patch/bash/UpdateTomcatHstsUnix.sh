@@ -732,6 +732,49 @@ get_tomcat_conf_paths() {
         conf_path="${CATALINA_HOME}/conf"
     fi
     
+    # Check systemd service files for Tomcat paths
+    if [[ -z "$conf_path" ]]; then
+        local systemd_services=()
+        if [[ -d "/etc/systemd/system" ]]; then
+            while IFS= read -r service_file; do
+                if [[ -f "$service_file" ]] && grep -qi "tomcat\|catalina" "$service_file"; then
+                    local service_path=$(grep -i "ExecStart\|WorkingDirectory" "$service_file" | head -1 | sed 's/.*=//' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//' | sed 's/\/bin\/.*//' | sed 's/\/catalina.*//')
+                    if [[ -n "$service_path" ]] && [[ -d "$service_path/conf" ]] && [[ -f "$service_path/conf/server.xml" ]]; then
+                        log_message "Found Tomcat configuration via systemd service: $service_path/conf"
+                        conf_path="$service_path/conf"
+                        break
+                    fi
+                fi
+            done < <(find /etc/systemd/system -name "*.service" -type f 2>/dev/null | head -20)
+        fi
+    fi
+    
+    # Check init.d scripts for Tomcat paths
+    if [[ -z "$conf_path" ]] && [[ -d "/etc/init.d" ]]; then
+        while IFS= read -r init_script; do
+            if [[ -f "$init_script" ]] && grep -qi "tomcat\|catalina" "$init_script"; then
+                local script_path=$(grep -i "CATALINA_HOME\|CATALINA_BASE\|TOMCAT_HOME" "$init_script" | head -1 | sed 's/.*=//' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//' | sed 's/"//g' | sed "s/'//g")
+                if [[ -n "$script_path" ]] && [[ -d "$script_path/conf" ]] && [[ -f "$script_path/conf/server.xml" ]]; then
+                    log_message "Found Tomcat configuration via init.d script: $script_path/conf"
+                    conf_path="$script_path/conf"
+                    break
+                fi
+            fi
+        done < <(find /etc/init.d -name "*tomcat*" -type f 2>/dev/null | head -10)
+    fi
+    
+    # Check running Tomcat processes for paths
+    if [[ -z "$conf_path" ]]; then
+        local tomcat_process=$(ps aux 2>/dev/null | grep -i "[t]omcat\|[c]atalina" | head -1)
+        if [[ -n "$tomcat_process" ]]; then
+            local proc_path=$(echo "$tomcat_process" | awk '{for(i=1;i<=NF;i++) if($i ~ /-Dcatalina\.home=|catalina\.base=/) {print $i; exit}}' | sed 's/.*=//')
+            if [[ -n "$proc_path" ]] && [[ -d "$proc_path/conf" ]] && [[ -f "$proc_path/conf/server.xml" ]]; then
+                log_message "Found Tomcat configuration via running process: $proc_path/conf"
+                conf_path="$proc_path/conf"
+            fi
+        fi
+    fi
+    
     # Search common Linux/Unix server paths (not macOS)
     if [[ -z "$conf_path" ]]; then
         log_message "Searching common Tomcat configuration paths..."

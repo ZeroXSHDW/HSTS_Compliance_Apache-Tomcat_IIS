@@ -208,9 +208,62 @@ function Get-TomcatConfigPaths {
         foreach ($dir in $subDirs) {
             $confPath = Join-Path $dir.FullName "conf"
             if (Test-Path (Join-Path $confPath "server.xml")) {
-                $possiblePaths += $confPath
+                if ($possiblePaths -notcontains $confPath) {
+                    $possiblePaths += $confPath
+                }
             }
         }
+    }
+    
+    # Check environment variables (CATALINA_HOME, CATALINA_BASE)
+    $catalinaHome = $env:CATALINA_HOME
+    if ($catalinaHome -and (Test-Path $catalinaHome)) {
+        $envConfPath = Join-Path $catalinaHome "conf"
+        if (Test-Path (Join-Path $envConfPath "server.xml")) {
+            if ($possiblePaths -notcontains $envConfPath) {
+                $possiblePaths += $envConfPath
+                Log-Message "Found Tomcat via CATALINA_HOME: $envConfPath"
+            }
+        }
+    }
+    
+    $catalinaBase = $env:CATALINA_BASE
+    if ($catalinaBase -and (Test-Path $catalinaBase)) {
+        $envConfPath = Join-Path $catalinaBase "conf"
+        if (Test-Path (Join-Path $envConfPath "server.xml")) {
+            if ($possiblePaths -notcontains $envConfPath) {
+                $possiblePaths += $envConfPath
+                Log-Message "Found Tomcat via CATALINA_BASE: $envConfPath"
+            }
+        }
+    }
+    
+    # Check Tomcat services to find installation paths
+    try {
+        $tomcatServices = Get-Service -ErrorAction SilentlyContinue | Where-Object { 
+            $_.Name -like "*Tomcat*" -or $_.DisplayName -like "*Tomcat*" 
+        }
+        foreach ($service in $tomcatServices) {
+            try {
+                $servicePath = (Get-WmiObject Win32_Service -Filter "Name='$($service.Name)'" -ErrorAction SilentlyContinue).PathName
+                if ($servicePath) {
+                    # Extract path from service executable path (usually bin\catalina.bat or bin\tomcat9.exe)
+                    $serviceDir = Split-Path $servicePath -Parent
+                    $tomcatHome = Split-Path $serviceDir -Parent
+                    $serviceConfPath = Join-Path $tomcatHome "conf"
+                    if (Test-Path (Join-Path $serviceConfPath "server.xml")) {
+                        if ($possiblePaths -notcontains $serviceConfPath) {
+                            $possiblePaths += $serviceConfPath
+                            Log-Message "Found Tomcat via service '$($service.Name)': $serviceConfPath"
+                        }
+                    }
+                }
+            } catch {
+                # Ignore errors for individual services
+            }
+        }
+    } catch {
+        # Ignore errors if service query fails
     }
     
     # Check all possible paths and return all found

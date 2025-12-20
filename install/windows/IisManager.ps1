@@ -173,18 +173,47 @@ function Install-Iis {
 
     # Install features
     try {
-        $installResult = Install-WindowsFeature -Name $featuresToInstall -IncludeManagementTools:$IncludeManagementTools
+        $installResult = $null
+        $restartNeeded = $false
         
-        if ($installResult.Success) {
+        # Try Install-WindowsFeature first (Windows Server)
+        try {
+            $installResult = Install-WindowsFeature -Name $featuresToInstall -IncludeManagementTools:$IncludeManagementTools -ErrorAction Stop
+            if ($installResult.Success) {
+                $restartNeeded = $installResult.RestartNeeded
+            }
+        } catch {
+            # Fall back to Enable-WindowsOptionalFeature (Windows Client/Server)
+            Write-Log "Install-WindowsFeature not available, using Enable-WindowsOptionalFeature..."
+            foreach ($feature in $featuresToInstall) {
+                try {
+                    $result = Enable-WindowsOptionalFeature -Online -FeatureName $feature -All -NoRestart -ErrorAction Stop
+                    if ($result.RestartNeeded) {
+                        $restartNeeded = $true
+                    }
+                } catch {
+                    Write-Log "WARNING: Failed to install feature $feature : $_"
+                }
+            }
+            # Create a success result object for consistency
+            $installResult = [PSCustomObject]@{ Success = $true; RestartNeeded = $restartNeeded }
+        }
+        
+        if ($installResult -and $installResult.Success) {
             Write-Log "IIS installation completed successfully."
-            Write-Log "Restart required: $($installResult.RestartNeeded)"
+            Write-Log "Restart required: $restartNeeded"
             
-            if ($installResult.RestartNeeded) {
+            if ($restartNeeded) {
                 Write-Log "WARNING: A system restart is required to complete the installation."
             }
         } else {
-            Write-Log "ERROR: IIS installation failed. Exit code: $($installResult.ExitCode)"
-            Write-Log "Failed features: $($installResult.FeatureResult -join ', ')"
+            Write-Log "ERROR: IIS installation failed."
+            if ($installResult.ExitCode) {
+                Write-Log "Exit code: $($installResult.ExitCode)"
+            }
+            if ($installResult.FeatureResult) {
+                Write-Log "Failed features: $($installResult.FeatureResult -join ', ')"
+            }
             exit 1
         }
     } catch {
