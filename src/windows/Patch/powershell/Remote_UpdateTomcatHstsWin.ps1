@@ -770,7 +770,7 @@ foreach ($server in $uniqueServers) {
                 FailureCount = $failureCount
                 LogFile = $LogFile
             }
-        }
+        } # End of scriptBlock
         
         # Try multiple authentication methods in order of preference
         $authMethods = @()
@@ -828,9 +828,9 @@ foreach ($server in $uniqueServers) {
             Write-Host "Last error: $lastError" -ForegroundColor Red
             Write-Host "Please ensure:" -ForegroundColor Yellow
             Write-Host "  1. WinRM is enabled on target server: Enable-PSRemoting -Force" -ForegroundColor Yellow
-            Write-Host "  2. Basic authentication is enabled (for workgroup): winrm set winrm/config/service/auth @{Basic='true'}" -ForegroundColor Yellow
+            Write-Host "  2. Basic authentication is enabled (for workgroup): winrm set winrm/config/service/auth @{Basic=`"true`"}" -ForegroundColor Yellow
             Write-Host "  3. Credentials have administrator privileges on target server" -ForegroundColor Yellow
-            Write-Host "  4. Trusted hosts are configured (if workgroup): Set-Item WSMan:\localhost\Client\TrustedHosts -Value '$server' -Force" -ForegroundColor Yellow
+            Write-Host "  4. Trusted hosts are configured (if workgroup): Set-Item WSMan:\localhost\Client\TrustedHosts -Value `"$server`" -Force" -ForegroundColor Yellow
             continue
         }
         
