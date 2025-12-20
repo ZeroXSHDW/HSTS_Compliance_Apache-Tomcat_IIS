@@ -82,7 +82,8 @@ This implementation follows OWASP recommendations:
 - ✅ **Logging**: Detailed logging to files and console with timestamps and hostname
 - ✅ **Error Handling**: Comprehensive error handling with clear exit codes (0=success, 1=failure, 2=error)
 - ✅ **Security Validations**: Path traversal protection, null byte detection, symlink/junction detection, permission checks
-- ✅ **User Confirmation**: Interactive prompts for destructive operations
+- ✅ **User Confirmation**: Interactive prompts for destructive operations (can be bypassed with `-Force`)
+- ✅ **Force Mode**: Auto-approve all changes without prompting (useful for automation)
 - ✅ **Example Files**: Provided example configuration files for testing
 
 ## Project Structure
@@ -249,6 +250,9 @@ sudo ./src/unix/Patch/bash/UpdateTomcatHstsUnix.sh --mode configure \
 
 # Configure with custom path
 .\src\windows\Patch\powershell\UpdateTomcatHstsWin.ps1 -Mode configure -TomcatConfPath "C:\Tomcat\conf"
+
+# Auto-approve all changes without prompting (useful for automation)
+.\src\windows\Patch\powershell\UpdateTomcatHstsWin.ps1 -Mode configure -Force
 
 # Preview changes without applying (dry run)
 .\src\windows\Patch\powershell\UpdateTomcatHstsWin.ps1 -Mode configure -DryRun
@@ -749,11 +753,12 @@ sudo ./src/unix/Patch/bash/UpdateTomcatHstsUnix.sh [--mode audit|configure] [--c
 
 **Syntax:**
 ```powershell
-.\src\windows\Patch\powershell\UpdateTomcatHstsWin.ps1 [-Mode audit|configure] [-TomcatConfPath <path>] [-CustomPaths <string[]>] [-CustomPathsFile <path>] [-DryRun]
+.\src\windows\Patch\powershell\UpdateTomcatHstsWin.ps1 [-Mode audit|configure] [-TomcatConfPath <path>] [-CustomPaths <string[]>] [-CustomPathsFile <path>] [-DryRun] [-Force]
 ```
 
 **Parameters:**
 - `-Mode` (optional, default: configure): Operation mode - `audit` or `configure`
+- `-Force` (optional): Auto-approve all configuration changes without prompting (configure mode only)
 - `-TomcatConfPath` (optional): Single custom Tomcat conf directory path (auto-detects if not provided)
 - `-CustomPaths` (optional): Array of custom Tomcat conf directory paths (e.g., `@("C:\Tomcat1\conf", "C:\Tomcat2\conf")`)
 - `-CustomPathsFile` (optional): File containing custom paths (one path per line, lines starting with # are comments)
