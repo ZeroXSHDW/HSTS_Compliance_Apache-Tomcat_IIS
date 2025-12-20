@@ -19,6 +19,7 @@ A comprehensive set of tools for auditing and configuring HTTP Strict Transport 
 - [Best Practices](#best-practices)
 - [Testing](#testing)
 - [Advanced Usage](#advanced-usage)
+- [PowerShell Remoting (WinRM) Setup Guide](#powershell-remoting-winrm-setup-guide)
 - [Code Review Summary](#code-review-summary)
 - [License](#license)
 - [Contributing](#contributing)
@@ -236,27 +237,49 @@ sudo ./src/unix/Patch/bash/UpdateTomcatHstsUnix.sh --mode configure \
 
 **Audit Mode - Check HSTS Configuration:**
 ```powershell
-# Auto-detect and audit
+# Local execution - Auto-detect and audit
 .\src\windows\Patch\powershell\UpdateTomcatHstsWin.ps1 -Mode audit
 
-# Audit with custom path
+# Local execution - Audit with custom path
 .\src\windows\Patch\powershell\UpdateTomcatHstsWin.ps1 -Mode audit -TomcatConfPath "C:\Tomcat\conf"
+
+# Remote execution - Audit on remote server
+$cred = Get-Credential
+.\src\windows\Patch\powershell\Remote_UpdateTomcatHstsWin.ps1 -ServerName "webserver01.example.com" -Mode audit -Credential $cred
+
+# Remote execution - Audit multiple servers
+$cred = Get-Credential
+.\src\windows\Patch\powershell\Remote_UpdateTomcatHstsWin.ps1 -ServerName @("webserver01.example.com", "webserver02.example.com") -Mode audit -Credential $cred
 ```
 
 **Configure Mode - Fix HSTS Configuration:**
 ```powershell
-# Auto-detect and configure
+# Local execution - Auto-detect and configure
 .\src\windows\Patch\powershell\UpdateTomcatHstsWin.ps1 -Mode configure
 
-# Configure with custom path
+# Local execution - Configure with custom path
 .\src\windows\Patch\powershell\UpdateTomcatHstsWin.ps1 -Mode configure -TomcatConfPath "C:\Tomcat\conf"
 
-# Auto-approve all changes without prompting (useful for automation)
+# Local execution - Auto-approve all changes without prompting (useful for automation)
 .\src\windows\Patch\powershell\UpdateTomcatHstsWin.ps1 -Mode configure -Force
 
-# Preview changes without applying (dry run)
+# Local execution - Preview changes without applying (dry run)
 .\src\windows\Patch\powershell\UpdateTomcatHstsWin.ps1 -Mode configure -DryRun
+
+# Remote execution - Configure on remote server
+$cred = Get-Credential
+.\src\windows\Patch\powershell\Remote_UpdateTomcatHstsWin.ps1 -ServerName "webserver01.example.com" -Mode configure -Credential $cred
+
+# Remote execution - Configure multiple servers
+$cred = Get-Credential
+.\src\windows\Patch\powershell\Remote_UpdateTomcatHstsWin.ps1 -ServerName @("webserver01.example.com", "webserver02.example.com") -Mode configure -Credential $cred
+
+# Remote execution - Configure with auto-approve (Force mode)
+$cred = Get-Credential
+.\src\windows\Patch\powershell\Remote_UpdateTomcatHstsWin.ps1 -ServerName "webserver01.example.com" -Mode configure -Credential $cred -Force
 ```
+<｜tool▁calls▁begin｜><｜tool▁call▁begin｜>
+read_file
 
 **Local - With Custom Paths:**
 ```powershell
@@ -279,16 +302,16 @@ sudo ./src/unix/Patch/bash/UpdateTomcatHstsUnix.sh --mode configure \
 # Ensure PowerShell Remoting is configured (see INSTALLATION.md)
 $cred = Get-Credential
 .\src\windows\Patch\powershell\Remote_UpdateTomcatHstsWin.ps1 `
-  -ServerName @("server1", "server2", "server3") `
+  -ServerName @("webserver01.example.com", "webserver02.example.com", "webserver03.example.com") `
   -Mode configure -Credential $cred
 ```
 
 **Remote - Multiple Servers (Server List File):**
 ```powershell
 # Create server list file: C:\servers.txt
-# server1.example.com
-# server2.example.com
-# server3.example.com
+# webserver01.example.com
+# webserver02.example.com
+# webserver03.example.com
 
 $cred = Get-Credential
 .\src\windows\Patch\powershell\Remote_UpdateTomcatHstsWin.ps1 `
@@ -300,33 +323,57 @@ $cred = Get-Credential
 ```powershell
 $cred = Get-Credential
 .\src\windows\Patch\powershell\Remote_UpdateTomcatHstsWin.ps1 `
-  -ServerName @("server1", "server2") `
+  -ServerName @("webserver01.example.com", "webserver02.example.com") `
   -CustomPaths @("C:\Tomcat\conf", "D:\Apache\Tomcat\conf") `
   -Mode configure -Credential $cred
 ```
+<｜tool▁calls▁begin｜><｜tool▁call▁begin｜>
+read_lints
 
 ### Microsoft IIS (Windows)
 
 **Audit Mode - Check HSTS Configuration:**
 ```powershell
-# Auto-detect and audit
+# Local execution - Auto-detect and audit
 .\src\windows\Patch\powershell\UpdateIisHstsWin.ps1 -Mode audit
 
-# Audit specific web.config file
+# Local execution - Audit specific web.config file
 .\src\windows\Patch\powershell\UpdateIisHstsWin.ps1 -Mode audit -ConfigPath "C:\inetpub\wwwroot\web.config"
+
+# Remote execution - Audit on remote server
+$cred = Get-Credential
+.\src\windows\Patch\powershell\Remote_UpdateIisHstsWin.ps1 -ServerName "webserver01.example.com" -Mode audit -Credential $cred
+
+# Remote execution - Audit multiple servers
+$cred = Get-Credential
+.\src\windows\Patch\powershell\Remote_UpdateIisHstsWin.ps1 -ServerName @("webserver01.example.com", "webserver02.example.com") -Mode audit -Credential $cred
 ```
 
 **Configure Mode - Fix HSTS Configuration:**
 ```powershell
-# Auto-detect and configure
+# Local execution - Auto-detect and configure
 .\src\windows\Patch\powershell\UpdateIisHstsWin.ps1 -Mode configure
 
-# Configure specific web.config file
+# Local execution - Configure specific web.config file
 .\src\windows\Patch\powershell\UpdateIisHstsWin.ps1 -Mode configure -ConfigPath "C:\inetpub\wwwroot\web.config"
 
-# Preview changes without applying (dry run)
+# Local execution - Preview changes without applying (dry run)
 .\src\windows\Patch\powershell\UpdateIisHstsWin.ps1 -Mode configure -DryRun
+
+# Remote execution - Configure on remote server
+$cred = Get-Credential
+.\src\windows\Patch\powershell\Remote_UpdateIisHstsWin.ps1 -ServerName "webserver01.example.com" -Mode configure -Credential $cred
+
+# Remote execution - Configure multiple servers
+$cred = Get-Credential
+.\src\windows\Patch\powershell\Remote_UpdateIisHstsWin.ps1 -ServerName @("webserver01.example.com", "webserver02.example.com") -Mode configure -Credential $cred
+
+# Remote execution - Configure with auto-approve (Force mode)
+$cred = Get-Credential
+.\src\windows\Patch\powershell\Remote_UpdateIisHstsWin.ps1 -ServerName "webserver01.example.com" -Mode configure -Credential $cred -Force
 ```
+<｜tool▁calls▁begin｜><｜tool▁call▁begin｜>
+grep
 
 **Local - With Custom Paths:**
 ```powershell
@@ -347,19 +394,19 @@ $cred = Get-Credential
 
 **Remote - Multiple Servers (Command Line):**
 ```powershell
-# Ensure PowerShell Remoting is configured (see INSTALLATION.md)
+# Ensure PowerShell Remoting is configured (see PowerShell Remoting Setup Guide)
 $cred = Get-Credential
 .\src\windows\Patch\powershell\Remote_UpdateIisHstsWin.ps1 `
-  -ServerName @("server1", "server2", "server3") `
+  -ServerName @("webserver01.example.com", "webserver02.example.com", "webserver03.example.com") `
   -Mode configure -Credential $cred
 ```
 
 **Remote - Multiple Servers (Server List File):**
 ```powershell
 # Create server list file: C:\servers.txt
-# server1.example.com
-# server2.example.com
-# server3.example.com
+# webserver01.example.com
+# webserver02.example.com
+# webserver03.example.com
 
 $cred = Get-Credential
 .\src\windows\Patch\powershell\Remote_UpdateIisHstsWin.ps1 `
@@ -371,7 +418,7 @@ $cred = Get-Credential
 ```powershell
 $cred = Get-Credential
 .\src\windows\Patch\powershell\Remote_UpdateIisHstsWin.ps1 `
-  -ServerName @("server1", "server2") `
+  -ServerName @("webserver01.example.com", "webserver02.example.com") `
   -CustomPaths @("C:\inetpub\wwwroot\web.config", "C:\MyApp\web.config") `
   -Mode configure -Credential $cred
 ```
@@ -857,9 +904,9 @@ $cred = Get-Credential
 
 # Example: Remote Tomcat execution using server list file
 # Create C:\servers.txt:
-# server1.example.com
-# server2.example.com
-# server3.example.com
+# webserver01.example.com
+# webserver02.example.com
+# webserver03.example.com
 $cred = Get-Credential
 .\src\windows\Patch\powershell\Remote_UpdateTomcatHstsWin.ps1 -ServerListFile "C:\servers.txt" -Mode configure -Credential $cred
 
@@ -875,13 +922,15 @@ $cred = Get-Credential
   -Mode configure -Credential $cred
 
 # Example: Remote audit without credentials (if using same account)
-.\src\windows\Patch\powershell\Remote_UpdateTomcatHstsWin.ps1 -ServerName @("server1") -Mode audit
-.\src\windows\Patch\powershell\Remote_UpdateIisHstsWin.ps1 -ServerName @("server1") -Mode audit
+.\src\windows\Patch\powershell\Remote_UpdateTomcatHstsWin.ps1 -ServerName @("webserver01.example.com") -Mode audit
+.\src\windows\Patch\powershell\Remote_UpdateIisHstsWin.ps1 -ServerName @("webserver01.example.com") -Mode audit
 ```
 
 **Important:** Before using remote scripts, ensure:
-1. PowerShell Remoting (WinRM) is enabled on all target servers
-2. Firewall rules allow WinRM traffic (see [INSTALLATION.md](INSTALLATION.md))
+1. PowerShell Remoting (WinRM) is enabled on **both** client and target servers
+2. WinRM is enabled on **client machine first** before configuring trusted hosts
+3. Trusted hosts are configured on client machine (if not using domain authentication)
+4. Firewall rules allow WinRM traffic (see [PowerShell Remoting Setup Guide](#powershell-remoting-winrm-setup-guide) below)
 3. Credentials have administrator privileges on target servers
 4. Network connectivity and DNS resolution work correctly
 
@@ -1233,9 +1282,9 @@ Windows remote scripts support server list files for batch operations:
 
 ```powershell
 # Create server list file: C:\servers.txt
-# server1.example.com
-# server2.example.com
-# server3.example.com
+# webserver01.example.com
+# webserver02.example.com
+# webserver03.example.com
 # # This is a comment
 
 $cred = Get-Credential
@@ -1330,6 +1379,206 @@ For a complete installation and setup guide, see **[INSTALLATION.md](INSTALLATIO
 - [ ] Credentials have administrator privileges on target servers
 
 See [INSTALLATION.md](INSTALLATION.md) for detailed instructions and troubleshooting.
+
+## PowerShell Remoting (WinRM) Setup Guide
+
+### Quick Setup for Remote Execution
+
+To use the remote scripts (`Remote_UpdateTomcatHstsWin.ps1` and `Remote_UpdateIisHstsWin.ps1`), you need to configure PowerShell Remoting on both the **client machine** (where you run the script) and the **target server(s)** (where Tomcat/IIS is installed).
+
+### Step 1: Enable WinRM on Client Machine (Where You Run the Script)
+
+**IMPORTANT:** You must enable WinRM on the client machine FIRST before configuring trusted hosts.
+
+```powershell
+# Run PowerShell as Administrator on the CLIENT machine
+# Enable PowerShell Remoting (this starts the WinRM service)
+Enable-PSRemoting -Force
+
+# Verify WinRM service is running
+Get-Service WinRM
+
+# If the service is not running, start it manually
+Start-Service WinRM
+Set-Service WinRM -StartupType Automatic
+```
+
+**Common Error Fix:** If you get "The client cannot connect to the destination specified" when setting trusted hosts, it means WinRM isn't running on your local machine. Run `Enable-PSRemoting -Force` first.
+
+### Step 2: Configure Trusted Hosts on Client Machine
+
+**On the CLIENT machine (where you run the remote script):**
+
+```powershell
+# Run PowerShell as Administrator
+
+# Method 1: Add a single server
+Set-Item WSMan:\localhost\Client\TrustedHosts -Value "webserver01.example.com" -Force
+
+# Method 2: Add multiple servers (comma-separated)
+Set-Item WSMan:\localhost\Client\TrustedHosts -Value "server1.domain.com,server2.domain.com,server3.domain.com" -Force
+
+# Method 3: Add all servers (less secure, use with caution)
+Set-Item WSMan:\localhost\Client\TrustedHosts -Value "*" -Force
+
+# Method 4: Append to existing trusted hosts
+$current = (Get-Item WSMan:\localhost\Client\TrustedHosts).Value
+if ($current) {
+    Set-Item WSMan:\localhost\Client\TrustedHosts -Value "$current,server1.domain.com" -Force
+} else {
+    Set-Item WSMan:\localhost\Client\TrustedHosts -Value "server1.domain.com" -Force
+}
+
+# View current trusted hosts
+Get-Item WSMan:\localhost\Client\TrustedHosts
+```
+
+**Note:** Using `*` for trusted hosts is less secure. Prefer adding specific server names or using domain authentication.
+
+### Step 3: Enable WinRM on Target Server(s)
+
+**On each TARGET server (where Tomcat/IIS is installed):**
+
+```powershell
+# Run PowerShell as Administrator on the TARGET server
+Enable-PSRemoting -Force
+
+# Configure firewall to allow WinRM
+Enable-NetFirewallRule -DisplayGroup "Windows Remote Management"
+
+# Verify WinRM is running
+Get-Service WinRM
+
+# Test WinRM locally on target server
+Test-WSMan -ComputerName localhost
+```
+
+### Step 4: Test Remote Connectivity
+
+**On the CLIENT machine:**
+
+```powershell
+# Test basic connectivity (replace with your server name)
+Test-WSMan -ComputerName "webserver01.example.com"
+
+# If successful, test remote command execution
+$cred = Get-Credential
+Invoke-Command -ComputerName "webserver01.example.com" -Credential $cred -ScriptBlock { $env:COMPUTERNAME }
+```
+
+### Troubleshooting Common Errors
+
+#### Error: "The client cannot connect to the destination specified"
+
+**Cause:** WinRM service is not running on the CLIENT machine.
+
+**Solution:**
+```powershell
+# On the CLIENT machine, run as Administrator
+Enable-PSRemoting -Force
+Start-Service WinRM
+Set-Service WinRM -StartupType Automatic
+
+# Then try setting trusted hosts again
+Set-Item WSMan:\localhost\Client\TrustedHosts -Value "server1.domain.com" -Force
+```
+
+#### Error: "Access Denied" or "Authentication Failed"
+
+**Solutions:**
+1. Verify credentials have administrator privileges on target server
+2. Check if account is locked or disabled
+3. For domain environments, ensure Kerberos authentication is working
+4. Try using FQDN (fully qualified domain name) instead of hostname
+
+#### Error: "Cannot connect to remote server"
+
+**Solutions:**
+1. Verify firewall rules on target server:
+   ```powershell
+   Get-NetFirewallRule -DisplayGroup "Windows Remote Management" | Select-Object DisplayName, Enabled
+   ```
+2. Test network connectivity:
+   ```powershell
+   Test-NetConnection -ComputerName "server1" -Port 5985
+   ```
+3. Check DNS resolution:
+   ```powershell
+   Resolve-DnsName "server1.domain.com"
+   ```
+
+#### Error: "WinRM cannot process the request"
+
+**Solutions:**
+1. Ensure WinRM service is running on target server:
+   ```powershell
+   Get-Service WinRM
+   Start-Service WinRM
+   ```
+2. Check WinRM configuration:
+   ```powershell
+   winrm get winrm/config
+   ```
+3. Reset WinRM configuration if needed:
+   ```powershell
+   winrm quickconfig
+   ```
+
+### Complete Setup Example
+
+**On CLIENT Machine:**
+```powershell
+# Run as Administrator
+# Step 1: Enable WinRM locally
+Enable-PSRemoting -Force
+
+# Step 2: Add target server to trusted hosts
+Set-Item WSMan:\localhost\Client\TrustedHosts -Value "webserver01.example.com" -Force
+
+# Step 3: Test connectivity
+Test-WSMan -ComputerName "webserver01.example.com"
+```
+
+**On TARGET Server:**
+```powershell
+# Run as Administrator
+# Step 1: Enable WinRM
+Enable-PSRemoting -Force
+
+# Step 2: Configure firewall
+Enable-NetFirewallRule -DisplayGroup "Windows Remote Management"
+
+# Step 3: Verify
+Get-Service WinRM
+Test-WSMan -ComputerName localhost
+```
+
+**Back on CLIENT Machine - Test Remote Execution:**
+```powershell
+# Test remote command
+$cred = Get-Credential
+Invoke-Command -ComputerName "webserver01.example.com" -Credential $cred -ScriptBlock { $env:COMPUTERNAME }
+
+# If successful, you can now use remote scripts
+$cred = Get-Credential
+.\Remote_UpdateTomcatHstsWin.ps1 -ServerName "webserver01.example.com" -Mode audit -Credential $cred
+```
+
+### Domain vs Workgroup Environments
+
+**Domain Environment (Recommended):**
+- Uses Kerberos authentication automatically
+- No need to configure TrustedHosts
+- More secure
+- Just enable WinRM on both client and target servers
+
+**Workgroup Environment:**
+- Must configure TrustedHosts on client machine
+- Uses Basic authentication (credentials sent in plain text)
+- Less secure - use only in trusted networks
+- Consider using HTTPS (port 5986) for better security
+
+For more detailed information, see [INSTALLATION.md](INSTALLATION.md).
 
 ## Quick Reference: Complete Feature Matrix
 
