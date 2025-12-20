@@ -28,6 +28,9 @@ param(
     [switch]$DryRun = $false,
     
     [Parameter(Mandatory=$false)]
+    [switch]$Force = $false,
+    
+    [Parameter(Mandatory=$false)]
     [System.Management.Automation.PSCredential]$Credential = $null
 )
 
@@ -85,7 +88,7 @@ foreach ($server in $uniqueServers) {
     
     try {
         $scriptBlock = {
-            param($Mode, $ConfigPath, $CustomPathsArray, $CustomPathsFile, $DryRun)
+            param($Mode, $ConfigPath, $CustomPathsArray, $CustomPathsFile, $DryRun, $Force)
             
             $ErrorActionPreference = "Stop"
             $RecommendedHsts = "max-age=31536000; includeSubDomains"
@@ -815,7 +818,7 @@ foreach ($server in $uniqueServers) {
                 $invokeParams = @{
                     ComputerName = $server
                     ScriptBlock = $scriptBlock
-                    ArgumentList = @($Mode, $ConfigPath, $CustomPaths, $CustomPathsFile, $DryRun.IsPresent)
+                    ArgumentList = @($Mode, $ConfigPath, $CustomPaths, $CustomPathsFile, $DryRun.IsPresent, $Force.IsPresent)
                     Authentication = $authMethod
                     ErrorAction = "Stop"
                 }

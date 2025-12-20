@@ -22,7 +22,10 @@ param(
     [string]$LogFile = "$env:LOCALAPPDATA\Temp\IisHsts.log",
     
     [Parameter(Mandatory=$false)]
-    [switch]$DryRun = $false
+    [switch]$DryRun = $false,
+    
+    [Parameter(Mandatory=$false)]
+    [switch]$Force = $false
 )
 
 $ErrorActionPreference = "Stop"
@@ -74,6 +77,9 @@ Log-Message "IIS HSTS Configuration Tool"
 Log-Message "Hostname: $Hostname"
 Log-Message "Execution Time: $Timestamp"
 Log-Message "Mode: $Mode"
+if ($Force) {
+    Log-Message "Force Mode: Enabled (auto-approve all changes)"
+}
 Log-Message "========================================="
 
 # Function: Load custom paths from file
@@ -776,6 +782,11 @@ function Confirm-Configure {
         return $true
     }
     
+    if ($Force) {
+        Log-Message "Force mode enabled: Auto-approving configuration changes"
+        return $true
+    }
+    
     Write-Host ""
     Write-Host "WARNING: This will modify the configuration file: $ConfigPath"
     Write-Host "All existing HSTS configurations will be removed and replaced with one compliant version."
@@ -835,13 +846,17 @@ function Process-WebConfig {
             Log-Message "Configuration required: Ensuring exactly one compliant HSTS definition exists"
             
             if (-not $DryRun) {
-                Write-Host ""
-                Write-Host "WARNING: This will modify: $WebConfigPath"
-                Write-Host "A backup will be created before making changes."
-                $response = Read-Host "Do you want to continue? (yes/no)"
-                if ($response -notmatch "^(yes|y)$") {
-                    Log-Message "Configuration operation cancelled by user"
-                    return 2
+                if (-not $Force) {
+                    Write-Host ""
+                    Write-Host "WARNING: This will modify: $WebConfigPath"
+                    Write-Host "A backup will be created before making changes."
+                    $response = Read-Host "Do you want to continue? (yes/no)"
+                    if ($response -notmatch "^(yes|y)$") {
+                        Log-Message "Configuration operation cancelled by user"
+                        return 2
+                    }
+                } else {
+                    Log-Message "Force mode enabled: Auto-approving configuration changes"
                 }
             }
             

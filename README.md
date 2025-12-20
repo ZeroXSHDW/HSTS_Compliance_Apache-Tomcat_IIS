@@ -819,7 +819,7 @@ sudo ./src/unix/Patch/bash/UpdateTomcatHstsUnix.sh [--mode audit|configure] [--c
 
 **Syntax:**
 ```powershell
-.\src\windows\Patch\powershell\Remote_UpdateTomcatHstsWin.ps1 [-ServerName <string[]>] [-ServerListFile <path>] [-Mode audit|configure] [-TomcatConfPath <path>] [-CustomPaths <string[]>] [-CustomPathsFile <path>] [-DryRun] [-Credential <PSCredential>]
+.\src\windows\Patch\powershell\Remote_UpdateTomcatHstsWin.ps1 [-ServerName <string[]>] [-ServerListFile <path>] [-Mode audit|configure] [-TomcatConfPath <path>] [-CustomPaths <string[]>] [-CustomPathsFile <path>] [-DryRun] [-Force] [-Credential <PSCredential>]
 ```
 
 **Parameters:**
@@ -830,6 +830,7 @@ sudo ./src/unix/Patch/bash/UpdateTomcatHstsUnix.sh [--mode audit|configure] [--c
 - `-CustomPaths` (optional): Array of custom Tomcat conf directory paths (e.g., `@("C:\Tomcat1\conf", "C:\Tomcat2\conf")`)
 - `-CustomPathsFile` (optional): File containing custom paths (one path per line, lines starting with # are comments)
 - `-DryRun` (optional): Preview changes without applying
+- `-Force` (optional): Auto-approve all configuration changes without prompting (configure mode only)
 - `-Credential` (optional): PSCredential object for remote authentication (use `Get-Credential`)
 
 **Note:** Either `-ServerName` or `-ServerListFile` (or both) must be provided.
@@ -848,7 +849,7 @@ sudo ./src/unix/Patch/bash/UpdateTomcatHstsUnix.sh [--mode audit|configure] [--c
 
 **Syntax:**
 ```powershell
-.\src\windows\Patch\powershell\UpdateIisHstsWin.ps1 [-Mode audit|configure] [-ConfigPath <path>] [-CustomPaths <string[]>] [-CustomPathsFile <path>] [-DryRun]
+.\src\windows\Patch\powershell\UpdateIisHstsWin.ps1 [-Mode audit|configure] [-ConfigPath <path>] [-CustomPaths <string[]>] [-CustomPathsFile <path>] [-DryRun] [-Force]
 ```
 
 **Parameters:**
@@ -857,6 +858,7 @@ sudo ./src/unix/Patch/bash/UpdateTomcatHstsUnix.sh [--mode audit|configure] [--c
 - `-CustomPaths` (optional): Array of web.config file paths or directories (e.g., `@("C:\path1\web.config", "C:\path2")`)
 - `-CustomPathsFile` (optional): File containing custom paths (one path per line, lines starting with # are comments)
 - `-DryRun` (optional): Preview changes without applying
+- `-Force` (optional): Auto-approve all configuration changes without prompting (configure mode only)
 
 **Note:** For directories, the script will look for `web.config` files within them.
 
@@ -868,7 +870,7 @@ sudo ./src/unix/Patch/bash/UpdateTomcatHstsUnix.sh [--mode audit|configure] [--c
 
 **Syntax:**
 ```powershell
-.\src\windows\Patch\powershell\Remote_UpdateIisHstsWin.ps1 [-ServerName <string[]>] [-ServerListFile <path>] [-Mode audit|configure] [-ConfigPath <path>] [-CustomPaths <string[]>] [-CustomPathsFile <path>] [-DryRun] [-Credential <PSCredential>]
+.\src\windows\Patch\powershell\Remote_UpdateIisHstsWin.ps1 [-ServerName <string[]>] [-ServerListFile <path>] [-Mode audit|configure] [-ConfigPath <path>] [-CustomPaths <string[]>] [-CustomPathsFile <path>] [-DryRun] [-Force] [-Credential <PSCredential>]
 ```
 
 **Parameters:**
@@ -879,6 +881,7 @@ sudo ./src/unix/Patch/bash/UpdateTomcatHstsUnix.sh [--mode audit|configure] [--c
 - `-CustomPaths` (optional): Array of web.config file paths or directories (e.g., `@("C:\path1\web.config", "C:\path2")`)
 - `-CustomPathsFile` (optional): File containing custom paths (one path per line, lines starting with # are comments)
 - `-DryRun` (optional): Preview changes without applying
+- `-Force` (optional): Auto-approve all configuration changes without prompting (configure mode only)
 - `-Credential` (optional): PSCredential object for remote authentication (use `Get-Credential`)
 
 **Note:** Either `-ServerName` or `-ServerListFile` (or both) must be provided. For directories, the script will look for `web.config` files within them.

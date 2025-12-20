@@ -28,6 +28,9 @@ param(
     [switch]$DryRun = $false,
     
     [Parameter(Mandatory=$false)]
+    [switch]$Force = $false,
+    
+    [Parameter(Mandatory=$false)]
     [System.Management.Automation.PSCredential]$Credential = $null
 )
 
@@ -85,7 +88,7 @@ foreach ($server in $uniqueServers) {
     
     try {
         $scriptBlock = {
-            param($Mode, $TomcatConfPath, $CustomPathsArray, $CustomPathsFile, $DryRun)
+            param($Mode, $TomcatConfPath, $CustomPathsArray, $CustomPathsFile, $DryRun, $Force)
             
             $ErrorActionPreference = "Stop"
             $RecommendedHsts = "max-age=31536000; includeSubDomains"
@@ -503,6 +506,22 @@ foreach ($server in $uniqueServers) {
                             return 0
                         }
                         Log-Message "Configuration required: Ensuring exactly one compliant HSTS definition exists"
+                        
+                        if (-not $DryRun) {
+                            if (-not $Force) {
+                                Write-Host ""
+                                Write-Host "WARNING: This will modify: $WebXmlPath"
+                                Write-Host "A backup will be created before making changes."
+                                $response = Read-Host "Do you want to continue? (yes/no)"
+                                if ($response -notmatch "^(yes|y)$") {
+                                    Log-Message "Configuration operation cancelled by user"
+                                    return 2
+                                }
+                            } else {
+                                Log-Message "Force mode enabled: Auto-approving configuration changes"
+                            }
+                        }
+                        
                         $backupPath = Backup-Config -ConfigPath $WebXmlPath
                         Apply-CompliantHsts -WebXml $webXml
                         if (-not $DryRun) {
@@ -615,7 +634,7 @@ foreach ($server in $uniqueServers) {
                 $invokeParams = @{
                     ComputerName = $server
                     ScriptBlock = $scriptBlock
-                    ArgumentList = @($Mode, $TomcatConfPath, $CustomPaths, $CustomPathsFile, $DryRun.IsPresent)
+                    ArgumentList = @($Mode, $TomcatConfPath, $CustomPaths, $CustomPathsFile, $DryRun.IsPresent, $Force.IsPresent)
                     Authentication = $authMethod
                     ErrorAction = "Stop"
                 }
