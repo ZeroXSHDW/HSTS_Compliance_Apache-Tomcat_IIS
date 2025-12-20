@@ -721,7 +721,7 @@ try {
     $failureCount = 0
     
     foreach ($webXml in $webXmlFiles) {
-        $result = Process-WebXml -WebXmlPath $webXml -Mode $Mode -ForceMode $Force
+        $result = Process-WebXml -WebXmlPath $webXml -Mode $Mode
         $processedCount++
         if ($result -eq 0) {
             $successCount++

@@ -122,6 +122,9 @@ foreach ($server in $uniqueServers) {
             Log-Message "Hostname: $Hostname"
             Log-Message "Execution Time: $Timestamp"
             Log-Message "Mode: $Mode"
+            if ($Force) {
+                Log-Message "Force Mode: Enabled (auto-approve all changes)"
+            }
             Log-Message "========================================="
             
             # Auto-detect IIS web.config files
@@ -722,6 +725,14 @@ foreach ($server in $uniqueServers) {
                         }
                         
                         Log-Message "Configuration required: Ensuring exactly one compliant HSTS definition exists"
+                        
+                        if (-not $DryRun) {
+                            if ($Force) {
+                                Log-Message "Force mode enabled: Auto-approving configuration changes"
+                            }
+                            # Note: Interactive prompts are skipped in remote execution
+                            # Use -Force parameter to auto-approve changes
+                        }
                         
                         $backupPath = Backup-Config -ConfigPath $WebConfigPath
                         $configureResult = Apply-CompliantHsts -ParsedConfig $parsedConfig -ConfigPath $WebConfigPath

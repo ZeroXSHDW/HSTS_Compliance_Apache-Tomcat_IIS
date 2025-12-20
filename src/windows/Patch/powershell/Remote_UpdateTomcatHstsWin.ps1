@@ -324,6 +324,17 @@ foreach ($server in $uniqueServers) {
                     throw "Invalid XML: $WebXmlPath"
                 }
                 [xml]$xml = Get-Content -Path $WebXmlPath -Raw
+                
+                # Create namespace manager for XPath queries (handles XML namespaces)
+                $nsManager = New-Object System.Xml.XmlNamespaceManager($xml.NameTable)
+                # Register common Tomcat namespaces
+                $nsManager.AddNamespace("ns", "http://xmlns.jcp.org/xml/ns/javaee")
+                $nsManager.AddNamespace("javaee", "http://xmlns.jcp.org/xml/ns/javaee")
+                $nsManager.AddNamespace("jakartaee", "https://jakarta.ee/xml/ns/jakartaee")
+                
+                # Store namespace manager in XML document for later use
+                $xml | Add-Member -MemberType NoteProperty -Name "NamespaceManager" -Value $nsManager -Force
+                
                 return $xml
             }
             
@@ -331,10 +342,48 @@ foreach ($server in $uniqueServers) {
                 param([System.Xml.XmlElement]$Filter)
                 $hasMaxAge = $false
                 $hasIncludeSubDomains = $false
-                $initParams = $Filter.SelectNodes("init-param")
+                
+                # Try to find init-param elements (with and without namespace)
+                $initParams = $null
+                $xpaths = @("init-param", ".//init-param", ".//*[local-name()='init-param']")
+                
+                foreach ($xpath in $xpaths) {
+                    try {
+                        $initParams = $Filter.SelectNodes($xpath)
+                        if ($initParams -and $initParams.Count -gt 0) {
+                            break
+                        }
+                    } catch {
+                        # Continue to next XPath
+                    }
+                }
+                
+                if (-not $initParams) {
+                    return $false
+                }
+                
                 foreach ($param in $initParams) {
-                    $name = $param.SelectSingleNode("param-name")
-                    $value = $param.SelectSingleNode("param-value")
+                    # Try to find param-name and param-value (with and without namespace)
+                    $name = $null
+                    $value = $null
+                    
+                    $nameXpaths = @("param-name", ".//param-name", ".//*[local-name()='param-name']")
+                    $valueXpaths = @("param-value", ".//param-value", ".//*[local-name()='param-value']")
+                    
+                    foreach ($xpath in $nameXpaths) {
+                        try {
+                            $name = $param.SelectSingleNode($xpath)
+                            if ($name) { break }
+                        } catch { }
+                    }
+                    
+                    foreach ($xpath in $valueXpaths) {
+                        try {
+                            $value = $param.SelectSingleNode($xpath)
+                            if ($value) { break }
+                        } catch { }
+                    }
+                    
                     if ($name -and $value) {
                         if ($name.InnerText -eq "hstsMaxAgeSeconds" -and $value.InnerText -eq "31536000") {
                             $hasMaxAge = $true
@@ -349,10 +398,29 @@ foreach ($server in $uniqueServers) {
             
             function Test-CompliantHsts {
                 param([xml]$WebXml)
-                $filters = $WebXml.SelectNodes("//filter[filter-name[text()='HstsHeaderFilter' or text()='HttpHeaderSecurityFilter']]")
-                foreach ($filter in $filters) {
-                    if (Test-FilterCompliant -Filter $filter) {
-                        return $true
+                # Try XPath with and without namespace handling
+                $filters = $null
+                $xpaths = @(
+                    "//filter[filter-name[text()='HstsHeaderFilter' or text()='HttpHeaderSecurityFilter']]",
+                    "//*[local-name()='filter'][*[local-name()='filter-name'][text()='HstsHeaderFilter' or text()='HttpHeaderSecurityFilter']]"
+                )
+                
+                foreach ($xpath in $xpaths) {
+                    try {
+                        $filters = $WebXml.SelectNodes($xpath)
+                        if ($filters -and $filters.Count -gt 0) {
+                            break
+                        }
+                    } catch {
+                        # Continue to next XPath
+                    }
+                }
+                
+                if ($filters) {
+                    foreach ($filter in $filters) {
+                        if (Test-FilterCompliant -Filter $filter) {
+                            return $true
+                        }
                     }
                 }
                 return $false
@@ -365,7 +433,28 @@ foreach ($server in $uniqueServers) {
                 $nonCompliantCount = 0
                 $details = ""
                 $isCorrect = $false
-                $filters = $WebXml.SelectNodes("//filter[filter-name[text()='HstsHeaderFilter' or text()='HttpHeaderSecurityFilter']]")
+                
+                # Try XPath with and without namespace handling
+                $filters = $null
+                $xpaths = @(
+                    "//filter[filter-name[text()='HstsHeaderFilter' or text()='HttpHeaderSecurityFilter']]",
+                    "//*[local-name()='filter'][*[local-name()='filter-name'][text()='HstsHeaderFilter' or text()='HttpHeaderSecurityFilter']]"
+                )
+                
+                foreach ($xpath in $xpaths) {
+                    try {
+                        $filters = $WebXml.SelectNodes($xpath)
+                        if ($filters -and $filters.Count -gt 0) {
+                            break
+                        }
+                    } catch {
+                        # Continue to next XPath
+                    }
+                }
+                
+                if (-not $filters) {
+                    $filters = @()
+                }
                 $headerCount = $filters.Count
                 if ($headerCount -eq 0) {
                     $details = "No HSTS header definitions found in configuration"
@@ -409,26 +498,107 @@ foreach ($server in $uniqueServers) {
             
             function Remove-AllHstsConfigs {
                 param([xml]$WebXml)
-                $filters = $WebXml.SelectNodes("//filter[filter-name[text()='HstsHeaderFilter' or text()='HttpHeaderSecurityFilter']]")
-                foreach ($filter in $filters) {
-                    $filter.ParentNode.RemoveChild($filter) | Out-Null
+                
+                # Try XPath with and without namespace handling for filters
+                $filters = $null
+                $xpaths = @(
+                    "//filter[filter-name[text()='HstsHeaderFilter' or text()='HttpHeaderSecurityFilter']]",
+                    "//*[local-name()='filter'][*[local-name()='filter-name'][text()='HstsHeaderFilter' or text()='HttpHeaderSecurityFilter']]"
+                )
+                
+                foreach ($xpath in $xpaths) {
+                    try {
+                        $filters = $WebXml.SelectNodes($xpath)
+                        if ($filters -and $filters.Count -gt 0) {
+                            break
+                        }
+                    } catch {
+                        # Continue to next XPath
+                    }
                 }
-                $mappings = $WebXml.SelectNodes("//filter-mapping[filter-name[text()='HstsHeaderFilter' or text()='HttpHeaderSecurityFilter']]")
-                foreach ($mapping in $mappings) {
-                    $mapping.ParentNode.RemoveChild($mapping) | Out-Null
+                
+                if ($filters) {
+                    foreach ($filter in $filters) {
+                        if ($filter.ParentNode) {
+                            $filter.ParentNode.RemoveChild($filter) | Out-Null
+                        }
+                    }
+                }
+                
+                # Try XPath with and without namespace handling for filter-mappings
+                $mappings = $null
+                $mappingXpaths = @(
+                    "//filter-mapping[filter-name[text()='HstsHeaderFilter' or text()='HttpHeaderSecurityFilter']]",
+                    "//*[local-name()='filter-mapping'][*[local-name()='filter-name'][text()='HstsHeaderFilter' or text()='HttpHeaderSecurityFilter']]"
+                )
+                
+                foreach ($xpath in $mappingXpaths) {
+                    try {
+                        $mappings = $WebXml.SelectNodes($xpath)
+                        if ($mappings -and $mappings.Count -gt 0) {
+                            break
+                        }
+                    } catch {
+                        # Continue to next XPath
+                    }
+                }
+                
+                if ($mappings) {
+                    foreach ($mapping in $mappings) {
+                        if ($mapping.ParentNode) {
+                            $mapping.ParentNode.RemoveChild($mapping) | Out-Null
+                        }
+                    }
                 }
             }
             
             function Apply-CompliantHsts {
                 param([xml]$WebXml)
                 Remove-AllHstsConfigs -WebXml $WebXml
-                # Try web-app first (for web.xml), then Context (for context.xml)
-                $webApp = $WebXml.SelectSingleNode("//web-app")
-                if (-not $webApp) {
-                    $webApp = $WebXml.SelectSingleNode("//Context")
-                    if (-not $webApp) {
-                        throw "Neither web-app nor Context element found in XML file"
+                
+                # Try to find web-app or Context element, handling namespaces
+                $webApp = $null
+                $nsManager = $null
+                
+                # Check if namespace manager exists (from Load-WebXml)
+                if ($WebXml.NamespaceManager) {
+                    $nsManager = $WebXml.NamespaceManager
+                } else {
+                    # Create namespace manager if not present
+                    $nsManager = New-Object System.Xml.XmlNamespaceManager($WebXml.NameTable)
+                    $nsManager.AddNamespace("ns", "http://xmlns.jcp.org/xml/ns/javaee")
+                    $nsManager.AddNamespace("javaee", "http://xmlns.jcp.org/xml/ns/javaee")
+                    $nsManager.AddNamespace("jakartaee", "https://jakarta.ee/xml/ns/jakartaee")
+                }
+                
+                # Try various XPath queries to find web-app element (with and without namespaces)
+                $xpaths = @(
+                    "//web-app",
+                    "//ns:web-app",
+                    "//javaee:web-app",
+                    "//jakartaee:web-app",
+                    "//*[local-name()='web-app']",
+                    "//Context",
+                    "//*[local-name()='Context']"
+                )
+                
+                foreach ($xpath in $xpaths) {
+                    try {
+                        if ($xpath -match "^(//ns:|//javaee:|//jakartaee:)") {
+                            $webApp = $WebXml.SelectSingleNode($xpath, $nsManager)
+                        } else {
+                            $webApp = $WebXml.SelectSingleNode($xpath)
+                        }
+                        if ($webApp) {
+                            break
+                        }
+                    } catch {
+                        # Continue to next XPath
                     }
+                }
+                
+                if (-not $webApp) {
+                    throw "Neither web-app nor Context element found in XML file. The file may use an unsupported XML namespace or structure."
                 }
                 $filter = $WebXml.CreateElement("filter")
                 $filterName = $WebXml.CreateElement("filter-name")
