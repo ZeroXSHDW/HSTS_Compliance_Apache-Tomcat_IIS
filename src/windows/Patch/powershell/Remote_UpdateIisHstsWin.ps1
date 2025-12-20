@@ -88,7 +88,10 @@ foreach ($server in $uniqueServers) {
     
     try {
         $scriptBlock = {
-            param($Mode, $ConfigPath, $CustomPathsArray, $CustomPathsFile, $DryRun, $Force)
+            param($Mode, $ConfigPath, $CustomPaths, $CustomPathsFile, $DryRun, $Force)
+            
+            # Rename parameter for internal use to match function expectations
+            $CustomPathsArray = $CustomPaths
             
             $ErrorActionPreference = "Stop"
             $RecommendedHsts = "max-age=31536000; includeSubDomains"

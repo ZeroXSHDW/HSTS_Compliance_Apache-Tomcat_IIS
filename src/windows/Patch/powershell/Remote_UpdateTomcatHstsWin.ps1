@@ -88,7 +88,10 @@ foreach ($server in $uniqueServers) {
     
     try {
         $scriptBlock = {
-            param($Mode, $TomcatConfPath, $CustomPathsArray, $CustomPathsFile, $DryRun, $Force)
+            param($Mode, $TomcatConfPath, $CustomPaths, $CustomPathsFile, $DryRun, $Force)
+            
+            # Rename parameter for internal use to match function expectations
+            $CustomPathsArray = $CustomPaths
             
             $ErrorActionPreference = "Stop"
             $RecommendedHsts = "max-age=31536000; includeSubDomains"
@@ -802,7 +805,7 @@ foreach ($server in $uniqueServers) {
                     ErrorAction = "Stop"
                 }
                 
-                # Note: $CustomPaths is passed as $CustomPathsArray parameter in script block
+                # Note: $CustomPaths is passed and received as $CustomPathsArray parameter in script block
                 
                 if ($Credential) {
                     $invokeParams.Credential = $Credential
