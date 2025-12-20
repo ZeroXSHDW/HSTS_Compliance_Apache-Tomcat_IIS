@@ -9,6 +9,7 @@ A comprehensive set of tools for auditing and configuring HTTP Strict Transport 
 - [Prerequisites](#prerequisites)
 - [Installation Instructions](#installation-instructions)
 - [Quick Start](#quick-start)
+- [Mode Reference](#mode-reference)
 - [Usage Examples](#usage-examples-with-output)
 - [Auto-Detection](#auto-detection)
 - [Command Reference](#command-reference)
@@ -45,7 +46,13 @@ This implementation follows OWASP recommendations:
 **Core Functionality:**
 - ✅ **Auto-Detection**: Automatically finds Tomcat and IIS installations across common paths
 - ✅ **Audit Mode**: Check if HSTS is correctly configured without making changes
+  - ✅ Windows Tomcat: `UpdateTomcatHstsWin.ps1 -Mode audit`
+  - ✅ Windows IIS: `UpdateIisHstsWin.ps1 -Mode audit`
+  - ✅ Linux/Unix Tomcat: `UpdateTomcatHstsUnix.sh --mode audit`
 - ✅ **Configure Mode**: Automatically fix HSTS configuration to be OWASP compliant
+  - ✅ Windows Tomcat: `UpdateTomcatHstsWin.ps1 -Mode configure`
+  - ✅ Windows IIS: `UpdateIisHstsWin.ps1 -Mode configure`
+  - ✅ Linux/Unix Tomcat: `UpdateTomcatHstsUnix.sh --mode configure`
 - ✅ **Backup Support**: Automatically creates timestamped backups before making changes
 - ✅ **Dry Run**: Preview changes without applying them (configure mode only)
 - ✅ **XML Validation**: Validates XML structure before and after modifications
@@ -180,14 +187,25 @@ See [INSTALLATION.md](INSTALLATION.md) for complete step-by-step instructions, t
 
 ### Apache Tomcat (Unix/Linux)
 
-**Auto-detect and Audit:**
+**Audit Mode - Check HSTS Configuration:**
 ```bash
+# Auto-detect and audit
 sudo ./src/unix/Patch/bash/UpdateTomcatHstsUnix.sh --mode audit
+
+# Audit with custom path
+sudo ./src/unix/Patch/bash/UpdateTomcatHstsUnix.sh --mode audit --custom-conf=/opt/tomcat/conf
 ```
 
-**Auto-detect and Configure:**
+**Configure Mode - Fix HSTS Configuration:**
 ```bash
+# Auto-detect and configure
 sudo ./src/unix/Patch/bash/UpdateTomcatHstsUnix.sh --mode configure
+
+# Configure with custom path
+sudo ./src/unix/Patch/bash/UpdateTomcatHstsUnix.sh --mode configure --custom-conf=/opt/tomcat/conf
+
+# Preview changes without applying (dry run)
+sudo ./src/unix/Patch/bash/UpdateTomcatHstsUnix.sh --mode configure --dry-run
 ```
 
 **With Custom Path:**
@@ -215,9 +233,25 @@ sudo ./src/unix/Patch/bash/UpdateTomcatHstsUnix.sh --mode configure \
 
 ### Apache Tomcat (Windows)
 
-**Local - Auto-detect and Configure:**
+**Audit Mode - Check HSTS Configuration:**
 ```powershell
+# Auto-detect and audit
+.\src\windows\Patch\powershell\UpdateTomcatHstsWin.ps1 -Mode audit
+
+# Audit with custom path
+.\src\windows\Patch\powershell\UpdateTomcatHstsWin.ps1 -Mode audit -TomcatConfPath "C:\Tomcat\conf"
+```
+
+**Configure Mode - Fix HSTS Configuration:**
+```powershell
+# Auto-detect and configure
 .\src\windows\Patch\powershell\UpdateTomcatHstsWin.ps1 -Mode configure
+
+# Configure with custom path
+.\src\windows\Patch\powershell\UpdateTomcatHstsWin.ps1 -Mode configure -TomcatConfPath "C:\Tomcat\conf"
+
+# Preview changes without applying (dry run)
+.\src\windows\Patch\powershell\UpdateTomcatHstsWin.ps1 -Mode configure -DryRun
 ```
 
 **Local - With Custom Paths:**
@@ -269,9 +303,25 @@ $cred = Get-Credential
 
 ### Microsoft IIS (Windows)
 
-**Local - Auto-detect and Configure:**
+**Audit Mode - Check HSTS Configuration:**
 ```powershell
+# Auto-detect and audit
+.\src\windows\Patch\powershell\UpdateIisHstsWin.ps1 -Mode audit
+
+# Audit specific web.config file
+.\src\windows\Patch\powershell\UpdateIisHstsWin.ps1 -Mode audit -ConfigPath "C:\inetpub\wwwroot\web.config"
+```
+
+**Configure Mode - Fix HSTS Configuration:**
+```powershell
+# Auto-detect and configure
 .\src\windows\Patch\powershell\UpdateIisHstsWin.ps1 -Mode configure
+
+# Configure specific web.config file
+.\src\windows\Patch\powershell\UpdateIisHstsWin.ps1 -Mode configure -ConfigPath "C:\inetpub\wwwroot\web.config"
+
+# Preview changes without applying (dry run)
+.\src\windows\Patch\powershell\UpdateIisHstsWin.ps1 -Mode configure -DryRun
 ```
 
 **Local - With Custom Paths:**
@@ -1279,8 +1329,8 @@ See [INSTALLATION.md](INSTALLATION.md) for detailed instructions and troubleshoo
 
 | Feature | Unix/Linux Tomcat | Windows Tomcat | Windows IIS |
 |---------|------------------|----------------|-------------|
-| **Audit Mode** | ✅ | ✅ | ✅ |
-| **Configure Mode** | ✅ | ✅ | ✅ |
+| **Audit Mode** | ✅ `--mode audit` | ✅ `-Mode audit` | ✅ `-Mode audit` |
+| **Configure Mode** | ✅ `--mode configure` | ✅ `-Mode configure` | ✅ `-Mode configure` |
 | **Dry Run** | ✅ | ✅ | ✅ |
 | **Auto-Detection** | ✅ | ✅ | ✅ |
 | **Custom Single Path** | ✅ | ✅ | ✅ |
@@ -1295,6 +1345,20 @@ See [INSTALLATION.md](INSTALLATION.md) for detailed instructions and troubleshoo
 | **Installation Scripts** | ✅ | ✅ | ❌* |
 
 *IIS is a Windows feature installed via Windows Features, not a standalone application.
+
+## Mode Reference
+
+For a complete reference guide on Audit and Configure modes for all scripts, see [MODE_REFERENCE.md](MODE_REFERENCE.md).
+
+**Quick Summary:**
+- **Audit Mode**: Check HSTS compliance without making changes
+  - Windows Tomcat: `-Mode audit`
+  - Windows IIS: `-Mode audit`
+  - Linux/Unix Tomcat: `--mode audit`
+- **Configure Mode**: Fix HSTS configuration to be compliant
+  - Windows Tomcat: `-Mode configure`
+  - Windows IIS: `-Mode configure`
+  - Linux/Unix Tomcat: `--mode configure`
 
 ## Complete Workflow Example
 
