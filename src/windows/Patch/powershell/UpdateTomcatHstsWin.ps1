@@ -460,6 +460,9 @@ function Audit-HstsHeaders {
 function Remove-AllHstsConfigs {
     param([xml]$WebXml)
     
+    # SAFETY: Only remove HSTS-related filters and mappings
+    # This function is designed to ONLY target HSTS filters to prevent accidental removal of other filters
+    
     # Try XPath with and without namespace handling for filters
     $filters = $null
     $xpaths = @(
@@ -478,10 +481,27 @@ function Remove-AllHstsConfigs {
         }
     }
     
+    # SAFETY: Verify each filter is actually an HSTS filter before removal
     if ($filters) {
         foreach ($filter in $filters) {
-            if ($filter.ParentNode) {
-                $filter.ParentNode.RemoveChild($filter) | Out-Null
+            # Double-check: Verify filter-name matches HSTS filter names
+            $filterNameNode = $null
+            $nameXpaths = @("filter-name", ".//filter-name", ".//*[local-name()='filter-name']")
+            foreach ($nameXpath in $nameXpaths) {
+                try {
+                    $filterNameNode = $filter.SelectSingleNode($nameXpath)
+                    if ($filterNameNode) { break }
+                } catch { }
+            }
+            
+            # Only remove if filter-name is confirmed to be HSTS-related
+            if ($filterNameNode -and ($filterNameNode.InnerText -eq "HstsHeaderFilter" -or $filterNameNode.InnerText -eq "HttpHeaderSecurityFilter")) {
+                if ($filter.ParentNode) {
+                    $filter.ParentNode.RemoveChild($filter) | Out-Null
+                    Log-Message "Removed HSTS filter: $($filterNameNode.InnerText)"
+                }
+            } else {
+                Log-Message "SAFETY: Skipping filter removal - filter-name does not match HSTS filter names"
             }
         }
     }
@@ -504,10 +524,27 @@ function Remove-AllHstsConfigs {
         }
     }
     
+    # SAFETY: Verify each mapping is actually an HSTS mapping before removal
     if ($mappings) {
         foreach ($mapping in $mappings) {
-            if ($mapping.ParentNode) {
-                $mapping.ParentNode.RemoveChild($mapping) | Out-Null
+            # Double-check: Verify filter-name in mapping matches HSTS filter names
+            $mappingFilterNameNode = $null
+            $nameXpaths = @("filter-name", ".//filter-name", ".//*[local-name()='filter-name']")
+            foreach ($nameXpath in $nameXpaths) {
+                try {
+                    $mappingFilterNameNode = $mapping.SelectSingleNode($nameXpath)
+                    if ($mappingFilterNameNode) { break }
+                } catch { }
+            }
+            
+            # Only remove if filter-name is confirmed to be HSTS-related
+            if ($mappingFilterNameNode -and ($mappingFilterNameNode.InnerText -eq "HstsHeaderFilter" -or $mappingFilterNameNode.InnerText -eq "HttpHeaderSecurityFilter")) {
+                if ($mapping.ParentNode) {
+                    $mapping.ParentNode.RemoveChild($mapping) | Out-Null
+                    Log-Message "Removed HSTS filter-mapping: $($mappingFilterNameNode.InnerText)"
+                }
+            } else {
+                Log-Message "SAFETY: Skipping mapping removal - filter-name does not match HSTS filter names"
             }
         }
     }
@@ -562,38 +599,120 @@ function Apply-CompliantHsts {
     if (-not $webApp) {
         throw "Neither web-app nor Context element found in XML file. The file may use an unsupported XML namespace or structure."
     }
+    
+    # SAFETY: Define exact required values - these are the ONLY values that will be set
+    $requiredFilterName = "HstsHeaderFilter"
+    $requiredFilterClass = "org.apache.catalina.filters.HttpHeaderSecurityFilter"
+    $requiredMaxAgeParam = "hstsMaxAgeSeconds"
+    $requiredMaxAgeValue = "31536000"  # Exactly 1 year in seconds
+    $requiredIncludeSubDomainsParam = "hstsIncludeSubDomains"
+    $requiredIncludeSubDomainsValue = "true"
+    $requiredUrlPattern = "/*"
+    
+    # Create filter element with SAFETY: Only set the exact required values
     $filter = $WebXml.CreateElement("filter")
     $filterName = $WebXml.CreateElement("filter-name")
-    $filterName.InnerText = "HstsHeaderFilter"
+    $filterName.InnerText = $requiredFilterName
     $filter.AppendChild($filterName) | Out-Null
+    
     $filterClass = $WebXml.CreateElement("filter-class")
-    $filterClass.InnerText = "org.apache.catalina.filters.HttpHeaderSecurityFilter"
+    $filterClass.InnerText = $requiredFilterClass
     $filter.AppendChild($filterClass) | Out-Null
+    
+    # SAFETY: Only add the two required init-params with exact values
     $initParam1 = $WebXml.CreateElement("init-param")
     $paramName1 = $WebXml.CreateElement("param-name")
-    $paramName1.InnerText = "hstsMaxAgeSeconds"
+    $paramName1.InnerText = $requiredMaxAgeParam
     $paramValue1 = $WebXml.CreateElement("param-value")
-    $paramValue1.InnerText = "31536000"
+    $paramValue1.InnerText = $requiredMaxAgeValue
     $initParam1.AppendChild($paramName1) | Out-Null
     $initParam1.AppendChild($paramValue1) | Out-Null
     $filter.AppendChild($initParam1) | Out-Null
+    
     $initParam2 = $WebXml.CreateElement("init-param")
     $paramName2 = $WebXml.CreateElement("param-name")
-    $paramName2.InnerText = "hstsIncludeSubDomains"
+    $paramName2.InnerText = $requiredIncludeSubDomainsParam
     $paramValue2 = $WebXml.CreateElement("param-value")
-    $paramValue2.InnerText = "true"
+    $paramValue2.InnerText = $requiredIncludeSubDomainsValue
     $initParam2.AppendChild($paramName2) | Out-Null
     $initParam2.AppendChild($paramValue2) | Out-Null
     $filter.AppendChild($initParam2) | Out-Null
+    
+    # Create filter-mapping with SAFETY: Only set the exact required values
     $filterMapping = $WebXml.CreateElement("filter-mapping")
     $mappingFilterName = $WebXml.CreateElement("filter-name")
-    $mappingFilterName.InnerText = "HstsHeaderFilter"
+    $mappingFilterName.InnerText = $requiredFilterName
     $filterMapping.AppendChild($mappingFilterName) | Out-Null
+    
     $urlPattern = $WebXml.CreateElement("url-pattern")
-    $urlPattern.InnerText = "/*"
+    $urlPattern.InnerText = $requiredUrlPattern
     $filterMapping.AppendChild($urlPattern) | Out-Null
+    
+    # Insert elements into web-app
     $webApp.InsertBefore($filter, $webApp.LastChild) | Out-Null
     $webApp.InsertBefore($filterMapping, $webApp.LastChild) | Out-Null
+    
+    Log-Message "Applied compliant HSTS configuration with exact values: max-age=31536000, includeSubDomains=true"
+}
+
+# SAFETY: Verification function to ensure only expected HSTS configuration exists
+function Verify-HstsConfiguration {
+    param([xml]$WebXml)
+    
+    # Verify exactly one HSTS filter exists
+    $filters = $null
+    $xpaths = @(
+        "//filter[filter-name[text()='HstsHeaderFilter' or text()='HttpHeaderSecurityFilter']]",
+        "//*[local-name()='filter'][*[local-name()='filter-name'][text()='HstsHeaderFilter' or text()='HttpHeaderSecurityFilter']]"
+    )
+    
+    foreach ($xpath in $xpaths) {
+        try {
+            $filters = $WebXml.SelectNodes($xpath)
+            if ($filters -and $filters.Count -gt 0) {
+                break
+            }
+        } catch {
+            # Continue to next XPath
+        }
+    }
+    
+    if (-not $filters -or $filters.Count -ne 1) {
+        throw "SAFETY CHECK FAILED: Expected exactly one HSTS filter, found $($filters.Count)"
+    }
+    
+    # Verify the filter has correct values
+    $filter = $filters[0]
+    $isCompliant = Test-FilterCompliant -Filter $filter
+    
+    if (-not $isCompliant) {
+        throw "SAFETY CHECK FAILED: HSTS filter does not have compliant values (max-age=31536000, includeSubDomains=true)"
+    }
+    
+    # Verify exactly one filter-mapping exists
+    $mappings = $null
+    $mappingXpaths = @(
+        "//filter-mapping[filter-name[text()='HstsHeaderFilter' or text()='HttpHeaderSecurityFilter']]",
+        "//*[local-name()='filter-mapping'][*[local-name()='filter-name'][text()='HstsHeaderFilter' or text()='HttpHeaderSecurityFilter']]"
+    )
+    
+    foreach ($xpath in $mappingXpaths) {
+        try {
+            $mappings = $WebXml.SelectNodes($xpath)
+            if ($mappings -and $mappings.Count -gt 0) {
+                break
+            }
+        } catch {
+            # Continue to next XPath
+        }
+    }
+    
+    if (-not $mappings -or $mappings.Count -ne 1) {
+        throw "SAFETY CHECK FAILED: Expected exactly one HSTS filter-mapping, found $($mappings.Count)"
+    }
+    
+    Log-Message "SAFETY VERIFICATION PASSED: HSTS configuration is correct and compliant"
+    return $true
 }
 
 # Function: Create backup
@@ -661,20 +780,45 @@ function Process-WebXml {
                 }
             }
             
+            # SAFETY: Create backup before making any changes
             $backupPath = Backup-Config -ConfigPath $WebXmlPath
+            
+            # Apply compliant HSTS configuration (only modifies HSTS-related elements)
             Apply-CompliantHsts -WebXml $webXml
+            
             if (-not $DryRun) {
+                # SAFETY: Save to temporary file first, then validate
                 $tempXmlPath = [System.IO.Path]::GetTempFileName()
                 $webXml.Save($tempXmlPath)
+                
+                # SAFETY: Validate XML structure before applying
                 if (-not (Test-ValidXml -XmlFilePath $tempXmlPath)) {
-                    throw "Generated XML failed validation"
+                    throw "SAFETY CHECK FAILED: Generated XML failed validation. Original file preserved at: $backupPath"
                 }
+                
+                # SAFETY: Reload and verify the configuration is correct before applying
+                [xml]$tempXml = Get-Content -Path $tempXmlPath -Raw
+                Verify-HstsConfiguration -WebXml $tempXml
+                
+                # SAFETY: Only apply if all checks pass
                 Copy-Item -Path $tempXmlPath -Destination $WebXmlPath -Force -ErrorAction Stop
                 Remove-Item -Path $tempXmlPath -Force -ErrorAction SilentlyContinue
-                Log-Message "SUCCESS: Compliant HSTS configuration applied successfully. All duplicate/non-compliant headers removed."
+                
+                # SAFETY: Final verification on the saved file
+                [xml]$finalXml = Get-Content -Path $WebXmlPath -Raw
+                Verify-HstsConfiguration -WebXml $finalXml
+                
+                Log-Message "SUCCESS: Compliant HSTS configuration applied successfully with all safety checks passed"
                 Log-Message "Backup available at: $backupPath"
             } else {
                 Log-Message "DRY RUN: Would apply compliant HSTS configuration"
+                # In dry run, still verify the configuration would be correct
+                try {
+                    Verify-HstsConfiguration -WebXml $webXml
+                    Log-Message "DRY RUN: Configuration verification passed"
+                } catch {
+                    Log-Message "DRY RUN: Configuration verification would fail: $_"
+                }
             }
             return 0
         }
