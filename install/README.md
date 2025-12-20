@@ -4,8 +4,10 @@ This directory contains cross-platform installation scripts for Apache Tomcat an
 
 ## Contents
 
-- `windows/TomcatManager.ps1` — PowerShell script for Windows (Tomcat)
-- `windows/IisManager.ps1` — PowerShell script for Windows (IIS)
+- `windows/TomcatManager.ps1` — PowerShell script for Windows (Tomcat - local execution)
+- `windows/Remote_TomcatManager.ps1` — PowerShell script for Windows (Tomcat - remote execution)
+- `windows/IisManager.ps1` — PowerShell script for Windows (IIS - local execution)
+- `windows/Remote_IisManager.ps1` — PowerShell script for Windows (IIS - remote execution)
 - `unix/tomcat_manager.sh` — Bash script for Unix/Linux/macOS (Tomcat)
 
 ## Features
@@ -186,6 +188,157 @@ Once Tomcat or IIS is installed, you can use the HSTS patching scripts to config
 ```bash
 sudo ./src/unix/Patch/bash/UpdateTomcatHstsUnix.sh --mode configure
 ```
+
+---
+
+## Remote Installation (Windows)
+
+The remote installation scripts allow you to install Tomcat or IIS on multiple Windows servers remotely via PowerShell Remoting (WinRM).
+
+### Prerequisites
+
+- PowerShell Remoting (WinRM) enabled on both client and target servers
+- Administrator credentials on target servers
+- Network connectivity to target servers
+- See [INSTALLATION.md](../INSTALLATION.md) for WinRM setup instructions
+
+### Remote: Remote_TomcatManager.ps1
+
+**Usage:**
+```powershell
+# Run as Administrator on CLIENT machine
+cd <repo-root>\install\windows
+
+# Example: Install Tomcat 10.1 on multiple servers
+$cred = Get-Credential
+.\Remote_TomcatManager.ps1 -ServerName @("server1", "server2", "server3") -Action install -TomcatVersion 10.1 -Credential $cred
+
+# Example: Using server list file
+# Create C:\servers.txt:
+# webserver01.example.com
+# webserver02.example.com
+$cred = Get-Credential
+.\Remote_TomcatManager.ps1 -ServerListFile "C:\servers.txt" -Action install -TomcatVersion 9.0 -Credential $cred
+
+# Example: Uninstall Tomcat on multiple servers
+.\Remote_TomcatManager.ps1 -ServerName @("server1", "server2") -Action uninstall -Credential $cred
+```
+
+**Parameters:**
+- `-ServerName` (optional): Array of server names (e.g., `@("server1", "server2")`)
+- `-ServerListFile` (optional): Path to file containing server names (one per line, comments with `#` supported)
+- `-Action` (required): `install` or `uninstall`
+- `-TomcatVersion` (required for install): Tomcat major version (`7`, `8.5`, `9`, `10.0`, `10.1`)
+- `-Username` (optional): Admin username (default: `tomcat`)
+- `-Password` (optional): Admin password (default: `s3cretP@ssw0rd!`)
+- `-Roles` (optional): Comma-separated roles (default: `manager-gui,admin-gui`)
+- `-StartMode` (optional): `service` (default) or `bat`
+- `-Credential` (optional): PSCredential object for authentication (if not provided, uses current user)
+
+**What it does:**
+- Connects to each target server via PowerShell Remoting
+- Executes Tomcat installation/uninstallation on remote servers
+- Automatically tries multiple authentication methods (Negotiate, Basic, Kerberos, CredSSP)
+- Logs actions to `$env:TEMP\TomcatManager.log` on each remote server
+
+### Remote: Remote_IisManager.ps1
+
+**Usage:**
+```powershell
+# Run as Administrator on CLIENT machine
+cd <repo-root>\install\windows
+
+# Example: Install IIS on multiple servers
+$cred = Get-Credential
+.\Remote_IisManager.ps1 -ServerName @("server1", "server2") -Action install -Credential $cred
+
+# Example: Install IIS with ASP.NET and FTP on multiple servers
+.\Remote_IisManager.ps1 -ServerName @("server1", "server2") -Action install -IncludeAspNet -IncludeFtp -Credential $cred
+
+# Example: Uninstall IIS on multiple servers
+.\Remote_IisManager.ps1 -ServerListFile "C:\servers.txt" -Action uninstall -Credential $cred
+```
+
+**Parameters:**
+- `-ServerName` (optional): Array of server names
+- `-ServerListFile` (optional): Path to file containing server names
+- `-Action` (required): `install` or `uninstall`
+- `-IncludeManagementTools` (optional): Include IIS Management Tools (default: `true`)
+- `-IncludeAspNet` (optional): Include ASP.NET support (default: `false`)
+- `-IncludeFtp` (optional): Include FTP Server (default: `false`)
+- `-Credential` (optional): PSCredential object for authentication
+
+**What it does:**
+- Connects to each target server via PowerShell Remoting
+- Executes IIS installation/uninstallation on remote servers
+- Automatically tries multiple authentication methods
+- Logs actions to `$env:TEMP\IisManager.log` on each remote server
+
+### Remote Script Features
+
+- **Multiple Authentication Methods:** Automatically tries Negotiate, Basic, Kerberos, and CredSSP
+- **Server List Files:** Support for comments (lines starting with `#`) in server list files
+- **Error Handling:** Continues processing other servers if one fails
+- **Detailed Logging:** Logs are written to each remote server's temp directory
+- **Credential Management:** Supports both credential-based and current user authentication
+
+### Remote Script Examples
+
+**Install Tomcat 10.1 on multiple servers:**
+```powershell
+$cred = Get-Credential
+.\Remote_TomcatManager.ps1 `
+    -ServerName @("webserver01.example.com", "webserver02.example.com") `
+    -Action install `
+    -TomcatVersion 10.1 `
+    -Username admin `
+    -Password SecurePass123! `
+    -Credential $cred
+```
+
+**Install IIS with all features using server list:**
+```powershell
+# Create C:\iis_servers.txt:
+# webserver01.example.com
+# webserver02.example.com
+# webserver03.example.com
+
+$cred = Get-Credential
+.\Remote_IisManager.ps1 `
+    -ServerListFile "C:\iis_servers.txt" `
+    -Action install `
+    -IncludeManagementTools `
+    -IncludeAspNet `
+    -IncludeFtp `
+    -Credential $cred
+```
+
+**Uninstall Tomcat on all servers in list:**
+```powershell
+$cred = Get-Credential
+.\Remote_TomcatManager.ps1 -ServerListFile "C:\servers.txt" -Action uninstall -Credential $cred
+```
+
+### Troubleshooting Remote Scripts
+
+**Error: "Cannot connect to remote server"**
+- Ensure WinRM is enabled on both client and target servers
+- Verify firewall rules allow WinRM traffic
+- Check network connectivity: `Test-NetConnection -ComputerName server1 -Port 5985`
+
+**Error: "Access Denied"**
+- Ensure credentials have administrator privileges on target servers
+- For workgroup environments, enable Basic authentication: `winrm set winrm/config/service/auth @{Basic="true"}`
+- Configure TrustedHosts on client machine if using workgroup
+
+**Error: "Authentication failed"**
+- Try using FQDN instead of hostname
+- Verify credentials are correct
+- Check if account is locked or disabled
+
+For detailed WinRM setup instructions, see [INSTALLATION.md](../INSTALLATION.md).
+
+---
 
 For more details, see the main [README.md](../README.md) in the project root.
 

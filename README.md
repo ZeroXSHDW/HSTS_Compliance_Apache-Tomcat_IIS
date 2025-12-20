@@ -1,6 +1,14 @@
 # HSTS Compliance Tools - Apache Tomcat & IIS
 
-A comprehensive set of tools for auditing and configuring HTTP Strict Transport Security (HSTS) headers in Apache Tomcat and Microsoft IIS web servers. This project focuses exclusively on HSTS compliance and patching across Linux and Windows platforms.
+A comprehensive set of tools for auditing and configuring HTTP Strict Transport Security (HSTS) headers in Apache Tomcat and Microsoft IIS web servers. 
+
+**Primary Purpose:** This project focuses exclusively on HSTS security configuration and compliance across Linux and Windows platforms.
+
+**Supported Platforms & Servers:**
+- **Linux/Unix:** Apache Tomcat HSTS configuration
+- **Windows:** Apache Tomcat and Microsoft IIS HSTS configuration
+
+**Supporting Tools:** Installation scripts are provided to help set up test environments, but the core functionality is HSTS security configuration.
 
 ## Table of Contents
 
@@ -75,7 +83,10 @@ This implementation follows OWASP recommendations:
 **Platform & Compatibility:**
 - ✅ **Cross-Platform**: Bash scripts for Unix/Linux servers, PowerShell for Windows Server
 - ✅ **Version Support**: Works with all versions of Tomcat (7.0+) and IIS (7.0+), including Tomcat 11.0
-- ✅ **Installation Scripts**: Automated Tomcat installation for Windows and Unix/Linux (versions 7.0, 8.5, 9.0, 10.0, 10.1)
+- ✅ **HSTS Configuration Support:**
+  - **Linux/Unix:** Apache Tomcat only
+  - **Windows:** Apache Tomcat and Microsoft IIS
+- ✅ **Supporting Installation Scripts**: Automated Tomcat and IIS installation scripts are provided as supporting tools for setting up test environments (Windows: Tomcat & IIS, Unix/Linux: Tomcat only)
 - ✅ **Java Auto-Installation**: Installation scripts automatically install required Java versions
 
 **Quality & Safety:**
@@ -99,24 +110,27 @@ This implementation follows OWASP recommendations:
 ├── assets/                      # Project assets
 │   └── images/
 │       └── banner.jpg          # Project banner image
-├── install/                     # Installation scripts for Tomcat
+├── install/                     # Supporting installation scripts (for test environments)
 │   ├── README.md               # Installation script documentation
 │   ├── windows/
-│   │   └── TomcatManager.ps1   # Windows Tomcat installation script (supports 7.0, 8.5, 9.0, 10.0, 10.1)
+│   │   ├── TomcatManager.ps1   # Windows Tomcat installation script (supports 7.0, 8.5, 9.0, 10.0, 10.1)
+│   │   ├── Remote_TomcatManager.ps1  # Remote Tomcat installation script
+│   │   ├── IisManager.ps1      # Windows IIS installation script
+│   │   └── Remote_IisManager.ps1      # Remote IIS installation script
 │   └── unix/
 │       └── tomcat_manager.sh   # Unix/Linux Tomcat installation script (supports 7.0, 8.5, 9.0, 10.0, 10.1)
-├── src/                         # HSTS patching scripts
+├── src/                         # PRIMARY: HSTS security configuration scripts
 │   ├── unix/
 │   │   └── Patch/
 │   │       └── bash/
-│   │           └── UpdateTomcatHstsUnix.sh    # Unix/Linux Tomcat HSTS script (auto-detect, custom paths)
+│   │           └── UpdateTomcatHstsUnix.sh    # Linux/Unix Tomcat HSTS configuration (auto-detect, custom paths)
 │   └── windows/
 │       └── Patch/
 │           └── powershell/
-│               ├── UpdateTomcatHstsWin.ps1           # Windows Tomcat HSTS script (local execution)
-│               ├── Remote_UpdateTomcatHstsWin.ps1    # Windows Tomcat HSTS script (remote execution)
-│               ├── UpdateIisHstsWin.ps1              # Windows IIS HSTS script (local execution)
-│               └── Remote_UpdateIisHstsWin.ps1       # Windows IIS HSTS script (remote execution)
+│               ├── UpdateTomcatHstsWin.ps1           # Windows Tomcat HSTS configuration (local execution)
+│               ├── Remote_UpdateTomcatHstsWin.ps1    # Windows Tomcat HSTS configuration (remote execution)
+│               ├── UpdateIisHstsWin.ps1              # Windows IIS HSTS configuration (local execution)
+│               └── Remote_UpdateIisHstsWin.ps1       # Windows IIS HSTS configuration (remote execution)
 ├── tests/                       # Test scripts for HSTS patching
 │   ├── README.md               # Test documentation and usage guide
 │   └── Patch/
@@ -154,9 +168,15 @@ This implementation follows OWASP recommendations:
 
 ## Installation Instructions
 
-### Automated Tomcat Installation
+> **Note:** The installation scripts in the `install/` directory are **supporting tools** provided to help set up test environments. The **primary purpose** of this project is HSTS security configuration. If you already have Tomcat or IIS installed, you can proceed directly to the [Quick Start](#quick-start) section to configure HSTS.
 
-For automated installation of Apache Tomcat on Windows or Unix/Linux systems, use the installation scripts provided in the `install/` directory. These scripts handle download, extraction, Java setup, secure user configuration, and service management.
+### Automated Installation (Supporting Tools)
+
+For automated installation of Apache Tomcat or IIS on Windows or Unix/Linux systems, use the installation scripts provided in the `install/` directory. These scripts handle download, extraction, Java setup, secure user configuration, and service management.
+
+**Supported Installations:**
+- **Windows:** Tomcat (7.0, 8.5, 9.0, 10.0, 10.1) and IIS
+- **Unix/Linux:** Tomcat (7.0, 8.5, 9.0, 10.0, 10.1)
 
 **Windows:**
 ```powershell
@@ -172,7 +192,7 @@ cd install/unix
 sudo ./tomcat_manager.sh -v 10.1
 ```
 
-See [install/README.md](install/README.md) for full installation script documentation and usage examples.
+See [install/README.md](install/README.md) for full installation script documentation and usage examples, including remote installation support.
 
 ### Manual Installation
 
@@ -184,8 +204,12 @@ For detailed manual installation instructions for Apache Tomcat, IIS, and PowerS
 - **PowerShell Remoting**: Enable on target servers: `Enable-PSRemoting -Force` and configure firewall rules
 
 See [INSTALLATION.md](INSTALLATION.md) for complete step-by-step instructions, troubleshooting guides, and verification checklists.
+
+> **After Installation:** Once Tomcat or IIS is installed, proceed to the [Quick Start](#quick-start) section to configure HSTS security headers.
     
 ## Quick Start
+
+> **Primary Purpose:** The main functionality of this project is HSTS security configuration. Use the scripts below to audit and configure HSTS headers for OWASP compliance.
 
 ### Apache Tomcat (Unix/Linux)
 
