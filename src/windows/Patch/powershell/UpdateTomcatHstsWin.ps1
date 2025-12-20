@@ -84,7 +84,9 @@ Log-Message "========================================="
 
 # Function: Load custom paths from file
 function Get-CustomPathsFromFile {
-    param([string]$PathsFile)
+    param(
+        [string]$PathsFile
+    )
     
     $paths = @()
     if (-not $PathsFile -or -not (Test-Path $PathsFile)) {
@@ -228,7 +230,9 @@ function Get-TomcatConfigPaths {
 
 # Find web.xml files
 function Find-WebXmlFiles {
-    param([string]$ConfPath)
+    param(
+        [string]$ConfPath
+    )
     
     $webXmlFiles = @()
     $tomcatHome = Split-Path $ConfPath
@@ -261,7 +265,9 @@ function Find-WebXmlFiles {
 
 # Function: Validate XML file
 function Test-ValidXml {
-    param([string]$XmlFilePath)
+    param(
+        [string]$XmlFilePath
+    )
     try {
         $xmlContent = Get-Content -Path $XmlFilePath -Raw -ErrorAction Stop
         [xml]$null = $xmlContent
@@ -273,7 +279,9 @@ function Test-ValidXml {
 
 # Function: Load web.xml file
 function Load-WebXml {
-    param([string]$WebXmlPath)
+    param(
+        [string]$WebXmlPath
+    )
     if (-not (Test-Path $WebXmlPath)) {
         throw "File not found: $WebXmlPath"
     }
@@ -297,7 +305,9 @@ function Load-WebXml {
 
 # Function: Test if a single filter is compliant
 function Test-FilterCompliant {
-    param([System.Xml.XmlElement]$Filter)
+    param(
+        [System.Xml.XmlElement]$Filter
+    )
     $hasMaxAge = $false
     $hasIncludeSubDomains = $false
     
@@ -356,7 +366,9 @@ function Test-FilterCompliant {
 
 # Function: Test if HSTS configuration is compliant (checks entire document)
 function Test-CompliantHsts {
-    param([xml]$WebXml)
+    param(
+        [xml]$WebXml
+    )
     # Try XPath with and without namespace handling
     $filters = $null
     $xpaths = @(
@@ -387,7 +399,9 @@ function Test-CompliantHsts {
 
 # Function: Audit HSTS headers
 function Audit-HstsHeaders {
-    param([xml]$WebXml)
+    param(
+        [xml]$WebXml
+    )
     $headerCount = 0
     $compliantCount = 0
     $nonCompliantCount = 0
@@ -458,7 +472,9 @@ function Audit-HstsHeaders {
 
 # Function: Remove all HSTS configurations
 function Remove-AllHstsConfigs {
-    param([xml]$WebXml)
+    param(
+        [xml]$WebXml
+    )
     
     # SAFETY: Only remove HSTS-related filters and mappings
     # This function is designed to ONLY target HSTS filters to prevent accidental removal of other filters
@@ -552,7 +568,9 @@ function Remove-AllHstsConfigs {
 
 # Function: Apply compliant HSTS configuration
 function Apply-CompliantHsts {
-    param([xml]$WebXml)
+    param(
+        [xml]$WebXml
+    )
     Remove-AllHstsConfigs -WebXml $WebXml
     
     # Try to find web-app or Context element, handling namespaces
@@ -657,7 +675,9 @@ function Apply-CompliantHsts {
 
 # SAFETY: Verification function to ensure only expected HSTS configuration exists
 function Verify-HstsConfiguration {
-    param([xml]$WebXml)
+    param(
+        [xml]$WebXml
+    )
     
     # Verify exactly one HSTS filter exists
     $filters = $null
@@ -717,7 +737,9 @@ function Verify-HstsConfiguration {
 
 # Function: Create backup
 function Backup-Config {
-    param([string]$ConfigPath)
+    param(
+        [string]$ConfigPath
+    )
     $timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
     $backupPath = "$ConfigPath.backup.$timestamp"
     try {
@@ -732,7 +754,10 @@ function Backup-Config {
 
 # Function: Process a single web.xml file
 function Process-WebXml {
-    param([string]$WebXmlPath, [string]$Mode)
+    param(
+        [string]$WebXmlPath,
+        [string]$Mode
+    )
     Log-Message ""
     Log-Message "========================================="
     Log-Message "Processing: $WebXmlPath"

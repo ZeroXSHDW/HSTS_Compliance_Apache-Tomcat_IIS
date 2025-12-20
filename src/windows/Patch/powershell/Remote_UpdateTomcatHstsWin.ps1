@@ -38,7 +38,9 @@ $ErrorActionPreference = "Stop"
 
 # Function: Load server names from file
 function Get-ServersFromFile {
-    param([string]$ServerFile)
+    param(
+        [string]$ServerFile
+    )
     
     $servers = @()
     if (-not $ServerFile -or -not (Test-Path $ServerFile)) {
@@ -101,25 +103,43 @@ foreach ($server in $uniqueServers) {
             $Hostname = $env:COMPUTERNAME
             $Timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
             
+            # Function: Log message to console and optionally to file
             function Log-Message {
-                param([string]$Message)
+                param(
+                    [string]$Message
+                )
+                
                 $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
                 $logEntry = "[$timestamp] $Message"
+                
                 Write-Host $logEntry
-                try {
-                    Add-Content -Path $LogFile -Value $logEntry -ErrorAction SilentlyContinue
-                } catch { }
+                
+                if ($LogFile -ne "") {
+                    try {
+                        Add-Content -Path $LogFile -Value $logEntry -ErrorAction SilentlyContinue
+                    } catch {
+                        # Silently fail if log file cannot be written
+                    }
+                }
             }
             
+            # Function: Log error message
             function Log-Error {
-                param([string]$Message)
+                param(
+                    [string]$Message
+                )
+                
                 Log-Message "ERROR: $Message"
             }
             
+            # Initialize log file
+            if ($LogFile -eq "") {
+                $LogFile = "$env:LOCALAPPDATA\Temp\TomcatHsts.log"
+            }
             try {
                 $null = New-Item -Path $LogFile -ItemType File -Force -ErrorAction Stop
             } catch {
-                Log-Error "Cannot create log file: $LogFile"
+                Write-Host "WARNING: Cannot create log file: $LogFile"
             }
             
             Log-Message "========================================="
@@ -131,7 +151,9 @@ foreach ($server in $uniqueServers) {
             
             # Function: Load custom paths from file
             function Get-CustomPathsFromFile {
-                param([string]$PathsFile)
+                param(
+                    [string]$PathsFile
+                )
                 
                 $paths = @()
                 if (-not $PathsFile -or -not (Test-Path $PathsFile)) {
@@ -275,7 +297,9 @@ foreach ($server in $uniqueServers) {
             
             # Find web.xml files
             function Find-WebXmlFiles {
-                param([string]$ConfPath)
+                param(
+                    [string]$ConfPath
+                )
                 
                 $webXmlFiles = @()
                 $tomcatHome = Split-Path $ConfPath
@@ -310,7 +334,9 @@ foreach ($server in $uniqueServers) {
             # (Same functions as UpdateTomcatHstsWin.ps1 - included inline for remote execution)
             
             function Test-ValidXml {
-                param([string]$XmlFilePath)
+                param(
+                    [string]$XmlFilePath
+                )
                 try {
                     $xmlContent = Get-Content -Path $XmlFilePath -Raw -ErrorAction Stop
                     [xml]$null = $xmlContent
@@ -321,7 +347,9 @@ foreach ($server in $uniqueServers) {
             }
             
             function Load-WebXml {
-                param([string]$WebXmlPath)
+                param(
+                    [string]$WebXmlPath
+                )
                 if (-not (Test-Path $WebXmlPath)) {
                     throw "File not found: $WebXmlPath"
                 }
@@ -344,7 +372,9 @@ foreach ($server in $uniqueServers) {
             }
             
             function Test-FilterCompliant {
-                param([System.Xml.XmlElement]$Filter)
+                param(
+                    [System.Xml.XmlElement]$Filter
+                )
                 $hasMaxAge = $false
                 $hasIncludeSubDomains = $false
                 
@@ -402,7 +432,9 @@ foreach ($server in $uniqueServers) {
             }
             
             function Test-CompliantHsts {
-                param([xml]$WebXml)
+                param(
+                    [xml]$WebXml
+                )
                 # Try XPath with and without namespace handling
                 $filters = $null
                 $xpaths = @(
@@ -432,7 +464,9 @@ foreach ($server in $uniqueServers) {
             }
             
             function Audit-HstsHeaders {
-                param([xml]$WebXml)
+                param(
+                    [xml]$WebXml
+                )
                 $headerCount = 0
                 $compliantCount = 0
                 $nonCompliantCount = 0
@@ -502,7 +536,9 @@ foreach ($server in $uniqueServers) {
             }
             
             function Remove-AllHstsConfigs {
-                param([xml]$WebXml)
+                param(
+                    [xml]$WebXml
+                )
                 
                 # SAFETY: Only remove HSTS-related filters and mappings
                 # This function is designed to ONLY target HSTS filters to prevent accidental removal of other filters
@@ -595,7 +631,9 @@ foreach ($server in $uniqueServers) {
             }
             
             function Apply-CompliantHsts {
-                param([xml]$WebXml)
+                param(
+                    [xml]$WebXml
+                )
                 
                 # SAFETY: Remove only HSTS-related configurations first
                 Remove-AllHstsConfigs -WebXml $WebXml
@@ -702,7 +740,9 @@ foreach ($server in $uniqueServers) {
             
             # SAFETY: Verification function to ensure only expected HSTS configuration exists
             function Verify-HstsConfiguration {
-                param([xml]$WebXml)
+                param(
+                    [xml]$WebXml
+                )
                 
                 # Verify exactly one HSTS filter exists
                 $filters = $null
@@ -761,7 +801,9 @@ foreach ($server in $uniqueServers) {
             }
             
             function Backup-Config {
-                param([string]$ConfigPath)
+                param(
+                    [string]$ConfigPath
+                )
                 $timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
                 $backupPath = "$ConfigPath.backup.$timestamp"
                 try {
@@ -775,7 +817,10 @@ foreach ($server in $uniqueServers) {
             }
             
             function Process-WebXml {
-                param([string]$WebXmlPath, [string]$Mode)
+                param(
+                    [string]$WebXmlPath,
+                    [string]$Mode
+                )
                 Log-Message ""
                 Log-Message "========================================="
                 Log-Message "Processing: $WebXmlPath"

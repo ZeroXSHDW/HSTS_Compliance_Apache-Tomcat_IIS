@@ -1,11 +1,12 @@
-# Apache Tomcat Installation Scripts
+# Installation Scripts
 
-This directory contains cross-platform installation scripts for Apache Tomcat, designed for automated deployment and configuration. These scripts support all major Tomcat versions (7.0, 8.5, 9.0, 10.0, 10.1).
+This directory contains cross-platform installation scripts for Apache Tomcat and Microsoft IIS, designed for automated deployment and configuration.
 
 ## Contents
 
-- `windows/TomcatManager.ps1` — PowerShell script for Windows
-- `unix/tomcat_manager.sh` — Bash script for Unix/Linux/macOS
+- `windows/TomcatManager.ps1` — PowerShell script for Windows (Tomcat)
+- `windows/IisManager.ps1` — PowerShell script for Windows (IIS)
+- `unix/tomcat_manager.sh` — Bash script for Unix/Linux/macOS (Tomcat)
 
 ## Features
 
@@ -57,6 +58,60 @@ cd <repo-root>\install\windows
 
 ---
 
+## Windows: IisManager.ps1
+
+**Usage:**
+```powershell
+# Run as Administrator in PowerShell
+cd <repo-root>\install\windows
+
+# Example: Install IIS with default features
+.\IisManager.ps1 -Action install
+```
+
+**Parameters:**
+- `-Action` (required): Action to perform - `install` or `uninstall`
+- `-IncludeManagementTools` (optional): Include IIS Management Tools (default: `true`)
+- `-IncludeAspNet` (optional): Include ASP.NET support (default: `false`)
+- `-IncludeFtp` (optional): Include FTP Server (default: `false`)
+
+**What it does:**
+- Installs IIS with core web server features
+- Optionally includes Management Tools, ASP.NET support, and FTP Server
+- Verifies installation and starts IIS service
+- Logs actions to `$env:TEMP\IisManager.log`
+
+**Examples:**
+```powershell
+# Install IIS with default features (includes Management Tools)
+.\IisManager.ps1 -Action install
+
+# Install IIS with ASP.NET and FTP support
+.\IisManager.ps1 -Action install -IncludeAspNet -IncludeFtp
+
+# Install IIS without Management Tools
+.\IisManager.ps1 -Action install -IncludeManagementTools:$false
+
+# Uninstall IIS
+.\IisManager.ps1 -Action uninstall
+```
+
+**Installed Features:**
+- Core IIS web server components
+- HTTP error pages, logging, compression
+- Static content, default documents, directory browsing
+- Security features (authentication, authorization, request filtering)
+- Management Tools (IIS Manager, PowerShell cmdlets) - if enabled
+- ASP.NET support - if enabled
+- FTP Server - if enabled
+
+**Default Website:**
+- Location: `C:\inetpub\wwwroot`
+- Accessible at: `http://localhost`
+- Service: `W3SVC` (World Wide Web Publishing Service)
+
+---
+
 ## Unix: tomcat_manager.sh
 
 **Usage:**
@@ -98,7 +153,8 @@ sudo ./tomcat_manager.sh -v 9.0 -s -f
 
 ## Log Files
 
-- **Windows:** `$env:TEMP\TomcatManager.log`
+- **Windows Tomcat:** `$env:TEMP\TomcatManager.log`
+- **Windows IIS:** `$env:TEMP\IisManager.log`
 - **Unix:** `~/TomcatManager.log`
 
 ---
@@ -114,11 +170,16 @@ sudo ./tomcat_manager.sh -v 9.0 -s -f
 
 ## After Installation
 
-Once Tomcat is installed, you can use the HSTS patching scripts to configure HSTS headers:
+Once Tomcat or IIS is installed, you can use the HSTS patching scripts to configure HSTS headers:
 
-**Windows:**
+**Windows Tomcat:**
 ```powershell
 .\src\windows\Patch\powershell\UpdateTomcatHstsWin.ps1 -Mode configure
+```
+
+**Windows IIS:**
+```powershell
+.\src\windows\Patch\powershell\UpdateIisHstsWin.ps1 -Mode configure
 ```
 
 **Unix:**
