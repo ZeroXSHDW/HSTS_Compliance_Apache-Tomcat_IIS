@@ -86,18 +86,34 @@ Before submitting:
 ├── LICENSE                      # MIT License
 ├── CONTRIBUTING.md              # This file
 ├── .gitignore                   # Git ignore patterns
-├── src/
+├── assets/                      # Project assets
+│   └── images/
+│       └── banner.jpg          # Project banner image
+├── install/                     # Installation scripts for Tomcat
+│   ├── README.md               # Installation script documentation
+│   ├── windows/
+│   │   └── TomcatManager.ps1   # Windows Tomcat installation script
+│   └── unix/
+│       └── tomcat_manager.sh   # Unix/Linux Tomcat installation script
+├── src/                         # HSTS patching scripts
 │   ├── unix/
 │   │   └── Patch/
 │   │       └── bash/
-│   │           └── UpdateTomcatHstsUnix.sh    # Unix/Linux Tomcat script
+│   │           └── UpdateTomcatHstsUnix.sh    # Unix/Linux Tomcat HSTS script
 │   └── windows/
 │       └── Patch/
 │           └── powershell/
-│               ├── UpdateTomcatHstsWin.ps1           # Windows Tomcat script (local)
-│               ├── Remote_UpdateTomcatHstsWin.ps1    # Windows Tomcat script (remote)
-│               ├── UpdateIisHstsWin.ps1              # Windows IIS script (local)
-│               └── Remote_UpdateIisHstsWin.ps1       # Windows IIS script (remote)
+│               ├── UpdateTomcatHstsWin.ps1           # Windows Tomcat HSTS script (local)
+│               ├── Remote_UpdateTomcatHstsWin.ps1    # Windows Tomcat HSTS script (remote)
+│               ├── UpdateIisHstsWin.ps1              # Windows IIS HSTS script (local)
+│               └── Remote_UpdateIisHstsWin.ps1       # Windows IIS HSTS script (remote)
+├── tests/                       # Test scripts for HSTS patching
+│   ├── README.md               # Test documentation
+│   └── Patch/
+│       ├── windows/
+│       │   └── test_hsts_win.ps1   # Windows HSTS tests (Tomcat and IIS)
+│       └── unix/
+│           └── test_hsts_unix.sh   # Unix/Linux HSTS tests (Tomcat)
 └── examples/                    # Example configuration files
     ├── README.md
     ├── test_web.xml

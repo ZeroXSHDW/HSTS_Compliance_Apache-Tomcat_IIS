@@ -1,6 +1,6 @@
-# HTTPS Headers - HSTS Configuration Tools
+# HSTS Compliance Tools - Apache Tomcat & IIS
 
-A comprehensive set of tools for auditing and configuring HTTP Strict Transport Security (HSTS) headers in Apache Tomcat and Microsoft IIS web servers.
+A comprehensive set of tools for auditing and configuring HTTP Strict Transport Security (HSTS) headers in Apache Tomcat and Microsoft IIS web servers. This project focuses exclusively on HSTS compliance and patching across Linux and Windows platforms.
 
 ## Table of Contents
 
@@ -16,6 +16,7 @@ A comprehensive set of tools for auditing and configuring HTTP Strict Transport 
 - [Security Notes](#security-notes)
 - [Troubleshooting](#troubleshooting)
 - [Best Practices](#best-practices)
+- [Testing](#testing)
 - [Advanced Usage](#advanced-usage)
 - [Code Review Summary](#code-review-summary)
 - [License](#license)
@@ -40,14 +41,42 @@ This implementation follows OWASP recommendations:
 - ℹ️ **Optional**: `preload` directive (allowed but not configured by default - see [Preload Considerations](#preload-considerations) below)
 
 **Key Features:**
-- ✅ **Auto-Detection**: Automatically finds Tomcat and IIS installations
-- ✅ **Audit Mode**: Check if HSTS is correctly configured
-- ✅ **Configure Mode**: Automatically fix HSTS configuration to be compliant
-- ✅ **Backup Support**: Automatically creates backups before making changes
-- ✅ **Dry Run**: Preview changes without applying them
+
+**Core Functionality:**
+- ✅ **Auto-Detection**: Automatically finds Tomcat and IIS installations across common paths
+- ✅ **Audit Mode**: Check if HSTS is correctly configured without making changes
+- ✅ **Configure Mode**: Automatically fix HSTS configuration to be OWASP compliant
+- ✅ **Backup Support**: Automatically creates timestamped backups before making changes
+- ✅ **Dry Run**: Preview changes without applying them (configure mode only)
+- ✅ **XML Validation**: Validates XML structure before and after modifications
+- ✅ **Idempotency**: Ensures exactly one compliant HSTS definition (removes duplicates)
+
+**Flexibility & Control:**
+- ✅ **Custom Paths**: Specify single or multiple custom configuration paths
+- ✅ **Paths File Support**: Load multiple paths from a file (one per line, comments supported)
+- ✅ **Multiple File Processing**: Automatically processes all web.xml/web.config files in detected installations
+- ✅ **Selective Processing**: Target specific files or directories as needed
+- ✅ **Environment Variable Support**: Unix scripts check CATALINA_BASE and CATALINA_HOME
+
+**Remote & Enterprise Features:**
+- ✅ **Remote Execution**: Windows scripts support remote execution via PowerShell Remoting (WinRM)
+- ✅ **Server List Files**: Execute on multiple servers using server list files (comments supported)
+- ✅ **Batch Operations**: Process multiple servers simultaneously with credential management
+- ✅ **Parallel Processing**: Remote scripts can process multiple servers in sequence
+
+**Platform & Compatibility:**
 - ✅ **Cross-Platform**: Bash scripts for Unix/Linux servers, PowerShell for Windows Server
-- ✅ **Remote Support**: Windows scripts support remote execution via Invoke-Command
 - ✅ **Version Support**: Works with all versions of Tomcat (7.0+) and IIS (7.0+)
+- ✅ **Installation Scripts**: Automated Tomcat installation for Windows and Unix/Linux (versions 7.0, 8.5, 9.0, 10.0, 10.1)
+- ✅ **Java Auto-Installation**: Installation scripts automatically install required Java versions
+
+**Quality & Safety:**
+- ✅ **Test Suite**: Comprehensive test scripts for validating HSTS patching functionality (5 scenarios Windows, 4 scenarios Unix)
+- ✅ **Logging**: Detailed logging to files and console with timestamps and hostname
+- ✅ **Error Handling**: Comprehensive error handling with clear exit codes (0=success, 1=failure, 2=error)
+- ✅ **Security Validations**: Path traversal protection, null byte detection, symlink/junction detection, permission checks
+- ✅ **User Confirmation**: Interactive prompts for destructive operations
+- ✅ **Example Files**: Provided example configuration files for testing
 
 ## Project Structure
 
@@ -58,22 +87,39 @@ This implementation follows OWASP recommendations:
 ├── LICENSE                      # MIT License
 ├── CONTRIBUTING.md              # Contribution guidelines
 ├── .gitignore                   # Git ignore patterns
-├── src/
+├── assets/                      # Project assets
+│   └── images/
+│       └── banner.jpg          # Project banner image
+├── install/                     # Installation scripts for Tomcat
+│   ├── README.md               # Installation script documentation
+│   ├── windows/
+│   │   └── TomcatManager.ps1   # Windows Tomcat installation script (supports 7.0, 8.5, 9.0, 10.0, 10.1)
+│   └── unix/
+│       └── tomcat_manager.sh   # Unix/Linux Tomcat installation script (supports 7.0, 8.5, 9.0, 10.0, 10.1)
+├── src/                         # HSTS patching scripts
 │   ├── unix/
 │   │   └── Patch/
 │   │       └── bash/
-│   │           └── UpdateTomcatHstsUnix.sh    # Unix/Linux Tomcat script (auto-detect)
+│   │           └── UpdateTomcatHstsUnix.sh    # Unix/Linux Tomcat HSTS script (auto-detect, custom paths)
 │   └── windows/
 │       └── Patch/
 │           └── powershell/
-│               ├── UpdateTomcatHstsWin.ps1           # Windows Tomcat script (local execution)
-│               ├── Remote_UpdateTomcatHstsWin.ps1    # Windows Tomcat script (remote execution)
-│               ├── UpdateIisHstsWin.ps1              # Windows IIS script (local execution)
-│               └── Remote_UpdateIisHstsWin.ps1       # Windows IIS script (remote execution)
-└── examples/                    # Example configuration files
-    ├── README.md
-    ├── test_web.xml       # Example Tomcat web.xml
-    └── test_web.config    # Example IIS web.config
+│               ├── UpdateTomcatHstsWin.ps1           # Windows Tomcat HSTS script (local execution)
+│               ├── Remote_UpdateTomcatHstsWin.ps1    # Windows Tomcat HSTS script (remote execution)
+│               ├── UpdateIisHstsWin.ps1              # Windows IIS HSTS script (local execution)
+│               └── Remote_UpdateIisHstsWin.ps1       # Windows IIS HSTS script (remote execution)
+├── tests/                       # Test scripts for HSTS patching
+│   ├── README.md               # Test documentation and usage guide
+│   └── Patch/
+│       ├── windows/
+│       │   └── test_hsts_win.ps1   # Windows HSTS tests (Tomcat and IIS, 5 scenarios)
+│       └── unix/
+│           └── test_hsts_unix.sh   # Unix/Linux HSTS tests (Tomcat, 4 scenarios)
+└── examples/                    # Example configuration files for testing
+    ├── README.md               # Examples usage guide
+    ├── test_web.xml            # Example Tomcat web.xml (minimal configuration)
+    ├── test_web.config         # Example IIS web.config (minimal configuration)
+    └── web.xml                 # Additional Tomcat web.xml example
 ```
 
 ## Prerequisites
@@ -99,10 +145,32 @@ This implementation follows OWASP recommendations:
 
 ## Installation Instructions
 
-For detailed installation instructions for Apache Tomcat, IIS, and PowerShell Remoting configuration, please see the **[INSTALLATION.md](INSTALLATION.md)** file.
+### Automated Tomcat Installation
+
+For automated installation of Apache Tomcat on Windows or Unix/Linux systems, use the installation scripts provided in the `install/` directory. These scripts handle download, extraction, Java setup, secure user configuration, and service management.
+
+**Windows:**
+```powershell
+# Run as Administrator
+cd install\windows
+.\TomcatManager.ps1 -Action install -TomcatVersion 10.1
+```
+
+**Unix/Linux:**
+```bash
+# Run as root or with sudo
+cd install/unix
+sudo ./tomcat_manager.sh -v 10.1
+```
+
+See [install/README.md](install/README.md) for full installation script documentation and usage examples.
+
+### Manual Installation
+
+For detailed manual installation instructions for Apache Tomcat, IIS, and PowerShell Remoting configuration, please see the **[INSTALLATION.md](INSTALLATION.md)** file.
 
 **Quick Summary:**
-- **Apache Tomcat**: Download Windows Service Installer from https://tomcat.apache.org
+- **Apache Tomcat**: Download Windows Service Installer from https://tomcat.apache.org or use the installation scripts
 - **IIS**: Install via PowerShell: `Install-WindowsFeature -Name Web-Server -IncludeManagementTools`
 - **PowerShell Remoting**: Enable on target servers: `Enable-PSRemoting -Force` and configure firewall rules
 
@@ -1000,6 +1068,37 @@ Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
 5. **Monitor logs**: Check application logs after applying HSTS to ensure no issues
 6. **XML validation**: Use `xmllint` (Unix) or XML validation tools to verify configuration files
 
+## Testing
+
+The project includes comprehensive test scripts to validate HSTS patching functionality across different scenarios.
+
+### Running Tests
+
+**Windows Tests:**
+```powershell
+# Run as Administrator
+cd tests\Patch\windows
+.\test_hsts_win.ps1
+```
+
+**Unix/Linux Tests:**
+```bash
+# Run as root or with sudo
+cd tests/Patch/unix
+sudo ./test_hsts_unix.sh
+```
+
+### Test Scenarios
+
+Tests validate the following scenarios:
+1. **No HSTS Header** - Configuration with no HSTS header (should add compliant header)
+2. **Non-Compliant HSTS (Short MaxAge)** - HSTS with max-age < 31536000 (should fix)
+3. **Non-Compliant HSTS (No IncludeSubDomains)** - Missing includeSubDomains (should add)
+4. **Compliant HSTS** - Already compliant (should remain unchanged)
+5. **Multiple HSTS Headers** - Duplicate headers (should consolidate to one)
+
+For detailed test documentation, see [tests/README.md](tests/README.md).
+
 ## Advanced Usage
 
 ### Auto-Detection of Multiple Files
@@ -1009,15 +1108,101 @@ All scripts automatically detect and process multiple configuration files:
 **Tomcat (Unix/Linux):**
 - Automatically finds: `conf/web.xml`, `conf/context.xml`, and all `webapps/*/WEB-INF/web.xml` files
 - Processes each file individually with a summary at the end
+- Searches common paths: `/opt/tomcat*/conf`, `/usr/local/tomcat*/conf`, `/var/lib/tomcat*/conf`, etc.
 
 **Tomcat (Windows):**
 - Automatically finds all web.xml files in the detected Tomcat installation
 - Processes each file individually with a summary at the end
+- Searches common paths: `C:\Program Files\Apache Software Foundation\Tomcat*\conf`, `C:\Tomcat*\conf`, etc.
 
 **IIS (Windows):**
 - Automatically finds all web.config files (root and application-specific)
 - Uses IIS WebAdministration module to discover all IIS sites
 - Processes each file individually with a summary at the end
+- Searches default path: `C:\inetpub\wwwroot\web.config` and application-specific paths
+
+### Custom Paths Support
+
+All scripts support flexible path specification:
+
+**Single Custom Path:**
+```bash
+# Unix
+sudo ./UpdateTomcatHstsUnix.sh --custom-conf=/opt/tomcat/conf
+```
+
+```powershell
+# Windows
+.\UpdateTomcatHstsWin.ps1 -TomcatConfPath "C:\Tomcat\conf"
+.\UpdateIisHstsWin.ps1 -ConfigPath "C:\MyApp\web.config"
+```
+
+**Multiple Custom Paths:**
+```bash
+# Unix - specify multiple times
+sudo ./UpdateTomcatHstsUnix.sh --custom-conf=/opt/tomcat1/conf --custom-conf=/opt/tomcat2/conf
+```
+
+```powershell
+# Windows - use array
+.\UpdateTomcatHstsWin.ps1 -CustomPaths @("C:\Tomcat1\conf", "C:\Tomcat2\conf")
+.\UpdateIisHstsWin.ps1 -CustomPaths @("C:\App1\web.config", "C:\App2\web.config")
+```
+
+**Paths File (Recommended for Many Paths):**
+```bash
+# Unix - create paths file: /etc/tomcat-paths.txt
+# /opt/tomcat1/conf
+# /opt/tomcat2/conf
+# /opt/tomcat3/conf
+
+sudo ./UpdateTomcatHstsUnix.sh --custom-paths-file=/etc/tomcat-paths.txt
+```
+
+```powershell
+# Windows - create paths file: C:\tomcat-paths.txt
+# C:\Tomcat1\conf
+# C:\Tomcat2\conf
+# C:\Tomcat3\conf
+
+.\UpdateTomcatHstsWin.ps1 -CustomPathsFile "C:\tomcat-paths.txt"
+.\UpdateIisHstsWin.ps1 -CustomPathsFile "C:\iis-paths.txt"
+```
+
+**Note:** Paths files support comments (lines starting with `#` are ignored).
+
+### Remote Execution with Server Lists
+
+Windows remote scripts support server list files for batch operations:
+
+```powershell
+# Create server list file: C:\servers.txt
+# server1.example.com
+# server2.example.com
+# server3.example.com
+# # This is a comment
+
+$cred = Get-Credential
+.\Remote_UpdateTomcatHstsWin.ps1 -ServerListFile "C:\servers.txt" -Mode configure -Credential $cred
+.\Remote_UpdateIisHstsWin.ps1 -ServerListFile "C:\servers.txt" -Mode configure -Credential $cred
+```
+
+### Logging
+
+All scripts provide comprehensive logging:
+
+**Unix/Linux:**
+- Default log location: `/tmp/TomcatHsts.log`
+- Logs include timestamps, hostname, and detailed operation information
+
+**Windows:**
+- Default log location: `$env:LOCALAPPDATA\Temp\TomcatHsts.log` (Tomcat) or `$env:LOCALAPPDATA\Temp\IisHsts.log` (IIS)
+- Custom log file: Use `-LogFile` parameter
+- Logs include timestamps, hostname, and detailed operation information
+
+**Remote Execution:**
+- Logs are written on the remote server
+- Client-side output shows remote server name prefix: `[SERVER-NAME]`
 
 ### Manual Processing of Specific Files
 
@@ -1090,13 +1275,111 @@ For a complete installation and setup guide, see **[INSTALLATION.md](INSTALLATIO
 
 See [INSTALLATION.md](INSTALLATION.md) for detailed instructions and troubleshooting.
 
+## Quick Reference: Complete Feature Matrix
+
+| Feature | Unix/Linux Tomcat | Windows Tomcat | Windows IIS |
+|---------|------------------|----------------|-------------|
+| **Audit Mode** | ✅ | ✅ | ✅ |
+| **Configure Mode** | ✅ | ✅ | ✅ |
+| **Dry Run** | ✅ | ✅ | ✅ |
+| **Auto-Detection** | ✅ | ✅ | ✅ |
+| **Custom Single Path** | ✅ | ✅ | ✅ |
+| **Custom Multiple Paths** | ✅ | ✅ | ✅ |
+| **Paths File Support** | ✅ | ✅ | ✅ |
+| **Remote Execution** | ❌ | ✅ | ✅ |
+| **Server List Files** | ❌ | ✅ | ✅ |
+| **Automatic Backups** | ✅ | ✅ | ✅ |
+| **XML Validation** | ✅ | ✅ | ✅ |
+| **Multiple File Processing** | ✅ | ✅ | ✅ |
+| **Logging** | ✅ | ✅ | ✅ |
+| **Installation Scripts** | ✅ | ✅ | ❌* |
+
+*IIS is a Windows feature installed via Windows Features, not a standalone application.
+
+## Complete Workflow Example
+
+### 1. Install Tomcat (if needed)
+
+**Windows:**
+```powershell
+cd install\windows
+.\TomcatManager.ps1 -Action install -TomcatVersion 10.1
+```
+
+**Unix/Linux:**
+```bash
+cd install/unix
+sudo ./tomcat_manager.sh -v 10.1
+```
+
+### 2. Audit Current Configuration
+
+**Windows Tomcat:**
+```powershell
+.\src\windows\Patch\powershell\UpdateTomcatHstsWin.ps1 -Mode audit
+```
+
+**Windows IIS:**
+```powershell
+.\src\windows\Patch\powershell\UpdateIisHstsWin.ps1 -Mode audit
+```
+
+**Unix/Linux Tomcat:**
+```bash
+sudo ./src/unix/Patch/bash/UpdateTomcatHstsUnix.sh --mode audit
+```
+
+### 3. Preview Changes (Dry Run)
+
+**Windows:**
+```powershell
+.\src\windows\Patch\powershell\UpdateTomcatHstsWin.ps1 -Mode configure -DryRun
+.\src\windows\Patch\powershell\UpdateIisHstsWin.ps1 -Mode configure -DryRun
+```
+
+**Unix/Linux:**
+```bash
+sudo ./src/unix/Patch/bash/UpdateTomcatHstsUnix.sh --mode configure --dry-run
+```
+
+### 4. Apply Configuration
+
+**Windows:**
+```powershell
+.\src\windows\Patch\powershell\UpdateTomcatHstsWin.ps1 -Mode configure
+.\src\windows\Patch\powershell\UpdateIisHstsWin.ps1 -Mode configure
+```
+
+**Unix/Linux:**
+```bash
+sudo ./src/unix/Patch/bash/UpdateTomcatHstsUnix.sh --mode configure
+```
+
+### 5. Verify Configuration
+
+Run audit mode again to confirm compliance.
+
+### 6. Run Tests
+
+**Windows:**
+```powershell
+cd tests\Patch\windows
+.\test_hsts_win.ps1
+```
+
+**Unix/Linux:**
+```bash
+cd tests/Patch/unix
+sudo ./test_hsts_unix.sh
+```
+
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+Contributions are welcome! Please feel free to submit a Pull Request. See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 ## Acknowledgments
 

@@ -12,7 +12,45 @@ This guide provides step-by-step instructions for installing Apache Tomcat and M
 
 ## Installing Apache Tomcat on Windows Server
 
-### Method 1: Using the Windows Service Installer (Recommended)
+### Method 1: Using the Automated Installation Script (Recommended)
+
+The project includes an automated installation script that handles download, Java installation, and service configuration.
+
+1. **Run the Installation Script:**
+   ```powershell
+   # Run PowerShell as Administrator
+   cd <repo-root>\install\windows
+   
+   # Install Tomcat 10.1 (latest)
+   .\TomcatManager.ps1 -Action install -TomcatVersion 10.1
+   
+   # Or install with custom credentials
+   .\TomcatManager.ps1 -Action install -TomcatVersion 9 -Username admin -Password MySecurePass! -Roles "manager-gui,admin-gui"
+   ```
+
+2. **What the Script Does:**
+   - Downloads the latest patch for the specified Tomcat version
+   - Installs Java if not found (OpenJDK 8 for Tomcat 7, OpenJDK 11 for others)
+   - Extracts Tomcat to `C:\tomcat`
+   - Configures admin user with secure password hashing
+   - Installs Tomcat as a Windows service
+   - Sets environment variables (JAVA_HOME, CATALINA_HOME)
+
+3. **Verify Installation:**
+   ```powershell
+   # Check if Tomcat service is running
+   Get-Service -Name "Tomcat*"
+   
+   # Check installation path
+   Test-Path "C:\tomcat\conf\server.xml"
+   
+   # Access Tomcat Manager
+   Start-Process "http://localhost:8080"
+   ```
+
+For more details, see [install/README.md](install/README.md).
+
+### Method 2: Using the Windows Service Installer
 
 1. **Download Apache Tomcat:**
    - Visit: https://tomcat.apache.org/download-90.cgi (or latest version)
