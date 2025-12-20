@@ -73,7 +73,7 @@ This implementation follows OWASP recommendations:
 
 **Platform & Compatibility:**
 - ✅ **Cross-Platform**: Bash scripts for Unix/Linux servers, PowerShell for Windows Server
-- ✅ **Version Support**: Works with all versions of Tomcat (7.0+) and IIS (7.0+)
+- ✅ **Version Support**: Works with all versions of Tomcat (7.0+) and IIS (7.0+), including Tomcat 11.0
 - ✅ **Installation Scripts**: Automated Tomcat installation for Windows and Unix/Linux (versions 7.0, 8.5, 9.0, 10.0, 10.1)
 - ✅ **Java Auto-Installation**: Installation scripts automatically install required Java versions
 
@@ -1007,6 +1007,7 @@ This generates the OWASP-recommended header: `Strict-Transport-Security: max-age
 ### Apache Tomcat
 - ✅ Tomcat 7.0
 - ✅ Tomcat 8.0
+- ✅ Tomcat 11.0
 - ✅ Tomcat 8.5
 - ✅ Tomcat 9.0
 - ✅ Tomcat 10.0
