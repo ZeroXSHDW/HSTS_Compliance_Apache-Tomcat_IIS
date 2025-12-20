@@ -508,18 +508,11 @@ foreach ($server in $uniqueServers) {
                         Log-Message "Configuration required: Ensuring exactly one compliant HSTS definition exists"
                         
                         if (-not $DryRun) {
-                            if (-not $Force) {
-                                Write-Host ""
-                                Write-Host "WARNING: This will modify: $WebXmlPath"
-                                Write-Host "A backup will be created before making changes."
-                                $response = Read-Host "Do you want to continue? (yes/no)"
-                                if ($response -notmatch "^(yes|y)$") {
-                                    Log-Message "Configuration operation cancelled by user"
-                                    return 2
-                                }
-                            } else {
+                            if ($Force) {
                                 Log-Message "Force mode enabled: Auto-approving configuration changes"
                             }
+                            # Note: Interactive prompts are skipped in remote execution
+                            # Use -Force parameter to auto-approve changes
                         }
                         
                         $backupPath = Backup-Config -ConfigPath $WebXmlPath
