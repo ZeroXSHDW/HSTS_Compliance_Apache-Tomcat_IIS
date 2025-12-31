@@ -19,7 +19,7 @@ param(
     [string]$CustomPathsFile = $null,
     
     [Parameter(Mandatory=$false)]
-    [string]$LogFile = "$env:LOCALAPPDATA\Temp\IisHsts.log",
+    [string]$LogFile = "$env:TEMP\IisHsts_$(Get-Date -Format 'yyyyMMdd_HHmmss').log",
     
     [Parameter(Mandatory=$false)]
     [switch]$DryRun = $false,
@@ -35,7 +35,7 @@ $Timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
 
 # Initialize log file
 if ($LogFile -eq "") {
-    $LogFile = "$env:LOCALAPPDATA\Temp\IisHsts.log"
+    $LogFile = "$env:TEMP\IisHsts_$(Get-Date -Format 'yyyyMMdd_HHmmss').log"
 }
 try {
     $null = New-Item -Path $LogFile -ItemType File -Force -ErrorAction Stop
@@ -847,7 +847,11 @@ function Apply-CompliantHsts {
         if ($DryRun) {
             Log-Message "DRY RUN: Would apply compliant HSTS configuration"
             Log-Message "Modified configuration would be:"
-            $ParsedConfig.Save([System.Console]::Out)
+            # Use StringWriter for safer output in all contexts
+            $stringWriter = New-Object System.IO.StringWriter
+            $ParsedConfig.Save($stringWriter)
+            Log-Message $stringWriter.ToString()
+            $stringWriter.Dispose()
             $success = $true
             $message = "DRY RUN: Would apply compliant HSTS configuration"
         } else {
@@ -1027,17 +1031,33 @@ function Process-WebConfig {
                 }
             }
             
-            $backupPath = Backup-Config -ConfigPath $WebConfigPath
-            $configureResult = Apply-CompliantHsts -ParsedConfig $parsedConfig -ConfigPath $WebConfigPath
-            
-            if (-not $configureResult.Success) {
-                Log-Error "Failed to configure HSTS: $($configureResult.Message)"
+            if (-not $DryRun) {
+                # SAFETY: Create backup before making any changes
+                $backupPath = Backup-Config -ConfigPath $WebConfigPath
+                
+                # Apply compliant HSTS configuration
+                $configureResult = Apply-CompliantHsts -ParsedConfig $parsedConfig -ConfigPath $WebConfigPath
+                
+                if (-not $configureResult.Success) {
+                    Log-Error "Failed to configure HSTS: $($configureResult.Message)"
+                    Log-Message "Backup available at: $backupPath"
+                    return 1
+                }
+                
+                Log-Message "SUCCESS: $($configureResult.Message)"
                 Log-Message "Backup available at: $backupPath"
-                return 1
+            } else {
+                # Dry run - apply to in-memory copy and show what would change
+                $configureResult = Apply-CompliantHsts -ParsedConfig $parsedConfig -ConfigPath $WebConfigPath
+                
+                if (-not $configureResult.Success) {
+                    Log-Error "DRY RUN: Configuration would fail: $($configureResult.Message)"
+                    return 1
+                }
+                
+                Log-Message "DRY RUN: $($configureResult.Message)"
             }
-            
-            Log-Message "SUCCESS: $($configureResult.Message)"
-            Log-Message "Backup available at: $backupPath"
+
             
             return 0
         }

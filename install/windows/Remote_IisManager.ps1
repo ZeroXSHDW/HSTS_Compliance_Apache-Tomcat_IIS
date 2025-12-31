@@ -428,7 +428,7 @@ foreach ($server in $uniqueServers) {
                 
             } catch {
                 $lastError = $_
-                Write-Host "Failed to connect using $authMethod: $($_.Exception.Message)" -ForegroundColor Yellow
+                Write-Host "Failed to connect using ${authMethod}: $($_.Exception.Message)" -ForegroundColor Yellow
                 continue
             }
         }
@@ -448,5 +448,6 @@ foreach ($server in $uniqueServers) {
 
 Write-Host ""
 Write-Host "Remote IIS management operation completed."
-Write-Host "Check individual server logs at: \\$server\C$\Users\$env:USERNAME\AppData\Local\Temp\IisManager.log"
+Write-Host "Check individual server logs at: \\<server>\C$\Users\<username>\AppData\Local\Temp\IisManager.log"
+Write-Host "  (Replace <server> with the server name and <username> with the remote user who ran the script)"
 

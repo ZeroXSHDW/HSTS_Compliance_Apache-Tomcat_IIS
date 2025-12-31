@@ -6,9 +6,9 @@
 
 set -e
 
-LOG_FILE="$HOME/TestHstsUnix.log"
-TEST_DIR="$HOME/HstsTest"
-BACKUP_DIR="$HOME/HstsTestBackup"
+LOG_FILE="$(pwd)/TestHstsUnix.log"
+TEST_DIR="$(pwd)/tests/HstsTest"
+BACKUP_DIR="$(pwd)/tests/HstsTestBackup"
 SCRIPT_PATH="$(dirname "$0")/../../../src/unix/Patch/bash/UpdateTomcatHstsUnix.sh"
 
 # Function to write log messages
@@ -47,16 +47,17 @@ test_scenario() {
     
     write_log "Testing scenario: $name - $description"
     
-    # Create test web.xml
+    # Create test web.xml and server.xml (required for detection)
     local web_xml_path="$TEST_DIR/conf/web.xml"
     echo "$web_xml" > "$web_xml_path"
+    touch "$TEST_DIR/conf/server.xml"
     
     # Backup original
     cp "$web_xml_path" "$BACKUP_DIR/web.xml.$name"
     
     # Run audit mode
     write_log "Running audit mode..."
-    if sudo "$SCRIPT_PATH" --mode audit --custom-conf="$TEST_DIR/conf" >> "$LOG_FILE" 2>&1; then
+    if "$SCRIPT_PATH" --mode audit --custom-conf="$TEST_DIR/conf" --log-file="$TEST_DIR/audit.log" >> "$LOG_FILE" 2>&1; then
         write_log "Audit completed successfully"
     else
         write_log "Audit failed or found issues (this may be expected)" "WARNING"
@@ -64,7 +65,7 @@ test_scenario() {
     
     # Run configure mode (dry run first)
     write_log "Running configure mode (dry run)..."
-    if sudo "$SCRIPT_PATH" --mode configure --custom-conf="$TEST_DIR/conf" --dry-run >> "$LOG_FILE" 2>&1; then
+    if "$SCRIPT_PATH" --mode configure --custom-conf="$TEST_DIR/conf" --dry-run --log-file="$TEST_DIR/dry_run.log" >> "$LOG_FILE" 2>&1; then
         write_log "Dry run completed successfully"
     else
         write_log "Dry run failed" "ERROR"

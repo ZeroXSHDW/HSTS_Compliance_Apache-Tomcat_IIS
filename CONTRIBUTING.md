@@ -60,7 +60,7 @@ Feature suggestions are welcome! Please include:
 - Administrator privileges for testing
 
 **For Unix/Linux Development:**
-- Bash 4.0 or later
+- Bash 3.2 or later
 - Linux/Unix server environment
 - Root or sudo access for testing
 

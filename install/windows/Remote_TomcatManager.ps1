@@ -288,7 +288,7 @@ foreach ($server in $uniqueServers) {
                                         Remove-Item -Path $dir -Recurse -Force
                                         Write-Log "Removed Java directory: $dir"
                                     } catch {
-                                        Write-Log "ERROR: Failed to remove Java directory $dir: $($_.Exception.Message)"
+                                        Write-Log "ERROR: Failed to remove Java directory ${dir}: $($_.Exception.Message)"
                                     }
                                 }
                             }
@@ -342,10 +342,12 @@ foreach ($server in $uniqueServers) {
                             $CHECKSUM_URL = ""
                             $CHECKSUM = ""
                             $LOCAL_FILE = ""
+                            $SERVICE_NAME = ""
 
                             switch ($TomcatMajor) {
                                 "7" {
                                     $TOMCAT_VERSION = "7.0.100"
+                                    $SERVICE_NAME = "Tomcat7"
                                     $LOCAL_FILE = "$env:TEMP\apache-tomcat-$TOMCAT_VERSION-windows-x64.zip"
                                     $TOMCAT_URLS = @(
                                         "https://archive.apache.org/dist/tomcat/tomcat-7/v$TOMCAT_VERSION/bin/apache-tomcat-$TOMCAT_VERSION-windows-x64.zip",
@@ -362,6 +364,7 @@ foreach ($server in $uniqueServers) {
                                 }
                                 "8.5" {
                                     $TOMCAT_VERSION = "8.5.100"
+                                    $SERVICE_NAME = "Tomcat8"
                                     $LOCAL_FILE = "$env:TEMP\apache-tomcat-$TOMCAT_VERSION-windows-x64.zip"
                                     $TOMCAT_URLS = @(
                                         "https://dlcdn.apache.org/tomcat/tomcat-8/v$TOMCAT_VERSION/bin/apache-tomcat-$TOMCAT_VERSION-windows-x64.zip",
@@ -381,6 +384,7 @@ foreach ($server in $uniqueServers) {
                                 }
                                 "9" {
                                     $TOMCAT_VERSION = "9.0.104"
+                                    $SERVICE_NAME = "Tomcat9"
                                     $LOCAL_FILE = "$env:TEMP\apache-tomcat-$TOMCAT_VERSION-windows-x64.zip"
                                     $TOMCAT_URLS = @(
                                         "https://dlcdn.apache.org/tomcat/tomcat-9/v$TOMCAT_VERSION/bin/apache-tomcat-$TOMCAT_VERSION-windows-x64.zip",
@@ -400,6 +404,7 @@ foreach ($server in $uniqueServers) {
                                 }
                                 "10.0" {
                                     $TOMCAT_VERSION = "10.0.27"
+                                    $SERVICE_NAME = "Tomcat10"
                                     $LOCAL_FILE = "$env:TEMP\apache-tomcat-$TOMCAT_VERSION-windows-x64.zip"
                                     $TOMCAT_URLS = @(
                                         "https://dlcdn.apache.org/tomcat/tomcat-10/v$TOMCAT_VERSION/bin/apache-tomcat-$TOMCAT_VERSION-windows-x64.zip",
@@ -419,6 +424,7 @@ foreach ($server in $uniqueServers) {
                                 }
                                 "10.1" {
                                     $TOMCAT_VERSION = "10.1.31"
+                                    $SERVICE_NAME = "Tomcat10"
                                     $LOCAL_FILE = "$env:TEMP\apache-tomcat-$TOMCAT_VERSION-windows-x64.zip"
                                     $TOMCAT_URLS = @(
                                         "https://dlcdn.apache.org/tomcat/tomcat-10/v$TOMCAT_VERSION/bin/apache-tomcat-$TOMCAT_VERSION-windows-x64.zip",
@@ -534,7 +540,9 @@ foreach ($server in $uniqueServers) {
                             Write-Log "Verifying checksum of downloaded file..."
                             $checksumFileUrl = $downloadedFilePath + ".sha512"
                             $baseName = [System.IO.Path]::GetFileName($downloadedFilePath)
-                            $checksumUrlBase = "https://archive.apache.org/dist/tomcat/tomcat-$($TomcatMajor -replace '\\.','')/v$TOMCAT_VERSION/bin/$baseName.sha512"
+                            # Convert version to URL format: "8.5" -> "8", "10.0" -> "10", "10.1" -> "10"
+                            $tomcatMajorUrl = if ($TomcatMajor -match '^(\d+)\.') { $matches[1] } else { $TomcatMajor -replace '\.\d+$','' }
+                            $checksumUrlBase = "https://archive.apache.org/dist/tomcat/tomcat-$tomcatMajorUrl/v$TOMCAT_VERSION/bin/$baseName.sha512"
                             $skipChecksum = $false
                             try {
                                 (New-Object System.Net.WebClient).DownloadFile($checksumUrlBase, $checksumFileUrl)
@@ -614,7 +622,7 @@ foreach ($server in $uniqueServers) {
 
                             # Install Tomcat as a Windows service
                             Write-Log "Installing Tomcat Windows service..."
-                            $serviceName = "Tomcat10"
+                            $serviceName = $SERVICE_NAME
                             $serviceBat = "$TOMCAT_DIR\bin\service.bat"
                             $serviceExists = $false
                             try {
@@ -857,7 +865,7 @@ foreach ($server in $uniqueServers) {
                 
             } catch {
                 $lastError = $_
-                Write-Host "Failed to connect using $authMethod: $($_.Exception.Message)" -ForegroundColor Yellow
+                Write-Host "Failed to connect using ${authMethod}: $($_.Exception.Message)" -ForegroundColor Yellow
                 continue
             }
         }
@@ -877,5 +885,6 @@ foreach ($server in $uniqueServers) {
 
 Write-Host ""
 Write-Host "Remote Tomcat management operation completed."
-Write-Host "Check individual server logs at: \\$server\C$\Users\$env:USERNAME\AppData\Local\Temp\TomcatManager.log"
+Write-Host "Check individual server logs at: \\<server>\C$\Users\<username>\AppData\Local\Temp\TomcatManager.log"
+Write-Host "  (Replace <server> with the server name and <username> with the remote user who ran the script)"
 

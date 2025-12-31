@@ -19,7 +19,7 @@ param(
     [string]$CustomPathsFile = $null,
     
     [Parameter(Mandatory=$false)]
-    [string]$LogFile = "$env:LOCALAPPDATA\Temp\TomcatHsts.log",
+    [string]$LogFile = "$env:TEMP\TomcatHsts_$(Get-Date -Format 'yyyyMMdd_HHmmss').log",
     
     [Parameter(Mandatory=$false)]
     [switch]$DryRun = $false,
@@ -35,7 +35,7 @@ $Timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
 
 # Initialize log file
 if ($LogFile -eq "") {
-    $LogFile = "$env:LOCALAPPDATA\Temp\TomcatHsts.log"
+    $LogFile = "$env:TEMP\TomcatHsts_$(Get-Date -Format 'yyyyMMdd_HHmmss').log"
 }
 try {
     $null = New-Item -Path $LogFile -ItemType File -Force -ErrorAction Stop
@@ -858,13 +858,13 @@ function Process-WebXml {
                 }
             }
             
-            # SAFETY: Create backup before making any changes
-            $backupPath = Backup-Config -ConfigPath $WebXmlPath
-            
-            # Apply compliant HSTS configuration (only modifies HSTS-related elements)
-            Apply-CompliantHsts -WebXml $webXml
-            
             if (-not $DryRun) {
+                # SAFETY: Create backup before making any changes
+                $backupPath = Backup-Config -ConfigPath $WebXmlPath
+                
+                # Apply compliant HSTS configuration (only modifies HSTS-related elements)
+                Apply-CompliantHsts -WebXml $webXml
+                
                 # SAFETY: Save to temporary file first, then validate
                 $tempXmlPath = [System.IO.Path]::GetTempFileName()
                 $webXml.Save($tempXmlPath)
@@ -889,6 +889,9 @@ function Process-WebXml {
                 Log-Message "SUCCESS: Compliant HSTS configuration applied successfully with all safety checks passed"
                 Log-Message "Backup available at: $backupPath"
             } else {
+                # Apply configuration changes to in-memory XML for validation
+                Apply-CompliantHsts -WebXml $webXml
+                
                 Log-Message "DRY RUN: Would apply compliant HSTS configuration"
                 # In dry run, still verify the configuration would be correct
                 try {

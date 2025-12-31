@@ -354,15 +354,16 @@ generate_hash() {
         salt_length="16"
     fi
     
-    # Build command
-    local cmd="env JAVA_HOME=\"$JAVA_HOME\" PATH=\"$PATH\" $digest_script -a $algorithm"
-    [ -n "$iterations" ] && cmd="$cmd -i $iterations"
-    [ -n "$salt_length" ] && cmd="$cmd -s $salt_length"
-    cmd="$cmd '$password'"
+    # Build command arguments safely without eval
+    local args=()
+    args+=("-a" "$algorithm")
+    [ -n "$iterations" ] && args+=("-i" "$iterations")
+    [ -n "$salt_length" ] && args+=("-s" "$salt_length")
+    args+=("$password")
     
-    # Run digest.sh
+    # Run digest.sh safely without eval
     local result
-    result=$(eval $cmd)
+    result=$(env JAVA_HOME="$JAVA_HOME" PATH="$PATH" "$digest_script" "${args[@]}")
     if [[ "$result" =~ [0-9a-fA-F:]+$ ]]; then
         echo "${BASH_REMATCH[0]}"
         return 0
@@ -549,25 +550,31 @@ update_user() {
     local temp_file="${users_xml}.tmp"
     cp "$users_xml" "$temp_file"
     
-    # Update or add user
+    # Update or add user safely
+    # Note: We use a different delimiter and escape variables to protect against special characters
+    local escaped_user=$(echo "$username" | sed 's/[&/\]/\\&/g')
+    local escaped_pass=$(echo "$password" | sed 's/[&/\]/\\&/g')
+    local escaped_roles=$(echo "$roles" | sed 's/[&/\]/\\&/g')
+
     if grep -q "<user username=\"$username\"" "$temp_file"; then
-        # Update existing user
+        # Update existing user - using @ as delimiter which is less likely in these fields, 
+        # but the escaping above is the primary protection
         if sed --version >/dev/null 2>&1; then
             # GNU sed
-            sed -i "s|<user username=\"$username\".*|<user username=\"$username\" password=\"$password\" roles=\"$roles\"/>|" "$temp_file"
+            sed -i "s@<user username=\"$escaped_user\".*@<user username=\"$escaped_user\" password=\"$escaped_pass\" roles=\"$escaped_roles\"/>@" "$temp_file"
         else
             # BSD/macOS sed
-            sed -i '' "s|<user username=\"$username\".*|<user username=\"$username\" password=\"$password\" roles=\"$roles\"/>|" "$temp_file"
+            sed -i '' "s@<user username=\"$escaped_user\".*@<user username=\"$escaped_user\" password=\"$escaped_pass\" roles=\"$escaped_roles\"/>@" "$temp_file"
         fi
     else
         # Add new user
         if sed --version >/dev/null 2>&1; then
             # GNU sed
-            sed -i "/<\/tomcat-users>/i <user username=\"$username\" password=\"$password\" roles=\"$roles\"/>" "$temp_file"
+            sed -i "/<\/tomcat-users>/i <user username=\"$escaped_user\" password=\"$escaped_pass\" roles=\"$escaped_roles\"/>" "$temp_file"
         else
             # BSD/macOS sed
             sed -i '' "/<\/tomcat-users>/i\\
-    <user username=\"$username\" password=\"$password\" roles=\"$roles\"/>" "$temp_file"
+    <user username=\"$escaped_user\" password=\"$escaped_pass\" roles=\"$escaped_roles\"/>" "$temp_file"
         fi
     fi
     
@@ -678,7 +685,14 @@ if [ -d "$INSTALL_PATH-$test_version" ] && [ ! -w "$INSTALL_PATH-$test_version" 
     exit 1
 fi
 write_log "Extracting Tomcat to $INSTALL_PATH-$test_version"
-rm -rf "$INSTALL_PATH-$test_version"
+# Safety check before rm -rf: ensure path is not empty, not root, and contains tomcat
+if [ -z "$INSTALL_PATH" ] || [ "$INSTALL_PATH" = "/" ] || [ -z "$test_version" ]; then
+    write_log "Invalid installation path for removal: $INSTALL_PATH-$test_version" "ERROR"
+    exit 1
+fi
+if [ -d "$INSTALL_PATH-$test_version" ]; then
+    rm -rf "$INSTALL_PATH-$test_version"
+fi
 tar xzf "$zip_file" -C "$(dirname "$INSTALL_PATH-$test_version")"
 mv "$(dirname "$INSTALL_PATH-$test_version")/apache-tomcat-$latest_minor" "$INSTALL_PATH-$test_version"
 rm -f "$zip_file"
@@ -700,10 +714,14 @@ write_log "Tomcat $test_version installation completed successfully" "INFO"
 # After creating tomcat-users.xml, ensure only the specified user is present
 # Remove all other uncommented <user ...> entries
 if [ -n "$USERNAME" ] && [ -n "$PASSWORD" ] && [ -n "$ROLES" ]; then
+    local esc_user=$(echo "$USERNAME" | sed 's/[&/\]/\\&/g')
+    local esc_pass=$(echo "$PASSWORD" | sed 's/[&/\]/\\&/g')
+    local esc_roles=$(echo "$ROLES" | sed 's/[&/\]/\\&/g')
+    
     # Remove all uncommented <user ...> lines
     sed -i '/^[[:space:]]*<user /d' "$users_xml"
     # Insert the specified user before </tomcat-users>
-    sed -i "/<\/tomcat-users>/i \\  <user username=\"$USERNAME\" password=\"$PASSWORD\" roles=\"$ROLES\"/>" "$users_xml"
+    sed -i "/<\/tomcat-users>/i \\  <user username=\"$esc_user\" password=\"$esc_pass\" roles=\"$esc_roles\"/>" "$users_xml"
     echo "[INFO] Only user $USERNAME is present in tomcat-users.xml."
 fi
 

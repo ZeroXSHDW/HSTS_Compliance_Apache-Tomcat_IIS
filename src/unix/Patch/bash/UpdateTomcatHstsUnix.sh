@@ -32,7 +32,7 @@ CONFIG_PATH=""
 CUSTOM_CONF_PATH=""
 CUSTOM_CONF_PATHS=()  # Array for multiple custom paths
 CUSTOM_PATHS_FILE=""
-LOG_FILE="/tmp/TomcatHsts.log"
+LOG_FILE="/var/log/tomcat-hsts-$(date +%Y%m%d_%H%M%S).log"
 DRY_RUN=false
 SCRIPT_NAME=$(basename "$0")
 RECOMMENDED_HSTS="max-age=31536000; includeSubDomains"
@@ -46,15 +46,18 @@ BACKUP_PATH=""
 
 # Cleanup function for temporary files
 cleanup_temp_files() {
-    for temp_file in "${TEMP_FILES[@]}"; do
-        if [[ -f "$temp_file" ]]; then
-            rm -f "$temp_file" 2>/dev/null || true
-        fi
-    done
+    # Check if TEMP_FILES exists and has elements to avoid unbound variable errors with set -u
+    if [[ -n "${TEMP_FILES[*]:-}" ]]; then
+        for temp_file in "${TEMP_FILES[@]}"; do
+            if [[ -f "$temp_file" ]]; then
+                rm -f "$temp_file" 2>/dev/null || true
+            fi
+        done
+    fi
 }
 
-# Trap to ensure cleanup on error/interrupt
-trap cleanup_temp_files ERR INT TERM
+# Trap to ensure cleanup on exit, error, interrupt, and termination
+trap cleanup_temp_files EXIT ERR INT TERM
 
 # Function: Print usage information
 usage() {
@@ -210,7 +213,7 @@ find_all_hsts_headers() {
     done <<< "$config_content"
     
     if [[ ${#headers[@]} -gt 0 ]]; then
-        echo "${headers[@]}"
+        printf '%s\n' "${headers[@]}"
     fi
 }
 
@@ -252,8 +255,13 @@ audit_hsts_headers() {
     local details=""
     local is_correct=1
     
-    # Find all HSTS header definitions
-    read -ra all_headers <<< "$(find_all_hsts_headers "$config_content")"
+    # Find all HSTS header definitions (using while loop for legacy Bash compatibility)
+    local all_headers=()
+    while IFS= read -r line; do
+        if [[ -n "$line" ]]; then
+            all_headers+=("$line")
+        fi
+    done <<< "$(find_all_hsts_headers "$config_content")"
     header_count=${#all_headers[@]}
     
     if [[ $header_count -eq 0 ]]; then
@@ -273,23 +281,26 @@ audit_hsts_headers() {
     
     # Check for filter-based HSTS configuration (Tomcat specific)
     if echo "$config_content" | grep -qi "hstsMaxAgeSeconds"; then
-        local max_age_lines=$(echo "$config_content" | grep -i "hstsMaxAgeSeconds" | wc -l | tr -d ' ')
-        local include_subdomains=$(echo "$config_content" | grep -i "hstsIncludeSubDomains" | grep -i "true" | wc -l | tr -d ' ')
+        # Extract the value of hstsMaxAgeSeconds even if it's on the next line
+        local max_age_val=$(echo "$config_content" | sed -n '/hstsMaxAgeSeconds/{n;p;}' | grep -o '[0-9]\+')
+        # Fallback if it's on the same line
+        if [[ -z "$max_age_val" ]]; then
+            max_age_val=$(echo "$config_content" | grep "hstsMaxAgeSeconds" | sed 's/.*hstsMaxAgeSeconds.*>\([0-9]\+\)<.*/\1/' | grep -o '^[0-9]\+$')
+        fi
         
-        if [[ $max_age_lines -gt 0 ]]; then
-            # Check if max-age is 31536000
-            if echo "$config_content" | grep -i "hstsMaxAgeSeconds" | grep -q "31536000"; then
-                if [[ $include_subdomains -gt 0 ]]; then
-                    compliant_count=$((compliant_count + 1))
-                    compliant_headers+=("Filter-based HSTS configuration")
-                else
-                    non_compliant_count=$((non_compliant_count + 1))
-                    non_compliant_headers+=("Filter-based HSTS: max-age correct but includeSubDomains missing or false")
-                fi
+        local include_subdomains=$(echo "$config_content" | sed -n '/hstsIncludeSubDomains/{n;p;}' | grep -i "true" | wc -l | tr -d ' ')
+        
+        if [[ -n "$max_age_val" ]] && [[ "$max_age_val" == "31536000" ]]; then
+            if [[ $include_subdomains -gt 0 ]]; then
+                compliant_count=$((compliant_count + 1))
+                compliant_headers+=("Filter-based HSTS configuration")
             else
                 non_compliant_count=$((non_compliant_count + 1))
-                non_compliant_headers+=("Filter-based HSTS: max-age is not 31536000")
+                non_compliant_headers+=("Filter-based HSTS: max-age correct but includeSubDomains missing or false")
             fi
+        else
+            non_compliant_count=$((non_compliant_count + 1))
+            non_compliant_headers+=("Filter-based HSTS: max-age is not 31536000 (found: ${max_age_val:-none})")
         fi
     fi
     
@@ -313,8 +324,10 @@ audit_hsts_headers() {
     fi
     
     # Determine overall status
-    if [[ $header_count -gt 1 ]]; then
-        details="Multiple HSTS header definitions found ($header_count total). Only one compliant configuration should exist."
+    local total_configs=$((compliant_count + non_compliant_count))
+    
+    if [[ $total_configs -gt 1 ]]; then
+        details="Multiple HSTS configurations found ($total_configs total). Only one compliant configuration should exist."
         is_correct=1
     elif [[ $compliant_count -eq 1 ]] && [[ $non_compliant_count -eq 0 ]]; then
         details="HSTS is correctly configured with exactly one compliant definition: max-age=31536000; includeSubDomains"
@@ -395,7 +408,11 @@ apply_compliant_hsts() {
     local filename=$(basename "$config_path")
     
     # First, remove all existing HSTS configurations
-    local temp_file=$(mktemp)
+    local temp_file=$(mktemp) || {
+        log_error "Failed to create temporary file"
+        return 1
+    }
+    TEMP_FILES+=("$temp_file")
     remove_all_hsts_configs "$config_content" "$temp_file"
     local cleaned_content=$(cat "$temp_file")
     # Clean up this temp file immediately after use
@@ -438,7 +455,10 @@ apply_compliant_hsts() {
             
             # Insert before closing tag with proper indentation
             # Use a more reliable approach with temporary files
-            local temp_filter=$(mktemp)
+            local temp_filter=$(mktemp) || {
+                log_error "Failed to create temporary file for filter configuration"
+                return 1
+            }
             TEMP_FILES+=("$temp_filter")
             printf '%s\n' "$filter_block" > "$temp_filter"
             
@@ -468,8 +488,7 @@ apply_compliant_hsts() {
                     cat "$temp_filter"
                 } > "$output_file"
             fi
-            # Clean up temp_filter after use
-            rm -f "$temp_filter"
+            # Temp file will be cleaned up by trap on exit
             
             # Validate the generated XML
             if ! validate_xml "$output_file" 2>/dev/null; then
@@ -535,7 +554,11 @@ backup_config() {
 configure_hsts_headers() {
     local config_content="$1"
     local config_path="$2"
-    local temp_file=$(mktemp)
+    local temp_file=$(mktemp) || {
+        log_error "Failed to create temporary file"
+        CONFIGURE_RESULT="Failed to create temporary file"
+        return 1
+    }
     TEMP_FILES+=("$temp_file")
     local success=1
     local message=""
@@ -591,8 +614,38 @@ configure_hsts_headers() {
             fi
         fi
         
+        # Preserve original file permissions and ownership
+        local original_perms=""
+        local original_owner=""
+        
+        # Get original permissions (platform-independent approach)
+        if command -v stat >/dev/null 2>&1; then
+            # Try GNU stat first (Linux)
+            original_perms=$(stat -c '%a' "$config_path" 2>/dev/null) || \
+            # Fallback to BSD stat (macOS/BSD)
+            original_perms=$(stat -f '%A' "$config_path" 2>/dev/null) || true
+            
+            # Get original owner
+            original_owner=$(stat -c '%U:%G' "$config_path" 2>/dev/null) || \
+            original_owner=$(stat -f '%Su:%Sg' "$config_path" 2>/dev/null) || true
+        fi
+        
         # Write back to original file
         if cp "$temp_file" "$config_path" 2>/dev/null; then
+            # Restore original permissions if we captured them
+            if [[ -n "$original_perms" ]]; then
+                chmod "$original_perms" "$config_path" 2>/dev/null || {
+                    log_message "WARNING: Could not restore original permissions ($original_perms)"
+                }
+            fi
+            
+            # Restore original ownership if we captured it and have permission
+            if [[ -n "$original_owner" ]] && [[ $EUID -eq 0 ]]; then
+                chown "$original_owner" "$config_path" 2>/dev/null || {
+                    log_message "WARNING: Could not restore original ownership ($original_owner)"
+                }
+            fi
+            
             # Verify the file was written correctly
             if [[ -f "$config_path" ]] && [[ -s "$config_path" ]]; then
                 success=0
@@ -674,7 +727,9 @@ load_custom_paths_from_file() {
     
     if [[ ${#paths[@]} -gt 0 ]]; then
         log_message "Loaded ${#paths[@]} custom path(s) from file: $paths_file"
+    if [ ${#paths[@]} -gt 0 ]; then
         printf '%s\n' "${paths[@]}"
+    fi
     fi
     
     return 0
@@ -689,16 +744,17 @@ get_tomcat_conf_paths() {
     
     # Check custom paths provided as arguments (deduplicate)
     local seen_paths=()
-    for custom_path in "${custom_conf_paths[@]}"; do
+    for custom_path in ${custom_conf_paths[@]+"${custom_conf_paths[@]}"}; do
         if [[ -n "$custom_path" ]]; then
-            # Check if we've already seen this path
             local seen=0
-            for seen_path in "${seen_paths[@]}"; do
-                if [[ "$seen_path" == "$custom_path" ]]; then
-                    seen=1
-                    break
-                fi
-            done
+            if [[ ${#seen_paths[@]} -gt 0 ]]; then
+                for seen_path in "${seen_paths[@]}"; do
+                    if [[ "$seen_path" == "$custom_path" ]]; then
+                        seen=1
+                        break
+                    fi
+                done
+            fi
             
             if [[ $seen -eq 0 ]]; then
                 seen_paths+=("$custom_path")
@@ -904,8 +960,8 @@ find_web_xml_files() {
         log_message "Found ${#web_xml_files[@]} web.xml file(s) to process"
     fi
     
-    # Return array (space-separated for bash)
-    echo "${web_xml_files[@]}"
+    # Return array (newline-separated for safer handling of paths with spaces)
+    printf '%s\n' "${web_xml_files[@]}"
 }
 
 # Function: Process a single web.xml file
@@ -961,7 +1017,7 @@ process_web_xml() {
         # Confirm before configuring (only once for all files)
         if [[ "$DRY_RUN" != "true" ]] && [[ -z "${CONFIRMED:-}" ]]; then
             if ! confirm_configure; then
-                exit 2
+                return 2
             fi
             CONFIRMED=1
         fi
@@ -1027,6 +1083,18 @@ main() {
                 CUSTOM_PATHS_FILE="${1#*=}"
                 shift
                 ;;
+            --log-file)
+                if [[ $# -lt 2 ]]; then
+                    log_error "Missing value for --log-file"
+                    usage
+                fi
+                LOG_FILE="$2"
+                shift 2
+                ;;
+            --log-file=*)
+                LOG_FILE="${1#*=}"
+                shift
+                ;;
             --dry-run|--dry_run)
                 DRY_RUN=true
                 shift
@@ -1064,7 +1132,7 @@ main() {
     log_message "========================================="
     
     # Collect all custom paths
-    local all_custom_paths=("${CUSTOM_CONF_PATHS[@]}")
+    local all_custom_paths=(${CUSTOM_CONF_PATHS[@]+"${CUSTOM_CONF_PATHS[@]}"})
     
     # Add legacy single custom path if set
     if [[ -n "$CUSTOM_CONF_PATH" ]]; then
@@ -1086,7 +1154,7 @@ main() {
     
     # Auto-detect Tomcat configuration directories
     local conf_paths_output
-    if ! conf_paths_output=$(get_tomcat_conf_paths "${all_custom_paths[@]}"); then
+    if ! conf_paths_output=$(get_tomcat_conf_paths ${all_custom_paths[@]+"${all_custom_paths[@]}"}); then
         log_error "Failed to locate Tomcat configuration"
         exit 2
     fi
@@ -1108,21 +1176,22 @@ main() {
     local web_xml_files=()
     for conf_path in "${conf_paths[@]}"; do
         log_message "Tomcat Configuration Directory: $conf_path"
-        local files
-        read -ra files <<< "$(find_web_xml_files "$conf_path")"
-        for file in "${files[@]}"; do
-            # Avoid duplicates
-            local found=0
-            for existing in "${web_xml_files[@]}"; do
-                if [[ "$existing" == "$file" ]]; then
-                    found=1
-                    break
+        while IFS= read -r file; do
+            if [[ -n "$file" ]]; then
+                local found=0
+                if [[ ${#web_xml_files[@]} -gt 0 ]]; then
+                    for existing in "${web_xml_files[@]}"; do
+                        if [[ "$existing" == "$file" ]]; then
+                            found=1
+                            break
+                        fi
+                    done
                 fi
-            done
-            if [[ $found -eq 0 ]]; then
-                web_xml_files+=("$file")
+                if [[ $found -eq 0 ]]; then
+                    web_xml_files+=("$file")
+                fi
             fi
-        done
+        done <<< "$(find_web_xml_files "$conf_path")"
     done
     
     if [[ ${#web_xml_files[@]} -eq 0 ]]; then

@@ -1,10 +1,14 @@
 # HSTS Compliance Tools - Apache Tomcat & IIS
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Platform](https://img.shields.io/badge/platform-Linux%20%7C%20Windows-lightgrey)](#platforms-and-servers)
+[![Status](https://img.shields.io/badge/status-Production--Ready-brightgreen)](#project-status)
 
-A comprehensive set of tools for auditing and configuring HTTP Strict Transport Security (HSTS) headers in Apache Tomcat and Microsoft IIS web servers. 
+A comprehensive set of tools for auditing and configuring HTTP Strict Transport Security (HSTS) headers in Apache Tomcat and Microsoft IIS web servers.
 
 **Primary Purpose:** This project focuses exclusively on HSTS security configuration and compliance across Linux and Windows platforms.
 
-**Supported Platforms & Servers:**
+## Platforms and Servers
+
 - **Linux/Unix:** Apache Tomcat HSTS configuration
 - **Windows:** Apache Tomcat and Microsoft IIS HSTS configuration
 
@@ -37,7 +41,8 @@ A comprehensive set of tools for auditing and configuring HTTP Strict Transport 
 This project provides scripts to audit and configure HSTS headers for compliance with security best practices as defined in the **OWASP HSTS Cheat Sheet** (RFC 6797).
 
 **OWASP Recommended Configuration:**
-```
+
+```http
 Strict-Transport-Security: max-age=31536000; includeSubDomains
 ```
 
@@ -46,6 +51,7 @@ Strict-Transport-Security: max-age=31536000; includeSubDomains
 ### Compliance Requirements
 
 This implementation follows OWASP recommendations:
+
 - ✅ **Required**: `max-age=31536000` (1 year = 365 days × 24 hours × 60 minutes × 60 seconds)
 - ✅ **Required**: `includeSubDomains` (prevents cookie-related attacks from subdomains)
 - ℹ️ **Optional**: `preload` directive (allowed but not configured by default - see [Preload Considerations](#preload-considerations) below)
@@ -53,8 +59,10 @@ This implementation follows OWASP recommendations:
 **Key Features:**
 
 **Core Functionality:**
+
 - ✅ **Auto-Detection**: Automatically finds Tomcat and IIS installations across common paths
 - ✅ **Audit Mode**: Check if HSTS is correctly configured without making changes
+
   - ✅ Windows Tomcat: `UpdateTomcatHstsWin.ps1 -Mode audit`
   - ✅ Windows IIS: `UpdateIisHstsWin.ps1 -Mode audit`
   - ✅ Linux/Unix Tomcat: `UpdateTomcatHstsUnix.sh --mode audit`
@@ -68,6 +76,7 @@ This implementation follows OWASP recommendations:
 - ✅ **Idempotency**: Ensures exactly one compliant HSTS definition (removes duplicates)
 
 **Flexibility & Control:**
+
 - ✅ **Custom Paths**: Specify single or multiple custom configuration paths
 - ✅ **Paths File Support**: Load multiple paths from a file (one per line, comments supported)
 - ✅ **Multiple File Processing**: Automatically processes all web.xml/web.config files in detected installations
@@ -148,21 +157,27 @@ This implementation follows OWASP recommendations:
 ## Prerequisites
 
 ### For Tomcat (Unix/Linux Servers)
-- Bash shell (version 4.0+)
+
+- Bash shell (version 3.2+)
 - Apache Tomcat installed (version 7.0 or later)
+
 - Root or sudo access for configuration changes
 - Optional: `xmllint` for XML validation, `diff` for dry-run preview
 - **Note:** Scripts are designed for Linux/Unix server environments only (not macOS)
 
 ### For Tomcat (Windows Server)
+
 - PowerShell 5.1 or later
 - Apache Tomcat installed (version 7.0 or later)
+
 - Administrator privileges
 - For remote execution: PowerShell Remoting (WinRM) enabled and configured
 
 ### For IIS (Windows Server)
+
 - PowerShell 5.1 or later
 - IIS installed (version 7.0 or later)
+
 - Administrator privileges
 - For remote execution: PowerShell Remoting (WinRM) enabled and configured
 
@@ -175,10 +190,12 @@ This implementation follows OWASP recommendations:
 For automated installation of Apache Tomcat or IIS on Windows or Unix/Linux systems, use the installation scripts provided in the `install/` directory. These scripts handle download, extraction, Java setup, secure user configuration, and service management.
 
 **Supported Installations:**
+
 - **Windows:** Tomcat (7.0, 8.5, 9.0, 10.0, 10.1) and IIS
 - **Unix/Linux:** Tomcat (7.0, 8.5, 9.0, 10.0, 10.1)
 
 **Windows:**
+
 ```powershell
 # Run as Administrator
 cd install\windows
@@ -206,6 +223,7 @@ For detailed manual installation instructions for Apache Tomcat, IIS, and PowerS
 See [INSTALLATION.md](INSTALLATION.md) for complete step-by-step instructions, troubleshooting guides, and verification checklists.
 
 > **After Installation:** Once Tomcat or IIS is installed, proceed to the [Quick Start](#quick-start) section to configure HSTS security headers.
+
     
 ## Quick Start
 
@@ -302,8 +320,6 @@ $cred = Get-Credential
 $cred = Get-Credential
 .\src\windows\Patch\powershell\Remote_UpdateTomcatHstsWin.ps1 -ServerName "webserver01.example.com" -Mode configure -Credential $cred -Force
 ```
-<｜tool▁calls▁begin｜><｜tool▁call▁begin｜>
-read_file
 
 **Local - With Custom Paths:**
 ```powershell
@@ -351,8 +367,6 @@ $cred = Get-Credential
   -CustomPaths @("C:\Tomcat\conf", "D:\Apache\Tomcat\conf") `
   -Mode configure -Credential $cred
 ```
-<｜tool▁calls▁begin｜><｜tool▁call▁begin｜>
-read_lints
 
 ### Microsoft IIS (Windows)
 
@@ -396,8 +410,6 @@ $cred = Get-Credential
 $cred = Get-Credential
 .\src\windows\Patch\powershell\Remote_UpdateIisHstsWin.ps1 -ServerName "webserver01.example.com" -Mode configure -Credential $cred -Force
 ```
-<｜tool▁calls▁begin｜><｜tool▁call▁begin｜>
-grep
 
 **Local - With Custom Paths:**
 ```powershell
@@ -551,7 +563,7 @@ sudo ./src/unix/Patch/bash/UpdateTomcatHstsUnix.sh --mode configure --dry-run
 [2025-01-15 10:30:45] Configuration required: Ensuring exactly one compliant HSTS definition exists
 [2025-01-15 10:30:45] DRY RUN: Would apply compliant HSTS configuration (see diff below)
 --- /opt/tomcat/conf/web.xml	2025-01-15 10:30:45.000000000 +0000
-+++ /tmp/tmp.XXXXXX	2025-01-15 10:30:45.000000000 +0000
++++ /tmp/tmp.abc123	2025-01-15 10:30:45.000000000 +0000
 @@ -10,6 +10,25 @@
      </description>
  </web-app>
@@ -806,13 +818,14 @@ All scripts include automatic detection capabilities to simplify deployment:
 
 **Syntax:**
 ```bash
-sudo ./src/unix/Patch/bash/UpdateTomcatHstsUnix.sh [--mode audit|configure] [--custom-conf=/path/to/conf] [--custom-paths-file=/path/to/file] [--dry-run]
+sudo ./src/unix/Patch/bash/UpdateTomcatHstsUnix.sh [--mode audit|configure] [--custom-conf=/path/to/conf] [--custom-paths-file=/path/to/file] [--log-file=/path/to/log] [--dry-run]
 ```
 
 **Options:**
 - `--mode` (optional, default: configure): Operation mode - `audit` or `configure`
 - `--custom-conf` (optional, repeatable): Custom Tomcat conf directory path (can be specified multiple times)
 - `--custom-paths-file` (optional): File containing custom paths (one path per line, lines starting with # are comments)
+- `--log-file` (optional): Custom log file path (defaults to timestamped log in /var/log)
 - `--dry-run` (optional): Preview changes without applying (configure mode only)
 
 **Auto-Detection:**
