@@ -1,4 +1,4 @@
-![HSTS_Compliance_Apache-Tomcat_IIS](assets/images/banner.png)
+![HSTS_Compliance_Apache-Tomcat_IIS](assets/images/banner.png = 240x240)
 
 # Installation Scripts
 
