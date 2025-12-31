@@ -1,5 +1,3 @@
-![HSTS_Compliance_Apache-Tomcat_IIS](assets/images/banner.png = 240x240)
-
 # Installation Scripts
 
 This directory contains cross-platform installation scripts for Apache Tomcat and Microsoft IIS, designed for automated deployment and configuration.
