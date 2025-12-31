@@ -58,11 +58,25 @@ Feature suggestions are welcome! Please include:
 - PowerShell 5.1 or later
 - Windows Server or Windows 10/11
 - Administrator privileges for testing
+- Python 3.x (optional, for pre-commit hooks)
 
 **For Unix/Linux Development:**
 - Bash 3.2 or later
 - Linux/Unix server environment
 - Root or sudo access for testing
+- Python 3.x (optional, for pre-commit hooks)
+
+### Pre-commit Hooks (Optional but Recommended)
+
+We use [pre-commit](https://pre-commit.com/) to automatically check code quality before committing.
+
+```bash
+# Install pre-commit
+pip install pre-commit
+
+# Install hooks into your git repo
+pre-commit install
+```
 
 ### Cloning the Repository
 

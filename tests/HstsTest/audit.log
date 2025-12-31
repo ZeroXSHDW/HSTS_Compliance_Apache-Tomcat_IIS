@@ -1,0 +1,146 @@
+[2025-12-31 18:13:27] =========================================
+[2025-12-31 18:13:27] Tomcat HSTS Configuration Tool
+[2025-12-31 18:13:27] Hostname: MacBookPro.station
+[2025-12-31 18:13:27] Execution Time: 2025-12-31 18:13:27
+[2025-12-31 18:13:27] Mode: audit
+[2025-12-31 18:13:27] =========================================
+[2025-12-31 18:13:27] Checking custom configuration path: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/HstsTest/conf
+[2025-12-31 18:13:27] Found valid Tomcat configuration at custom path: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/HstsTest/conf
+[2025-12-31 18:13:27] Found Tomcat Configuration: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/HstsTest/conf (Version: 9.0.50)
+[2025-12-31 18:13:27] Searching for web.xml files...
+[2025-12-31 18:13:27]   Found: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/HstsTest/conf/web.xml (global configuration)
+[2025-12-31 18:13:27] Found 1 web.xml file(s) to process
+[2025-12-31 18:13:27] 
+[2025-12-31 18:13:27] =========================================
+[2025-12-31 18:13:27] Processing: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/HstsTest/conf/web.xml
+[2025-12-31 18:13:27] =========================================
+[2025-12-31 18:13:27] FAILURE: No HSTS header definitions found in configuration
+[2025-12-31 18:13:27] HSTS configuration needs to be updated.
+[2025-12-31 18:13:27] 
+[2025-12-31 18:13:27] =========================================
+[2025-12-31 18:13:27] Summary
+[2025-12-31 18:13:27] =========================================
+[2025-12-31 18:13:27] Total files processed: 1
+[2025-12-31 18:13:27] Successful: 0
+[2025-12-31 18:13:27] Failed: 1
+[2025-12-31 18:13:27] Overall Status: FAILURE (some files failed)
+[2025-12-31 18:13:27] Log file: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/HstsTest/audit.log
+[2025-12-31 18:13:27] =========================================
+[2025-12-31 18:13:27] Tomcat HSTS Configuration Tool
+[2025-12-31 18:13:27] Hostname: MacBookPro.station
+[2025-12-31 18:13:27] Execution Time: 2025-12-31 18:13:27
+[2025-12-31 18:13:27] Mode: audit
+[2025-12-31 18:13:27] =========================================
+[2025-12-31 18:13:27] Checking custom configuration path: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/HstsTest/conf
+[2025-12-31 18:13:27] Found valid Tomcat configuration at custom path: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/HstsTest/conf
+[2025-12-31 18:13:27] Found Tomcat Configuration: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/HstsTest/conf (Version: 9.0.50)
+[2025-12-31 18:13:27] Searching for web.xml files...
+[2025-12-31 18:13:27]   Found: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/HstsTest/conf/web.xml (global configuration)
+[2025-12-31 18:13:27] Found 1 web.xml file(s) to process
+[2025-12-31 18:13:27] 
+[2025-12-31 18:13:27] =========================================
+[2025-12-31 18:13:27] Processing: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/HstsTest/conf/web.xml
+[2025-12-31 18:13:27] =========================================
+[2025-12-31 18:13:28] Found 5 HSTS header definition(s)
+[2025-12-31 18:13:28] Non-compliant headers found:
+[2025-12-31 18:13:28]   - Filter-based HSTS: max-age is not 31536000 (found: 86400)
+[2025-12-31 18:13:28] FAILURE: HSTS header(s) found but none are compliant. Found 1 non-compliant definition(s).
+[2025-12-31 18:13:28] HSTS configuration needs to be updated.
+[2025-12-31 18:13:28] ACTION REQUIRED: Remove duplicate HSTS definitions. Only one compliant configuration should exist.
+[2025-12-31 18:13:28] 
+[2025-12-31 18:13:28] =========================================
+[2025-12-31 18:13:28] Summary
+[2025-12-31 18:13:28] =========================================
+[2025-12-31 18:13:28] Total files processed: 1
+[2025-12-31 18:13:28] Successful: 0
+[2025-12-31 18:13:28] Failed: 1
+[2025-12-31 18:13:28] Overall Status: FAILURE (some files failed)
+[2025-12-31 18:13:28] Log file: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/HstsTest/audit.log
+[2025-12-31 18:13:28] =========================================
+[2025-12-31 18:13:28] Tomcat HSTS Configuration Tool
+[2025-12-31 18:13:28] Hostname: MacBookPro.station
+[2025-12-31 18:13:28] Execution Time: 2025-12-31 18:13:28
+[2025-12-31 18:13:28] Mode: audit
+[2025-12-31 18:13:28] =========================================
+[2025-12-31 18:13:28] Checking custom configuration path: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/HstsTest/conf
+[2025-12-31 18:13:28] Found valid Tomcat configuration at custom path: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/HstsTest/conf
+[2025-12-31 18:13:28] Found Tomcat Configuration: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/HstsTest/conf (Version: 9.0.50)
+[2025-12-31 18:13:28] Searching for web.xml files...
+[2025-12-31 18:13:28]   Found: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/HstsTest/conf/web.xml (global configuration)
+[2025-12-31 18:13:28] Found 1 web.xml file(s) to process
+[2025-12-31 18:13:28] 
+[2025-12-31 18:13:28] =========================================
+[2025-12-31 18:13:28] Processing: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/HstsTest/conf/web.xml
+[2025-12-31 18:13:28] =========================================
+[2025-12-31 18:13:28] Found 5 HSTS header definition(s)
+[2025-12-31 18:13:28] Non-compliant headers found:
+[2025-12-31 18:13:28]   - Filter-based HSTS: max-age correct but includeSubDomains missing or false
+[2025-12-31 18:13:28] FAILURE: HSTS header(s) found but none are compliant. Found 1 non-compliant definition(s).
+[2025-12-31 18:13:28] HSTS configuration needs to be updated.
+[2025-12-31 18:13:28] ACTION REQUIRED: Remove duplicate HSTS definitions. Only one compliant configuration should exist.
+[2025-12-31 18:13:28] 
+[2025-12-31 18:13:28] =========================================
+[2025-12-31 18:13:28] Summary
+[2025-12-31 18:13:28] =========================================
+[2025-12-31 18:13:28] Total files processed: 1
+[2025-12-31 18:13:28] Successful: 0
+[2025-12-31 18:13:28] Failed: 1
+[2025-12-31 18:13:28] Overall Status: FAILURE (some files failed)
+[2025-12-31 18:13:28] Log file: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/HstsTest/audit.log
+[2025-12-31 18:13:29] =========================================
+[2025-12-31 18:13:29] Tomcat HSTS Configuration Tool
+[2025-12-31 18:13:29] Hostname: MacBookPro.station
+[2025-12-31 18:13:29] Execution Time: 2025-12-31 18:13:29
+[2025-12-31 18:13:29] Mode: audit
+[2025-12-31 18:13:29] =========================================
+[2025-12-31 18:13:29] Checking custom configuration path: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/HstsTest/conf
+[2025-12-31 18:13:29] Found valid Tomcat configuration at custom path: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/HstsTest/conf
+[2025-12-31 18:13:29] Found Tomcat Configuration: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/HstsTest/conf (Version: 9.0.50)
+[2025-12-31 18:13:29] Searching for web.xml files...
+[2025-12-31 18:13:29]   Found: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/HstsTest/conf/web.xml (global configuration)
+[2025-12-31 18:13:29] Found 1 web.xml file(s) to process
+[2025-12-31 18:13:29] 
+[2025-12-31 18:13:29] =========================================
+[2025-12-31 18:13:29] Processing: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/HstsTest/conf/web.xml
+[2025-12-31 18:13:29] =========================================
+[2025-12-31 18:13:29] Found 5 HSTS header definition(s)
+[2025-12-31 18:13:29] Compliant headers found:
+[2025-12-31 18:13:29]   - Filter-based HSTS configuration
+[2025-12-31 18:13:29] SUCCESS: HSTS is correctly configured with exactly one compliant definition: max-age=31536000; includeSubDomains
+[2025-12-31 18:13:29] HSTS configuration is compliant.
+[2025-12-31 18:13:29] 
+[2025-12-31 18:13:29] =========================================
+[2025-12-31 18:13:29] Summary
+[2025-12-31 18:13:29] =========================================
+[2025-12-31 18:13:29] Total files processed: 1
+[2025-12-31 18:13:29] Successful: 1
+[2025-12-31 18:13:29] Failed: 0
+[2025-12-31 18:13:29] Overall Status: SUCCESS
+[2025-12-31 18:13:29] Log file: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/HstsTest/audit.log
+[2025-12-31 18:13:29] =========================================
+[2025-12-31 18:13:29] Tomcat HSTS Configuration Tool
+[2025-12-31 18:13:29] Hostname: MacBookPro.station
+[2025-12-31 18:13:29] Execution Time: 2025-12-31 18:13:29
+[2025-12-31 18:13:29] Mode: audit
+[2025-12-31 18:13:29] =========================================
+[2025-12-31 18:13:29] Checking custom configuration path: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/HstsTest/conf
+[2025-12-31 18:13:29] Found valid Tomcat configuration at custom path: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/HstsTest/conf
+[2025-12-31 18:13:29] Found Tomcat Configuration: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/HstsTest/conf (Version: 11.0.0)
+[2025-12-31 18:13:29] Searching for web.xml files...
+[2025-12-31 18:13:29]   Found: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/HstsTest/conf/web.xml (global configuration)
+[2025-12-31 18:13:29] Found 1 web.xml file(s) to process
+[2025-12-31 18:13:29] 
+[2025-12-31 18:13:29] =========================================
+[2025-12-31 18:13:29] Processing: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/HstsTest/conf/web.xml
+[2025-12-31 18:13:29] =========================================
+[2025-12-31 18:13:30] FAILURE: No HSTS header definitions found in configuration
+[2025-12-31 18:13:30] HSTS configuration needs to be updated.
+[2025-12-31 18:13:30] 
+[2025-12-31 18:13:30] =========================================
+[2025-12-31 18:13:30] Summary
+[2025-12-31 18:13:30] =========================================
+[2025-12-31 18:13:30] Total files processed: 1
+[2025-12-31 18:13:30] Successful: 0
+[2025-12-31 18:13:30] Failed: 1
+[2025-12-31 18:13:30] Overall Status: FAILURE (some files failed)
+[2025-12-31 18:13:30] Log file: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/HstsTest/audit.log

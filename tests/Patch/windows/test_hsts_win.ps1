@@ -33,9 +33,9 @@ New-Item -ItemType Directory -Path $BACKUP_DIR -Force | Out-Null
 # Test scenarios
 $testScenarios = @(
     @{
-        Name = "No_HSTS_Header"
-        Description = "Configuration with no HSTS header"
-        WebXml = @"
+        Name           = "No_HSTS_Header"
+        Description    = "Configuration with no HSTS header"
+        WebXml         = @"
 <?xml version="1.0" encoding="UTF-8"?>
 <web-app xmlns="http://xmlns.jcp.org/xml/ns/javaee"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -45,7 +45,7 @@ $testScenarios = @(
     <display-name>Test Application</display-name>
 </web-app>
 "@
-        WebConfig = @"
+        WebConfig      = @"
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
     <system.webServer>
@@ -59,9 +59,9 @@ $testScenarios = @(
         ExpectedResult = "Should add compliant HSTS header"
     },
     @{
-        Name = "Non_Compliant_HSTS_Short_MaxAge"
-        Description = "HSTS with max-age less than 31536000"
-        WebXml = @"
+        Name           = "Non_Compliant_HSTS_Short_MaxAge"
+        Description    = "HSTS with max-age less than 31536000"
+        WebXml         = @"
 <?xml version="1.0" encoding="UTF-8"?>
 <web-app xmlns="http://xmlns.jcp.org/xml/ns/javaee"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -86,7 +86,7 @@ $testScenarios = @(
     </filter-mapping>
 </web-app>
 "@
-        WebConfig = @"
+        WebConfig      = @"
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
     <system.webServer>
@@ -101,9 +101,9 @@ $testScenarios = @(
         ExpectedResult = "Should replace with compliant HSTS header (max-age=31536000)"
     },
     @{
-        Name = "Non_Compliant_HSTS_No_IncludeSubDomains"
-        Description = "HSTS with max-age correct but missing includeSubDomains"
-        WebXml = @"
+        Name           = "Non_Compliant_HSTS_No_IncludeSubDomains"
+        Description    = "HSTS with max-age correct but missing includeSubDomains"
+        WebXml         = @"
 <?xml version="1.0" encoding="UTF-8"?>
 <web-app xmlns="http://xmlns.jcp.org/xml/ns/javaee"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -128,7 +128,7 @@ $testScenarios = @(
     </filter-mapping>
 </web-app>
 "@
-        WebConfig = @"
+        WebConfig      = @"
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
     <system.webServer>
@@ -143,9 +143,9 @@ $testScenarios = @(
         ExpectedResult = "Should add includeSubDomains"
     },
     @{
-        Name = "Compliant_HSTS"
-        Description = "Already compliant HSTS configuration"
-        WebXml = @"
+        Name           = "Compliant_HSTS"
+        Description    = "Already compliant HSTS configuration"
+        WebXml         = @"
 <?xml version="1.0" encoding="UTF-8"?>
 <web-app xmlns="http://xmlns.jcp.org/xml/ns/javaee"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -170,7 +170,7 @@ $testScenarios = @(
     </filter-mapping>
 </web-app>
 "@
-        WebConfig = @"
+        WebConfig      = @"
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
     <system.webServer>
@@ -185,9 +185,9 @@ $testScenarios = @(
         ExpectedResult = "Should remain unchanged (already compliant)"
     },
     @{
-        Name = "Multiple_HSTS_Headers"
-        Description = "Multiple HSTS header definitions (should be consolidated)"
-        WebXml = @"
+        Name           = "Multiple_HSTS_Headers"
+        Description    = "Multiple HSTS header definitions (should be consolidated)"
+        WebXml         = @"
 <?xml version="1.0" encoding="UTF-8"?>
 <web-app xmlns="http://xmlns.jcp.org/xml/ns/javaee"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -224,7 +224,7 @@ $testScenarios = @(
     </filter-mapping>
 </web-app>
 "@
-        WebConfig = @"
+        WebConfig      = @"
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
     <system.webServer>
@@ -238,6 +238,33 @@ $testScenarios = @(
 </configuration>
 "@
         ExpectedResult = "Should remove duplicates and keep one compliant header"
+    },
+    @{
+        Name           = "Tomcat_11_Jakarta_And_IIS_Native"
+        Description    = "Tomcat 11 (Jakarta) and IIS Native HSTS detection"
+        WebXml         = @"
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns="https://jakarta.ee/xml/ns/jakartaee"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="https://jakarta.ee/xml/ns/jakartaee
+         https://jakarta.ee/xml/ns/jakartaee/web-app_5_0.xsd"
+         version="5.0">
+    <display-name>Jakarta Test App</display-name>
+</web-app>
+"@
+        WebConfig      = @"
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <system.webServer>
+        <hsts enabled="true" max-age="31536000" includeSubDomains="true" />
+        <httpProtocol>
+            <customHeaders>
+            </customHeaders>
+        </httpProtocol>
+    </system.webServer>
+</configuration>
+"@
+        ExpectedResult = "Should detect Tomcat 11 Jakarta-style and IIS Native configs"
     }
 )
 
@@ -268,7 +295,8 @@ foreach ($scenario in $testScenarios) {
     try {
         $auditResult = & $scriptPath -Mode audit -CustomPaths @("$tomcatTestDir\conf") 2>&1
         Write-Log "Audit output: $auditResult"
-    } catch {
+    }
+    catch {
         Write-Log "Audit error: $_" "ERROR"
     }
     
@@ -277,7 +305,8 @@ foreach ($scenario in $testScenarios) {
     try {
         $dryRunResult = & $scriptPath -Mode configure -CustomPaths @("$tomcatTestDir\conf") -DryRun 2>&1
         Write-Log "Dry run output: $dryRunResult"
-    } catch {
+    }
+    catch {
         Write-Log "Dry run error: $_" "ERROR"
     }
     
@@ -311,7 +340,8 @@ foreach ($scenario in $testScenarios) {
     try {
         $auditResult = & $iisScriptPath -Mode audit -ConfigPath $webConfigPath 2>&1
         Write-Log "Audit output: $auditResult"
-    } catch {
+    }
+    catch {
         Write-Log "Audit error: $_" "ERROR"
     }
     
@@ -320,7 +350,8 @@ foreach ($scenario in $testScenarios) {
     try {
         $dryRunResult = & $iisScriptPath -Mode configure -ConfigPath $webConfigPath -DryRun 2>&1
         Write-Log "Dry run output: $dryRunResult"
-    } catch {
+    }
+    catch {
         Write-Log "Dry run error: $_" "ERROR"
     }
     

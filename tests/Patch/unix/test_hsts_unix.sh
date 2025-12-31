@@ -44,13 +44,15 @@ test_scenario() {
     local description="$2"
     local web_xml="$3"
     local expected_result="$4"
+    local version="${5:-9.0.50}"
     
-    write_log "Testing scenario: $name - $description"
+    write_log "Testing scenario: $name - $description (Tomcat $version)"
     
-    # Create test web.xml and server.xml (required for detection)
+    # Create test web.xml and server.xml (required for detection) and RELEASE-NOTES for version detection
     local web_xml_path="$TEST_DIR/conf/web.xml"
     echo "$web_xml" > "$web_xml_path"
     touch "$TEST_DIR/conf/server.xml"
+    echo "Apache Tomcat Version $version" > "$TEST_DIR/RELEASE-NOTES"
     
     # Backup original
     cp "$web_xml_path" "$BACKUP_DIR/web.xml.$name"
@@ -170,7 +172,40 @@ test_scenario "Compliant_HSTS" \
         <url-pattern>/*</url-pattern>
     </filter-mapping>
 </web-app>' \
-    "Should remain unchanged (already compliant)"
+# Scenario 5: Tomcat 11 with Jakarta Namespace
+test_scenario "Tomcat_11_Jakarta" \
+    "Tomcat 11 with jakarta.ee namespace" \
+    '<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns="https://jakarta.ee/xml/ns/jakartaee"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="https://jakarta.ee/xml/ns/jakartaee
+         https://jakarta.ee/xml/ns/jakartaee/web-app_5_0.xsd"
+         version="5.0">
+    <display-name>Jakarta Test App</display-name>
+</web-app>' \
+    "Should add compliant HSTS header to Jakarta-style web.xml" \
+    "11.0.0"
+
+# Scenario 6: JSON Reporting
+write_log "Testing scenario: JSON_Reporting - Verify JSON output format"
+# Create test environment
+web_xml_path="$TEST_DIR/conf/web.xml"
+echo '<?xml version="1.0" encoding="UTF-8"?><web-app version="4.0"></web-app>' > "$web_xml_path"
+touch "$TEST_DIR/conf/server.xml"
+echo "Apache Tomcat Version 9.0.0" > "$TEST_DIR/RELEASE-NOTES"
+
+# Run with JSON flag (capture stdout, ignore exit code 1 which is expected for non-compliant audit)
+write_log "Running with --json flag..."
+json_output=$("$SCRIPT_PATH" --mode audit --custom-conf="$TEST_DIR/conf" --json --log-file="$TEST_DIR/json_test.log" 2>/dev/null || true)
+
+if echo "$json_output" | grep -q "\"hostname\"" && echo "$json_output" | grep -q "\"overall_status\""; then
+    write_log "JSON output format verified successfully"
+    write_log "JSON Content: $json_output"
+else
+    write_log "JSON output format verification failed" "ERROR"
+    write_log "Output was: $json_output" "ERROR"
+    exit 1
+fi
 
 write_log "=== All HSTS tests completed ==="
 write_log "Test log saved to: $LOG_FILE"

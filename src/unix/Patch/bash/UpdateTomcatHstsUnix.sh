@@ -33,12 +33,19 @@ CUSTOM_CONF_PATH=""
 CUSTOM_CONF_PATHS=()  # Array for multiple custom paths
 CUSTOM_PATHS_FILE=""
 LOG_FILE="/var/log/tomcat-hsts-$(date +%Y%m%d_%H%M%S).log"
+REPORT_FILE=""
+JSON_OUTPUT=false
 DRY_RUN=false
 SCRIPT_NAME=$(basename "$0")
 RECOMMENDED_HSTS="max-age=31536000; includeSubDomains"
 RECOMMENDED_HSTS_FULL="Strict-Transport-Security: max-age=31536000; includeSubDomains"
 HOSTNAME=$(hostname)
+OS_INFO=$(uname -sr)
 TIMESTAMP=$(date '+%Y-%m-%d %H:%M:%S')
+
+# Global variables for tracking results
+RESULTS_JSON=""
+SUMMARY_ENTRIES=()
 
 # Global variables for cleanup
 TEMP_FILES=()
@@ -61,7 +68,7 @@ trap cleanup_temp_files EXIT ERR INT TERM
 
 # Function: Print usage information
 usage() {
-    echo "Usage: sudo $SCRIPT_NAME [--mode audit|configure] [--custom-conf=/path/to/conf] [--custom-paths-file=/path/to/file] [--dry-run]"
+    echo "Usage: sudo $SCRIPT_NAME [--mode audit|configure] [--custom-conf=/path/to/conf] [--custom-paths-file=/path/to/file] [--json] [--report-file=path] [--dry-run]"
     echo ""
     echo "Options:"
     echo "  --mode <audit|configure>     Operation mode (default: configure)"
@@ -70,15 +77,14 @@ usage() {
     echo "  --custom-conf <path>         Optional: Custom Tomcat conf directory path (can be specified multiple times)"
     echo "                               If not provided, script will auto-detect Tomcat installation"
     echo "  --custom-paths-file <file>   Optional: File containing custom paths (one path per line)"
-    echo "                               Lines starting with # are treated as comments"
+    echo "  --json                       Output summary in JSON format to stdout"
+    echo "  --report-file <path>         Path to save a detailed JSON report of all processed servers"
     echo "  --dry-run                    Show what would be changed without making changes (configure mode only)"
     echo ""
     echo "Examples:"
     echo "  sudo $SCRIPT_NAME                                    # Auto-detect and configure"
     echo "  sudo $SCRIPT_NAME --mode audit                       # Auto-detect and audit only"
-    echo "  sudo $SCRIPT_NAME --custom-conf=/opt/tomcat/conf     # Use custom path"
-    echo "  sudo $SCRIPT_NAME --custom-conf=/opt/tomcat1/conf --custom-conf=/opt/tomcat2/conf  # Multiple paths"
-    echo "  sudo $SCRIPT_NAME --custom-paths-file=/etc/tomcat-paths.txt  # Use paths file"
+    echo "  sudo $SCRIPT_NAME --json --report-file=report.json   # Generate enterprise reports"
     echo "  sudo $SCRIPT_NAME --mode configure --dry-run         # Preview changes"
     exit 2
 }
@@ -371,30 +377,29 @@ audit_hsts_headers() {
 remove_all_hsts_configs() {
     local config_content="$1"
     local output_file="$2"
-    local temp_content="$config_content"
     
-    # Remove filter-based HSTS configurations
-    # Remove HttpHeaderSecurityFilter or HstsHeaderFilter blocks (more precise pattern)
-    temp_content=$(echo "$temp_content" | sed '/<filter-name>.*[Hh]sts.*Header.*Filter<\/filter-name>/,/<\/filter>/d')
-    temp_content=$(echo "$temp_content" | sed '/<filter-name>.*[Hh]ttpHeaderSecurity<\/filter-name>/,/<\/filter>/d')
+    # Use a temporary file for intermediate steps
+    local temp_xml=$(mktemp)
+    echo "$config_content" > "$temp_xml"
     
-    # Remove filter-mapping for HSTS filters (only if it references our filter)
-    temp_content=$(echo "$temp_content" | sed '/<filter-mapping>/,/<\/filter-mapping>/{
-        /<filter-name>.*[Hh]sts.*Header.*Filter\|[Hh]ttpHeaderSecurity<\/filter-name>/d
-        /HstsHeaderFilter\|httpHeaderSecurity/d
-    }')
+    # Remove filter blocks containing HSTS filter classes or names
+    # This AWK script removes entire <filter> or <filter-mapping> blocks if they contain HSTS keywords
+    awk '
+    /<filter>|<filter-mapping>/ {
+        block = $0
+        found = 0
+        while ((getline line) > 0) {
+            block = block "\n" line
+            if (line ~ /HstsHeaderFilter|HttpHeaderSecurityFilter|org\.apache\.catalina\.filters\.HttpHeaderSecurityFilter/) found = 1
+            if (line ~ /<\/filter>|<\/filter-mapping>/) break
+        }
+        if (!found) print block
+        next
+    }
+    { print }
+    ' "$temp_xml" > "$output_file"
     
-    # Remove hstsMaxAgeSeconds and hstsIncludeSubDomains init-params (only within filter blocks)
-    # This is safer - only remove if they're in the context of a filter
-    temp_content=$(echo "$temp_content" | sed '/<filter>/,/<\/filter>/{
-        /<param-name>hstsMaxAgeSeconds<\/param-name>/,/<\/init-param>/d
-        /<param-name>hstsIncludeSubDomains<\/param-name>/,/<\/init-param>/d
-    }')
-    
-    # Remove direct Strict-Transport-Security header definitions (but not in comments)
-    temp_content=$(echo "$temp_content" | sed '/^[[:space:]]*[^#]*Strict-Transport-Security/Id')
-    
-    echo "$temp_content" > "$output_file"
+    rm -f "$temp_xml"
     return 0
 }
 
@@ -726,13 +731,73 @@ load_custom_paths_from_file() {
     done < "$paths_file"
     
     if [[ ${#paths[@]} -gt 0 ]]; then
-        log_message "Loaded ${#paths[@]} custom path(s) from file: $paths_file"
-    if [ ${#paths[@]} -gt 0 ]; then
+        log_message "Loaded ${#paths[@]} custom configuration path(s) from file: $paths_file"
         printf '%s\n' "${paths[@]}"
-    fi
     fi
     
     return 0
+}
+
+# Function: Detect Tomcat version from installation directory
+# Parameters: conf_path
+# Returns: Tomcat version string or "Unknown"
+get_tomcat_version() {
+    local conf_path="$1"
+    local tomcat_home
+    tomcat_home=$(dirname "$conf_path")
+    local version="Unknown"
+    
+    # Check RELEASE-NOTES
+    if [[ -f "$tomcat_home/RELEASE-NOTES" ]]; then
+        version=$(grep -i "Apache Tomcat Version" "$tomcat_home/RELEASE-NOTES" | awk '{print $NF}' | sed 's/\r//g')
+    fi
+    
+    # Check version.sh if possible
+    if [[ "$version" == "Unknown" ]] && [[ -f "$tomcat_home/bin/version.sh" ]]; then
+        if command -v java >/dev/null 2>&1; then
+            version=$("$tomcat_home/bin/version.sh" 2>/dev/null | grep "Server version" | cut -d'/' -f2 | sed 's/\r//g')
+        fi
+    fi
+    
+    # Check jar manifest if ZIP is available (less likely but possible)
+    if [[ "$version" == "Unknown" ]] && [[ -f "$tomcat_home/lib/catalina.jar" ]] && command -v unzip >/dev/null 2>&1; then
+        version=$(unzip -p "$tomcat_home/lib/catalina.jar" META-INF/MANIFEST.MF | grep "Implementation-Version" | cut -d: -f2 | tr -d ' \r')
+    fi
+    
+    echo "${version:-Unknown}"
+}
+
+# Function: Check if Tomcat version supports HttpHeaderSecurityFilter
+# Parameters: version
+# Returns: 0 if supported, 1 if not
+check_hsts_support() {
+    local version="$1"
+    if [[ "$version" == "Unknown" ]]; then return 0; fi
+    
+    # Remove any non-numeric characters from the beginning (e.g., "tomcat-")
+    version=$(echo "$version" | sed 's/^[^0-9]*//')
+    
+    local major=$(echo "$version" | cut -d. -f1)
+    local minor=$(echo "$version" | cut -d. -f2 | sed 's/[^0-9].*//')
+    local patch=$(echo "$version" | cut -d. -f3 | sed 's/[^0-9].*//')
+    
+    # Handle empty minor/patch
+    minor=${minor:-0}
+    patch=${patch:-0}
+    
+    # Support added in:
+    # 9.0.0.M6, 8.5.1, 8.0.35, 7.0.69
+    if [[ $major -ge 9 ]]; then return 0; fi
+    if [[ $major -eq 8 ]]; then
+        if [[ $minor -ge 5 ]]; then
+            if [[ $patch -ge 1 ]]; then return 0; fi
+        elif [[ $minor -eq 0 ]]; then
+            if [[ $patch -ge 35 ]]; then return 0; fi
+        fi
+    fi
+    if [[ $major -eq 7 ]] && [[ $patch -ge 69 ]]; then return 0; fi
+    
+    return 1
 }
 
 # Function: Auto-detect Tomcat configuration directories
@@ -777,64 +842,93 @@ get_tomcat_conf_paths() {
     fi
     
     # Check CATALINA_BASE
-    if [[ -z "$conf_path" ]] && [[ -n "${CATALINA_BASE}" ]] && [[ -d "${CATALINA_BASE}/conf" ]] && [[ -f "${CATALINA_BASE}/conf/server.xml" ]]; then
-        log_message "Found Tomcat configuration at CATALINA_BASE: ${CATALINA_BASE}/conf"
-        conf_path="${CATALINA_BASE}/conf"
-    fi
-    
-    # Check CATALINA_HOME
-    if [[ -z "$conf_path" ]] && [[ -n "${CATALINA_HOME}" ]] && [[ -d "${CATALINA_HOME}/conf" ]] && [[ -f "${CATALINA_HOME}/conf/server.xml" ]]; then
-        log_message "Found Tomcat configuration at CATALINA_HOME: ${CATALINA_HOME}/conf"
-        conf_path="${CATALINA_HOME}/conf"
-    fi
-    
-    # Check systemd service files for Tomcat paths
-    if [[ -z "$conf_path" ]]; then
-        local systemd_services=()
-        if [[ -d "/etc/systemd/system" ]]; then
-            while IFS= read -r service_file; do
-                if [[ -f "$service_file" ]] && grep -qi "tomcat\|catalina" "$service_file"; then
-                    local service_path=$(grep -i "ExecStart\|WorkingDirectory" "$service_file" | head -1 | sed 's/.*=//' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//' | sed 's/\/bin\/.*//' | sed 's/\/catalina.*//')
-                    if [[ -n "$service_path" ]] && [[ -d "$service_path/conf" ]] && [[ -f "$service_path/conf/server.xml" ]]; then
-                        log_message "Found Tomcat configuration via systemd service: $service_path/conf"
-                        conf_path="$service_path/conf"
-                        break
-                    fi
-                fi
-            done < <(find /etc/systemd/system -name "*.service" -type f 2>/dev/null | head -20)
+    if [[ -n "${CATALINA_BASE}" ]] && [[ -d "${CATALINA_BASE}/conf" ]] && [[ -f "${CATALINA_BASE}/conf/server.xml" ]]; then
+        local cb_conf="${CATALINA_BASE}/conf"
+        # Add to conf_paths if not already there
+        local found_cb=0
+        for p in "${conf_paths[@]}"; do
+            if [[ "$p" == "$cb_conf" ]]; then found_cb=1; break; fi
+        done
+        if [[ $found_cb -eq 0 ]]; then
+            conf_paths+=("$cb_conf")
+            log_message "Found Tomcat configuration at CATALINA_BASE: $cb_conf"
         fi
     fi
     
-    # Check init.d scripts for Tomcat paths
-    if [[ -z "$conf_path" ]] && [[ -d "/etc/init.d" ]]; then
+    # Check CATALINA_HOME
+    if [[ -n "${CATALINA_HOME}" ]] && [[ -d "${CATALINA_HOME}/conf" ]] && [[ -f "${CATALINA_HOME}/conf/server.xml" ]]; then
+        local ch_conf="${CATALINA_HOME}/conf"
+        local found_ch=0
+        for p in "${conf_paths[@]}"; do
+            if [[ "$p" == "$ch_conf" ]]; then found_ch=1; break; fi
+        done
+        if [[ $found_ch -eq 0 ]]; then
+            conf_paths+=("$ch_conf")
+            log_message "Found Tomcat configuration at CATALINA_HOME: $ch_conf"
+        fi
+    fi
+    
+    # Check systemd service files
+    if [[ -d "/etc/systemd/system" ]]; then
+        while IFS= read -r service_file; do
+            if [[ -f "$service_file" ]] && grep -qi "tomcat\|catalina" "$service_file"; then
+                local service_path=$(grep -i "ExecStart\|WorkingDirectory" "$service_file" | head -1 | sed 's/.*=//' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//' | sed 's/\/bin\/.*//' | sed 's/\/catalina.*//')
+                if [[ -n "$service_path" ]] && [[ -d "$service_path/conf" ]] && [[ -f "$service_path/conf/server.xml" ]]; then
+                    local s_conf="$service_path/conf"
+                    local found_s=0
+                    for p in "${conf_paths[@]}"; do
+                        if [[ "$p" == "$s_conf" ]]; then found_s=1; break; fi
+                    done
+                    if [[ $found_s -eq 0 ]]; then
+                        conf_paths+=("$s_conf")
+                        log_message "Found Tomcat via systemd: $s_conf"
+                    fi
+                fi
+            fi
+        done < <(find /etc/systemd/system -name "*.service" -type f 2>/dev/null | head -50)
+    fi
+    
+    # Check init.d scripts
+    if [[ -d "/etc/init.d" ]]; then
         while IFS= read -r init_script; do
             if [[ -f "$init_script" ]] && grep -qi "tomcat\|catalina" "$init_script"; then
                 local script_path=$(grep -i "CATALINA_HOME\|CATALINA_BASE\|TOMCAT_HOME" "$init_script" | head -1 | sed 's/.*=//' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//' | sed 's/"//g' | sed "s/'//g")
                 if [[ -n "$script_path" ]] && [[ -d "$script_path/conf" ]] && [[ -f "$script_path/conf/server.xml" ]]; then
-                    log_message "Found Tomcat configuration via init.d script: $script_path/conf"
-                    conf_path="$script_path/conf"
-                    break
+                    local i_conf="$script_path/conf"
+                    local found_i=0
+                    for p in "${conf_paths[@]}"; do
+                        if [[ "$p" == "$i_conf" ]]; then found_i=1; break; fi
+                    done
+                    if [[ $found_i -eq 0 ]]; then
+                        conf_paths+=("$i_conf")
+                        log_message "Found Tomcat via init.d: $i_conf"
+                    fi
                 fi
             fi
-        done < <(find /etc/init.d -name "*tomcat*" -type f 2>/dev/null | head -10)
+        done < <(find /etc/init.d -name "*tomcat*" -type f 2>/dev/null | head -20)
     fi
     
-    # Check running Tomcat processes for paths
-    if [[ -z "$conf_path" ]]; then
-        local tomcat_process=$(ps aux 2>/dev/null | grep -i "[t]omcat\|[c]atalina" | head -1)
+    # Check running processes
+    while read -r tomcat_process; do
         if [[ -n "$tomcat_process" ]]; then
             local proc_path=$(echo "$tomcat_process" | awk '{for(i=1;i<=NF;i++) if($i ~ /-Dcatalina\.home=|catalina\.base=/) {print $i; exit}}' | sed 's/.*=//')
             if [[ -n "$proc_path" ]] && [[ -d "$proc_path/conf" ]] && [[ -f "$proc_path/conf/server.xml" ]]; then
-                log_message "Found Tomcat configuration via running process: $proc_path/conf"
-                conf_path="$proc_path/conf"
+                local p_conf="$proc_path/conf"
+                local found_p=0
+                for p in "${conf_paths[@]}"; do
+                    if [[ "$p" == "$p_conf" ]]; then found_p=1; break; fi
+                done
+                if [[ $found_p -eq 0 ]]; then
+                    conf_paths+=("$p_conf")
+                    log_message "Found Tomcat via running process: $p_conf"
+                fi
             fi
         fi
-    fi
+    done < <(ps aux 2>/dev/null | grep -i "[t]omcat\|[c]atalina")
     
-    # Search common Linux/Unix server paths (not macOS)
-    if [[ -z "$conf_path" ]]; then
-        log_message "Searching common Tomcat configuration paths..."
-        for path in \
+    # Search common paths
+    log_message "Checking standard locations for Tomcat configurations..."
+    for path in \
             "/opt/tomcat/conf" \
             "/opt/tomcat7/conf" \
             "/opt/tomcat8/conf" \
@@ -849,60 +943,92 @@ get_tomcat_conf_paths() {
             "/var/lib/tomcat8/conf" \
             "/var/lib/tomcat9/conf" \
             "/var/lib/tomcat10/conf" \
-            "/usr/share/tomcat/conf" \
-            "/usr/share/tomcat7/conf" \
-            "/usr/share/tomcat8/conf" \
-            "/usr/share/tomcat9/conf" \
-            "/usr/share/tomcat10/conf" \
-            "/etc/tomcat/conf" \
+            "/etc/tomcat7" \
+            "/etc/tomcat8" \
+            "/etc/tomcat9" \
+            "/etc/tomcat10" \
+            "/etc/tomcat11" \
             "/etc/tomcat7/conf" \
             "/etc/tomcat8/conf" \
             "/etc/tomcat9/conf" \
-            "/etc/tomcat10/conf"; do
+            "/etc/tomcat10/conf" \
+            "/etc/tomcat11/conf" \
+            "/opt/tomcat11/conf" \
+            "/usr/local/tomcat11/conf" \
+            "/var/lib/tomcat11/conf" \
+            "/etc/tomcat/conf"; do
             if [[ -d "${path}" ]] && [[ -f "${path}/server.xml" ]]; then
                 log_message "Found Tomcat configuration at: ${path}"
-                conf_path="${path}"
-                break
+                # Add to conf_paths if not already there
+                local found_standard=0
+                for p in "${conf_paths[@]}"; do
+                    if [[ "$p" == "${path}" ]]; then
+                        found_standard=1
+                        break
+                    fi
+                done
+                if [[ $found_standard -eq 0 ]]; then
+                    conf_paths+=("${path}")
+                    conf_path="${path}" # Keep for logic below, but we use the array now
+                fi
             fi
         done
-    fi
     
     # Fallback to find command (Linux/Unix servers only)
-    if [[ -z "$conf_path" ]]; then
-        log_message "No Tomcat configuration found in common paths, attempting to locate server.xml..."
-        local found_path
-        found_path=$(find /opt /usr/local /var/lib /usr/share /etc -type f -name "server.xml" -path "*/conf/server.xml" 2>/dev/null | head -n 1)
-        if [[ -n "$found_path" ]]; then
-            conf_path=$(dirname "$found_path")
-            if [[ -f "$conf_path/server.xml" ]]; then
-                log_message "Found Tomcat configuration via find: ${conf_path}"
-            else
-                log_error "Found server.xml but path is invalid: ${conf_path}"
-                conf_path=""
+    # Search for all server.xml files in common locations
+    log_message "Searching common paths for additional Tomcat configurations..."
+    while IFS= read -r found_xml; do
+        if [[ -n "$found_xml" ]]; then
+            local found_dir=$(dirname "$found_xml")
+            if [[ -f "$found_dir/server.xml" ]]; then
+                # Add to conf_paths if not already there
+                local already_found=0
+                for p in "${conf_paths[@]}"; do
+                    if [[ "$p" == "${found_dir}" ]]; then
+                        already_found=1
+                        break
+                    fi
+                done
+                if [[ $already_found -eq 0 ]]; then
+                    conf_paths+=("${found_dir}")
+                    log_message "Found Tomcat configuration via search: ${found_dir}"
+                fi
+            fi
+        fi
+    done < <(find /opt /usr/local /var/lib /usr/share /etc -type f -name "server.xml" -path "*/conf/server.xml" 2>/dev/null)
+    
+    # Check CATALINA_BASE and CATALINA_HOME
+    if [[ -n "$CATALINA_BASE" ]] && [[ -d "$CATALINA_BASE/conf" ]]; then
+        local cb_conf="$CATALINA_BASE/conf"
+        if [[ -f "$cb_conf/server.xml" ]]; then
+            local already_cb=0
+            for p in "${conf_paths[@]}"; do
+                if [[ "$p" == "${cb_conf}" ]]; then
+                    already_cb=1
+                    break
+                fi
+            done
+            if [[ $already_cb -eq 0 ]]; then
+                conf_paths+=("${cb_conf}")
+                log_message "Found Tomcat via CATALINA_BASE: ${cb_conf}"
             fi
         fi
     fi
     
-    # If auto-detection found a path, add it to conf_paths array (if not already present)
-    if [[ -n "$conf_path" ]]; then
-        # Validate the path
-        if [[ -d "$conf_path" ]] && [[ -f "$conf_path/server.xml" ]]; then
-            # Check if this path is already in conf_paths (avoid duplicates)
-            local already_exists=0
-            for existing_path in "${conf_paths[@]}"; do
-                if [[ "$existing_path" == "$conf_path" ]]; then
-                    already_exists=1
+    if [[ -n "$CATALINA_HOME" ]] && [[ -d "$CATALINA_HOME/conf" ]]; then
+        local ch_conf="$CATALINA_HOME/conf"
+        if [[ -f "$ch_conf/server.xml" ]]; then
+            local already_ch=0
+            for p in "${conf_paths[@]}"; do
+                if [[ "$p" == "${ch_conf}" ]]; then
+                    already_ch=1
                     break
                 fi
             done
-            
-            if [[ $already_exists -eq 0 ]]; then
-                conf_paths+=("$conf_path")
+            if [[ $already_ch -eq 0 ]]; then
+                conf_paths+=("${ch_conf}")
+                log_message "Found Tomcat via CATALINA_HOME: ${ch_conf}"
             fi
-        else
-            log_error "Invalid configuration directory: $conf_path"
-            log_error "  - Missing server.xml"
-            conf_path=""
         fi
     fi
     
@@ -1059,6 +1185,22 @@ main() {
                 MODE="$2"
                 shift 2
                 ;;
+            --json)
+                JSON_OUTPUT=true
+                shift
+                ;;
+            --report-file|--report_file)
+                if [[ $# -lt 2 ]]; then
+                    log_error "Missing value for --report-file"
+                    usage
+                fi
+                REPORT_FILE="$2"
+                shift 2
+                ;;
+            --report-file=*|--report_file=*)
+                REPORT_FILE="${1#*=}"
+                shift
+                ;;
             --custom-conf)
                 if [[ $# -lt 2 ]]; then
                     log_error "Missing value for --custom-conf"
@@ -1117,10 +1259,17 @@ main() {
     
     # Initialize log file
     if [[ -n "$LOG_FILE" ]]; then
-        touch "$LOG_FILE" 2>/dev/null || {
-            log_error "Cannot create log file: $LOG_FILE"
-            exit 2
-        }
+        # Check if we can write to the log file or its directory
+        if ! touch "$LOG_FILE" 2>/dev/null; then
+            log_error "Cannot create log file in /var/log. Attempting fallback to /tmp..."
+            LOG_FILE="/tmp/tomcat-hsts-$(date +%Y%m%d_%H%M%S).log"
+            if ! touch "$LOG_FILE" 2>/dev/null; then
+                log_error "Cannot create log file in /tmp either. Continuing without file logging."
+                LOG_FILE=""
+            else
+                log_message "Logging to fallback location: $LOG_FILE"
+            fi
+        fi
     fi
     
     # Log start
@@ -1175,7 +1324,15 @@ main() {
     # Find all web.xml files from all configuration directories
     local web_xml_files=()
     for conf_path in "${conf_paths[@]}"; do
-        log_message "Tomcat Configuration Directory: $conf_path"
+        local tomcat_version
+        tomcat_version=$(get_tomcat_version "$conf_path")
+        log_message "Found Tomcat Configuration: $conf_path (Version: $tomcat_version)"
+        
+        if ! check_hsts_support "$tomcat_version"; then
+            log_message "WARNING: Tomcat version $tomcat_version may not natively support HttpHeaderSecurityFilter."
+            log_message "  - Supported versions: 7.0.69+, 8.0.35+, 8.5.1+, 9.0.0.M6+"
+            log_message "  - If this is an older version, HSTS configuration may not take effect."
+        fi
         while IFS= read -r file; do
             if [[ -n "$file" ]]; then
                 local found=0
@@ -1216,22 +1373,44 @@ main() {
     done
     
     # Summary
-    log_message ""
-    log_message "========================================="
-    log_message "Summary"
-    log_message "========================================="
-    log_message "Total files processed: $processed_count"
-    log_message "Successful: $success_count"
-    log_message "Failed: $failure_count"
-    
-    if [[ $overall_success -eq 0 ]]; then
-        log_message "Overall Status: SUCCESS"
-    else
-        log_message "Overall Status: FAILURE (some files failed)"
+    if [[ "$JSON_OUTPUT" == "false" ]]; then
+        log_message ""
+        log_message "========================================="
+        log_message "Summary"
+        log_message "========================================="
+        log_message "Total files processed: $processed_count"
+        log_message "Successful: $success_count"
+        log_message "Failed: $failure_count"
+        
+        if [[ $overall_success -eq 0 ]]; then
+            log_message "Overall Status: SUCCESS"
+        else
+            log_message "Overall Status: FAILURE (some files failed)"
+        fi
+        
+        if [[ -n "$LOG_FILE" ]]; then
+            log_message "Log file: $LOG_FILE"
+        fi
     fi
-    
-    if [[ -n "$LOG_FILE" ]]; then
-        log_message "Log file: $LOG_FILE"
+
+    # Build JSON Report
+    local json_report="{"
+    json_report+="\"hostname\":\"$HOSTNAME\","
+    json_report+="\"os\":\"$OS_INFO\","
+    json_report+="\"timestamp\":\"$TIMESTAMP\","
+    json_report+="\"mode\":\"$MODE\","
+    json_report+="\"total_processed\":$processed_count,"
+    json_report+="\"success_count\":$success_count,"
+    json_report+="\"failure_count\":$failure_count,"
+    json_report+="\"overall_status\":\"$( [[ $overall_success -eq 0 ]] && echo "SUCCESS" || echo "FAILURE" )\""
+    json_report+="}"
+
+    if [[ "$JSON_OUTPUT" == "true" ]]; then
+        echo "$json_report"
+    fi
+
+    if [[ -n "$REPORT_FILE" ]]; then
+        echo "$json_report" > "$REPORT_FILE" 2>/dev/null || log_error "Failed to write report to $REPORT_FILE"
     fi
     
     exit $overall_success
