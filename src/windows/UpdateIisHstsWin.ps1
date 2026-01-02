@@ -35,8 +35,11 @@ param(
     [string]$OutputFormat = "text",
 
     [Parameter(Mandatory = $false)]
-    [ValidateSet("basic", "high", "veryhigh", "maximum")]
-    [string]$SecurityLevel = "high"
+    [ValidateSet("basic", "high", "veryhigh", "maximum", "1", "2", "3", "4")]
+    [string]$SecurityLevel = "high",
+
+    [Parameter(Mandatory = $false)]
+    [switch]$All = $false
 )
 
 $ErrorActionPreference = "Stop"
@@ -48,9 +51,21 @@ $RequireSubDomains = $true
 $RequirePreload = $false
 
 switch ($SecurityLevel.ToLower()) {
+    "1" {
+        $SecurityLevel = "basic"
+        $MinMaxAge = 31536000
+        $RequireSubDomains = $false
+        $RequirePreload = $false
+    }
     "basic" {
         $MinMaxAge = 31536000
         $RequireSubDomains = $false
+        $RequirePreload = $false
+    }
+    "2" {
+        $SecurityLevel = "high"
+        $MinMaxAge = 31536000
+        $RequireSubDomains = $true
         $RequirePreload = $false
     }
     "high" {
@@ -58,8 +73,20 @@ switch ($SecurityLevel.ToLower()) {
         $RequireSubDomains = $true
         $RequirePreload = $false
     }
+    "3" {
+        $SecurityLevel = "veryhigh"
+        $MinMaxAge = 31536000
+        $RequireSubDomains = $true
+        $RequirePreload = $true
+    }
     "veryhigh" {
         $MinMaxAge = 31536000
+        $RequireSubDomains = $true
+        $RequirePreload = $true
+    }
+    "4" {
+        $SecurityLevel = "maximum"
+        $MinMaxAge = 63072000
         $RequireSubDomains = $true
         $RequirePreload = $true
     }
@@ -828,17 +855,36 @@ function Test-HstsHeaders {
             }
 
             Write-LogMessage ""
-            Write-LogMessage "Recommended Action:"
-            Write-LogMessage "  Add HSTS header: Strict-Transport-Security: max-age=31536000; includeSubDomains"
+            Write-LogMessage "=== Current HSTS Configuration ==="
+            Write-LogMessage "  Status: NOT CONFIGURED"
+            Write-LogMessage "  Header: (none)"
             Write-LogMessage ""
-            Write-LogMessage "To fix, run the configure command:"
-            Write-LogMessage "  .\UpdateIisHstsWin.ps1 -Mode configure -SecurityLevel $SecurityLevel"
+            Write-LogMessage "=== Available Security Levels ==="
             Write-LogMessage ""
-            Write-LogMessage "Available security levels:"
-            Write-LogMessage "  -SecurityLevel basic     (max-age only)"
-            Write-LogMessage "  -SecurityLevel high      (max-age + includeSubDomains) [default]"
-            Write-LogMessage "  -SecurityLevel veryhigh  (max-age + includeSubDomains + preload)"
-            Write-LogMessage "  -SecurityLevel maximum   (2yr max-age + includeSubDomains + preload)"
+            Write-LogMessage "  [1] BASIC - Minimum HSTS protection"
+            Write-LogMessage "      Header: Strict-Transport-Security: max-age=31536000"
+            Write-LogMessage "      Use when: Subdomains should NOT be affected"
+            Write-LogMessage ""
+            Write-LogMessage "  [2] HIGH - OWASP Recommended (Default)"
+            Write-LogMessage "      Header: Strict-Transport-Security: max-age=31536000; includeSubDomains"
+            Write-LogMessage "      Use when: All subdomains also use HTTPS"
+            Write-LogMessage ""
+            Write-LogMessage "  [3] VERY HIGH - Preload Ready"
+            Write-LogMessage "      Header: Strict-Transport-Security: max-age=31536000; includeSubDomains; preload"
+            Write-LogMessage "      Use when: Ready for browser preload list submission"
+            Write-LogMessage ""
+            Write-LogMessage "  [4] MAXIMUM - Highest Security"
+            Write-LogMessage "      Header: Strict-Transport-Security: max-age=63072000; includeSubDomains; preload"
+            Write-LogMessage "      Use when: Maximum protection with 2-year cache"
+            Write-LogMessage ""
+            Write-LogMessage "=== Configure Commands (copy and run) ==="
+            Write-LogMessage ""
+            Write-LogMessage "  Option 1: .\UpdateIisHstsWin.ps1 -Mode configure -SecurityLevel basic"
+            Write-LogMessage "  Option 2: .\UpdateIisHstsWin.ps1 -Mode configure -SecurityLevel high"
+            Write-LogMessage "  Option 3: .\UpdateIisHstsWin.ps1 -Mode configure -SecurityLevel veryhigh"
+            Write-LogMessage "  Option 4: .\UpdateIisHstsWin.ps1 -Mode configure -SecurityLevel maximum"
+            Write-LogMessage ""
+            Write-LogMessage "  Add -DryRun to preview changes without applying"
             Write-LogMessage "=========================================="
 
             return @{
@@ -1204,7 +1250,8 @@ function New-ConfigBackup {
 function Write-AuditResults {
     param(
         [bool]$IsCorrect,
-        [string]$Details
+        [string]$Details,
+        [string]$WebConfigPath = ""
     )
     
     if ($IsCorrect) {
@@ -1214,6 +1261,15 @@ function Write-AuditResults {
     else {
         Write-LogMessage "FAILURE: $Details"
         Write-LogMessage "HSTS configuration needs to be updated."
+        # Show per-installation configure commands if we have a specific config path
+        if (-not [string]::IsNullOrEmpty($WebConfigPath)) {
+            Write-LogMessage ""
+            Write-LogMessage "To configure THIS installation, run one of:"
+            Write-LogMessage "  Option 1: .\UpdateIisHstsWin.ps1 -Mode configure -SecurityLevel basic -CustomPaths @('$WebConfigPath')"
+            Write-LogMessage "  Option 2: .\UpdateIisHstsWin.ps1 -Mode configure -SecurityLevel high -CustomPaths @('$WebConfigPath')"
+            Write-LogMessage "  Option 3: .\UpdateIisHstsWin.ps1 -Mode configure -SecurityLevel veryhigh -CustomPaths @('$WebConfigPath')"
+            Write-LogMessage "  Option 4: .\UpdateIisHstsWin.ps1 -Mode configure -SecurityLevel maximum -CustomPaths @('$WebConfigPath')"
+        }
     }
 }
 
@@ -1261,7 +1317,7 @@ function Invoke-WebConfigPatch {
         
         if ($Mode -eq "audit") {
             $auditResult = Test-HstsHeaders -ParsedConfig $parsedConfig
-            Write-AuditResults -IsCorrect $auditResult.IsCorrect -Details $auditResult.Details
+            Write-AuditResults -IsCorrect $auditResult.IsCorrect -Details $auditResult.Details -WebConfigPath $WebConfigPath
             
             if ($auditResult.IsCorrect) {
                 return 0
@@ -1424,6 +1480,54 @@ try {
     }
     else {
         Write-LogMessage "Overall Status: FAILURE (some files failed)"
+        
+        # Get failed paths from report entries
+        $failedPaths = $reportEntries | Where-Object { $_.Status -eq "FAILURE" } | Select-Object -ExpandProperty FileName
+        
+        if ($failedPaths -and $failedPaths.Count -gt 0 -and $Mode -eq "audit") {
+            Write-LogMessage ""
+            Write-LogMessage "========================================="
+            Write-LogMessage "CONFIGURATION COMMANDS FOR FAILED PATHS"
+            Write-LogMessage "========================================="
+            Write-LogMessage ""
+            Write-LogMessage "Copy and run the appropriate command for each installation:"
+            Write-LogMessage ""
+            
+            $pathNum = 1
+            foreach ($failedPath in $failedPaths) {
+                Write-LogMessage "--- Installation $pathNum`: $failedPath ---"
+                Write-LogMessage ""
+                Write-LogMessage "  [1] BASIC (max-age=31536000):"
+                Write-LogMessage "      .\UpdateIisHstsWin.ps1 -Mode configure -SecurityLevel 1 -CustomPaths @('$failedPath')"
+                Write-LogMessage ""
+                Write-LogMessage "  [2] HIGH - OWASP Recommended (max-age=31536000; includeSubDomains):"
+                Write-LogMessage "      .\UpdateIisHstsWin.ps1 -Mode configure -SecurityLevel 2 -CustomPaths @('$failedPath')"
+                Write-LogMessage ""
+                Write-LogMessage "  [3] VERY HIGH - Preload Ready (max-age=31536000; includeSubDomains; preload):"
+                Write-LogMessage "      .\UpdateIisHstsWin.ps1 -Mode configure -SecurityLevel 3 -CustomPaths @('$failedPath')"
+                Write-LogMessage ""
+                Write-LogMessage "  [4] MAXIMUM - Highest Security (max-age=63072000; includeSubDomains; preload):"
+                Write-LogMessage "      .\UpdateIisHstsWin.ps1 -Mode configure -SecurityLevel 4 -CustomPaths @('$failedPath')"
+                Write-LogMessage ""
+                $pathNum++
+            }
+            Write-LogMessage ""
+            Write-LogMessage "========================================="
+            Write-LogMessage "CONFIGURE ALL FAILED PATHS (QUICK FIX)"
+            Write-LogMessage "========================================="
+            Write-LogMessage ""
+            Write-LogMessage "To configure ALL failed installations at once, run ONE of these commands:"
+            Write-LogMessage ""
+            Write-LogMessage "  [1] Apply BASIC to ALL:      .\UpdateIisHstsWin.ps1 -Mode configure -SecurityLevel 1"
+            Write-LogMessage "  [2] Apply HIGH to ALL:       .\UpdateIisHstsWin.ps1 -Mode configure -SecurityLevel 2"
+            Write-LogMessage "  [3] Apply VERY HIGH to ALL:  .\UpdateIisHstsWin.ps1 -Mode configure -SecurityLevel 3"
+            Write-LogMessage "  [4] Apply MAXIMUM to ALL:    .\UpdateIisHstsWin.ps1 -Mode configure -SecurityLevel 4"
+            Write-LogMessage ""
+            Write-LogMessage "TIP: Add -DryRun to preview changes without applying"
+            Write-LogMessage "========================================="
+
+            # Interactive mode removed per user request.
+        }
     }
 
     # Generate Report

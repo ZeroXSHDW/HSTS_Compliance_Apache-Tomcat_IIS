@@ -308,17 +308,36 @@ audit_hsts_headers() {
             log_message "  No filters found in configuration"
         fi
         log_message ""
-        log_message "Recommended Action:"
-        log_message "  Add HSTS configuration with: max-age=31536000; includeSubDomains"
+        log_message "=== Current HSTS Configuration ==="
+        log_message "  Status: NOT CONFIGURED"
+        log_message "  Header: (none)"
         log_message ""
-        log_message "To fix, run the configure command:"
-        log_message "  sudo $0 --mode configure --security-level $SECURITY_LEVEL"
+        log_message "=== Available Security Levels ==="
         log_message ""
-        log_message "Available security levels:"
-        log_message "  --security-level basic     (max-age only)"
-        log_message "  --security-level high      (max-age + includeSubDomains) [default]"
-        log_message "  --security-level veryhigh  (max-age + includeSubDomains + preload)"
-        log_message "  --security-level maximum   (2yr max-age + includeSubDomains + preload)"
+        log_message "  [1] BASIC - Minimum HSTS protection"
+        log_message "      Header: Strict-Transport-Security: max-age=31536000"
+        log_message "      Use when: Subdomains should NOT be affected"
+        log_message ""
+        log_message "  [2] HIGH - OWASP Recommended (Default)"
+        log_message "      Header: Strict-Transport-Security: max-age=31536000; includeSubDomains"
+        log_message "      Use when: All subdomains also use HTTPS"
+        log_message ""
+        log_message "  [3] VERY HIGH - Preload Ready"
+        log_message "      Header: Strict-Transport-Security: max-age=31536000; includeSubDomains; preload"
+        log_message "      Use when: Ready for browser preload list submission"
+        log_message ""
+        log_message "  [4] MAXIMUM - Highest Security"
+        log_message "      Header: Strict-Transport-Security: max-age=63072000; includeSubDomains; preload"
+        log_message "      Use when: Maximum protection with 2-year cache"
+        log_message ""
+        log_message "=== Configure Commands (copy and run) ==="
+        log_message ""
+        log_message "  Option 1: sudo $0 --mode configure --security-level basic"
+        log_message "  Option 2: sudo $0 --mode configure --security-level high"
+        log_message "  Option 3: sudo $0 --mode configure --security-level veryhigh"
+        log_message "  Option 4: sudo $0 --mode configure --security-level maximum"
+        log_message ""
+        log_message "  Add --dry-run to preview changes without applying"
         log_message "=========================================="
         AUDIT_RESULT="$details"
         AUDIT_HEADER_COUNT=0
@@ -905,6 +924,7 @@ configure_hsts_headers() {
 log_audit_results() {
     local is_correct="$1"
     local details="$2"
+    local config_file="${3:-}"  # Optional: specific config file path
     
     if [[ $is_correct -eq 0 ]]; then
         log_message "SUCCESS: $details"
@@ -914,6 +934,16 @@ log_audit_results() {
         log_message "HSTS configuration needs to be updated."
         if [[ $AUDIT_HEADER_COUNT -gt 1 ]]; then
             log_message "ACTION REQUIRED: Remove duplicate HSTS definitions. Only one compliant configuration should exist."
+        fi
+        # Show per-file configure commands if we have a specific config path
+        if [[ -n "$config_file" ]]; then
+            local conf_dir=$(dirname "$config_file")
+            log_message ""
+            log_message "To configure THIS installation, run one of:"
+            log_message "  Option 1: sudo $0 --mode configure --security-level basic --custom-conf=$conf_dir"
+            log_message "  Option 2: sudo $0 --mode configure --security-level high --custom-conf=$conf_dir"
+            log_message "  Option 3: sudo $0 --mode configure --security-level veryhigh --custom-conf=$conf_dir"
+            log_message "  Option 4: sudo $0 --mode configure --security-level maximum --custom-conf=$conf_dir"
         fi
     fi
 }
@@ -1451,7 +1481,7 @@ process_web_xml() {
             local is_correct=0
         fi
         
-        log_audit_results "$is_correct" "$AUDIT_RESULT"
+        log_audit_results "$is_correct" "$AUDIT_RESULT" "$web_xml_path"
         return $is_correct
         
     elif [[ "$MODE" == "configure" ]]; then
@@ -1581,8 +1611,16 @@ main() {
                 LOG_FILE="${1#*=}"
                 shift
                 ;;
+            --non-interactive|--non_interactive)
+                NON_INTERACTIVE=true
+                shift
+                ;;
             --dry-run|--dry_run)
                 DRY_RUN=true
+                shift
+                ;;
+            --all)
+                # Explicit flag to configure all found paths (default behavior, but explicit)
                 shift
                 ;;
             --security-level|--security_level)
@@ -1609,22 +1647,26 @@ main() {
     
     # Validate security level and set target values
     case "$SECURITY_LEVEL" in
-        basic)
+        basic|1)
+            SECURITY_LEVEL="basic"
             MIN_MAX_AGE=31536000
             REQUIRE_SUBDOMAINS=false
             REQUIRE_PRELOAD=false
             ;;
-        high)
+        high|2)
+            SECURITY_LEVEL="high"
             MIN_MAX_AGE=31536000
             REQUIRE_SUBDOMAINS=true
             REQUIRE_PRELOAD=false
             ;;
-        veryhigh)
+        veryhigh|3)
+            SECURITY_LEVEL="veryhigh"
             MIN_MAX_AGE=31536000
             REQUIRE_SUBDOMAINS=true
             REQUIRE_PRELOAD=true
             ;;
-        maximum)
+        maximum|4)
+            SECURITY_LEVEL="maximum"
             MIN_MAX_AGE=63072000
             REQUIRE_SUBDOMAINS=true
             REQUIRE_PRELOAD=true
@@ -1745,13 +1787,17 @@ main() {
     local processed_count=0
     local success_count=0
     local failure_count=0
+    local failed_paths=()
+    local success_paths=()
     
     for web_xml in "${web_xml_files[@]}"; do
         if process_web_xml "$web_xml"; then
             success_count=$((success_count + 1))
+            success_paths+=("$web_xml")
         else
             failure_count=$((failure_count + 1))
             overall_success=1
+            failed_paths+=("$web_xml")
         fi
         processed_count=$((processed_count + 1))
     done
@@ -1770,6 +1816,54 @@ main() {
             log_message "Overall Status: SUCCESS"
         else
             log_message "Overall Status: FAILURE (some files failed)"
+            
+            # Show comprehensive configure commands for failed paths
+            if [[ ${#failed_paths[@]} -gt 0 ]] && [[ "$MODE" == "audit" ]]; then
+                log_message ""
+                log_message "========================================="
+                log_message "CONFIGURATION COMMANDS FOR FAILED PATHS"
+                log_message "========================================="
+                log_message ""
+                log_message "Copy and run the appropriate command for each installation:"
+                log_message ""
+                
+                local path_num=1
+                for failed_path in "${failed_paths[@]}"; do
+                    local conf_dir=$(dirname "$failed_path")
+                    log_message "--- Installation $path_num: $conf_dir ---"
+                    log_message ""
+                    log_message "  [1] BASIC (max-age=31536000):"
+                    log_message "      sudo $0 --mode configure --security-level 1 --custom-conf=$conf_dir"
+                    log_message ""
+                    log_message "  [2] HIGH - OWASP Recommended (max-age=31536000; includeSubDomains):"
+                    log_message "      sudo $0 --mode configure --security-level 2 --custom-conf=$conf_dir"
+                    log_message ""
+                    log_message "  [3] VERY HIGH - Preload Ready (max-age=31536000; includeSubDomains; preload):"
+                    log_message "      sudo $0 --mode configure --security-level 3 --custom-conf=$conf_dir"
+                    log_message ""
+                    log_message "  [4] MAXIMUM - Highest Security (max-age=63072000; includeSubDomains; preload):"
+                    log_message "      sudo $0 --mode configure --security-level 4 --custom-conf=$conf_dir"
+                    log_message ""
+                    path_num=$((path_num + 1))
+                done
+                log_message ""
+                log_message "========================================="
+                log_message "CONFIGURE ALL FAILED PATHS (QUICK FIX)"
+                log_message "========================================="
+                log_message ""
+                log_message "To configure ALL failed installations at once, run ONE of these commands:"
+                log_message ""
+                log_message "  [1] Apply BASIC to ALL:      sudo $0 --mode configure --security-level 1"
+                log_message "  [2] Apply HIGH to ALL:       sudo $0 --mode configure --security-level 2"
+                log_message "  [3] Apply VERY HIGH to ALL:  sudo $0 --mode configure --security-level 3"
+                log_message "  [4] Apply MAXIMUM to ALL:    sudo $0 --mode configure --security-level 4"
+                log_message ""
+                log_message "TIP: Add --dry-run to preview changes without applying"
+                log_message "========================================="
+
+                # Interactive mode removed per user request.
+                # Recommendations are printed above.
+            fi
         fi
         
         if [[ -n "$LOG_FILE" ]]; then
