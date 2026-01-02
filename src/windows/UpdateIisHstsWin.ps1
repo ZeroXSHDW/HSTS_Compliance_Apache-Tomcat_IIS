@@ -1033,31 +1033,32 @@ function Invoke-HstsCompliantPatch {
         Remove-AllHstsHeaders -ParsedConfig $ParsedConfig
         
         # Ensure system.webServer section exists
-        if ($null -eq $ParsedConfig.configuration.'system.webServer') {
+        $systemWebServerNode = $ParsedConfig.configuration.SelectSingleNode("system.webServer")
+        if ($null -eq $systemWebServerNode) {
             $systemWebServer = $ParsedConfig.CreateElement("system.webServer")
             $null = $ParsedConfig.configuration.AppendChild($systemWebServer)
         }
+        else {
+            $systemWebServer = $systemWebServerNode
+        }
         
-        $systemWebServer = $ParsedConfig.configuration.'system.webServer'
-        
-        # Ensure httpProtocol section exists
-        if ($null -eq $systemWebServer.httpProtocol) {
+        # Ensure httpProtocol section exists (use SelectSingleNode to get XML element)
+        $httpProtocolNode = $systemWebServer.SelectSingleNode("httpProtocol")
+        if ($null -eq $httpProtocolNode) {
             $httpProtocol = $ParsedConfig.CreateElement("httpProtocol")
             $null = $systemWebServer.AppendChild($httpProtocol)
         }
+        else {
+            $httpProtocol = $httpProtocolNode
+        }
         
-        $httpProtocol = $systemWebServer.httpProtocol
-        
-        # Ensure customHeaders section exists
-        # Check if customHeaders element exists in the XML structure
+        # Ensure customHeaders section exists (use SelectSingleNode to get XML element)
         $customHeadersNode = $httpProtocol.SelectSingleNode("customHeaders")
         if ($null -eq $customHeadersNode) {
-            # Element doesn't exist, create it
             $customHeaders = $ParsedConfig.CreateElement("customHeaders")
             $null = $httpProtocol.AppendChild($customHeaders)
         }
         else {
-            # Element exists, get it as XML element (not string property)
             $customHeaders = $customHeadersNode
         }
         

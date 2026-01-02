@@ -1324,7 +1324,7 @@ get_tomcat_conf_paths() {
     done < <(find /opt /usr/local /var/lib /usr/share /etc -type f -name "server.xml" -path "*/conf/server.xml" 2>/dev/null)
     
     # Check CATALINA_BASE and CATALINA_HOME
-    if [[ -n "$CATALINA_BASE" ]] && [[ -d "$CATALINA_BASE/conf" ]]; then
+    if [[ -n "${CATALINA_BASE:-}" ]] && [[ -d "${CATALINA_BASE}/conf" ]]; then
         local cb_conf="$CATALINA_BASE/conf"
         if [[ -f "$cb_conf/server.xml" ]]; then
             local already_cb=0
@@ -1341,8 +1341,8 @@ get_tomcat_conf_paths() {
         fi
     fi
     
-    if [[ -n "$CATALINA_HOME" ]] && [[ -d "$CATALINA_HOME/conf" ]]; then
-        local ch_conf="$CATALINA_HOME/conf"
+    if [[ -n "${CATALINA_HOME:-}" ]] && [[ -d "${CATALINA_HOME}/conf" ]]; then
+        local ch_conf="${CATALINA_HOME}/conf"
         if [[ -f "$ch_conf/server.xml" ]]; then
             local already_ch=0
             for p in "${conf_paths[@]}"; do

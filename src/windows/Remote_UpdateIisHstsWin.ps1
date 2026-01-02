@@ -967,20 +967,27 @@ foreach ($server in $uniqueServers) {
                     try {
                         Remove-AllHstsHeaders -ParsedConfig $ParsedConfig
                     
-                        if ($null -eq $ParsedConfig.configuration.'system.webServer') {
+                        # Ensure system.webServer section exists (use SelectSingleNode for XML element)
+                        $systemWebServerNode = $ParsedConfig.configuration.SelectSingleNode("system.webServer")
+                        if ($null -eq $systemWebServerNode) {
                             $systemWebServer = $ParsedConfig.CreateElement("system.webServer")
                             $null = $ParsedConfig.configuration.AppendChild($systemWebServer)
                         }
+                        else {
+                            $systemWebServer = $systemWebServerNode
+                        }
                     
-                        $systemWebServer = $ParsedConfig.configuration.'system.webServer'
-                    
-                        if ($null -eq $systemWebServer.httpProtocol) {
+                        # Ensure httpProtocol section exists (use SelectSingleNode for XML element)
+                        $httpProtocolNode = $systemWebServer.SelectSingleNode("httpProtocol")
+                        if ($null -eq $httpProtocolNode) {
                             $httpProtocol = $ParsedConfig.CreateElement("httpProtocol")
                             $null = $systemWebServer.AppendChild($httpProtocol)
                         }
+                        else {
+                            $httpProtocol = $httpProtocolNode
+                        }
                     
-                        $httpProtocol = $systemWebServer.httpProtocol
-                    
+                        # Ensure customHeaders section exists (use SelectSingleNode for XML element)
                         $customHeadersNode = $httpProtocol.SelectSingleNode("customHeaders")
                         if ($null -eq $customHeadersNode) {
                             $customHeaders = $ParsedConfig.CreateElement("customHeaders")

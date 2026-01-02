@@ -46,14 +46,20 @@ cd HSTS_Compliance_Apache-Tomcat_IIS
 # Audit HSTS configuration (no changes)
 sudo ./src/unix/UpdateTomcatHstsUnix.sh --mode audit
 
-# Configure HSTS to be OWASP compliant
+# Configure HSTS to be OWASP compliant (default: high security level)
 sudo ./src/unix/UpdateTomcatHstsUnix.sh --mode configure
 
 # Preview changes without applying (dry run)
 sudo ./src/unix/UpdateTomcatHstsUnix.sh --mode configure --dry-run
 
-# Configure with a specific security level (e.g., maximum)
-sudo ./src/unix/UpdateTomcatHstsUnix.sh --mode configure --security-level maximum
+# Security level examples:
+sudo ./src/unix/UpdateTomcatHstsUnix.sh --mode configure --security-level basic     # max-age only
+sudo ./src/unix/UpdateTomcatHstsUnix.sh --mode configure --security-level high      # + includeSubDomains (default)
+sudo ./src/unix/UpdateTomcatHstsUnix.sh --mode configure --security-level veryhigh  # + preload
+sudo ./src/unix/UpdateTomcatHstsUnix.sh --mode configure --security-level maximum   # 2yr max-age + preload
+
+# Generate JSON report for SIEM integration
+sudo ./src/unix/UpdateTomcatHstsUnix.sh --mode audit --json --report-file=/var/log/hsts-audit.json
 ```
 
 #### Windows - Apache Tomcat (Local)
@@ -64,11 +70,19 @@ sudo ./src/unix/UpdateTomcatHstsUnix.sh --mode configure --security-level maximu
 # Audit HSTS configuration (no changes)
 .\src\windows\UpdateTomcatHstsWin.ps1 -Mode audit
 
-# Configure HSTS to be OWASP compliant
+# Configure HSTS to be OWASP compliant (default: high security level)
 .\src\windows\UpdateTomcatHstsWin.ps1 -Mode configure
 
 # Preview changes without applying (dry run)
 .\src\windows\UpdateTomcatHstsWin.ps1 -Mode configure -DryRun
+
+# Security level examples:
+.\src\windows\UpdateTomcatHstsWin.ps1 -Mode configure -SecurityLevel basic     # max-age only
+.\src\windows\UpdateTomcatHstsWin.ps1 -Mode configure -SecurityLevel veryhigh  # + preload
+.\src\windows\UpdateTomcatHstsWin.ps1 -Mode configure -SecurityLevel maximum   # 2yr max-age + preload
+
+# Generate JSON report
+.\src\windows\UpdateTomcatHstsWin.ps1 -Mode audit -OutputFormat json -ReportPath "C:\reports\hsts-audit.json"
 ```
 
 #### Windows - IIS (Local)
@@ -79,14 +93,19 @@ sudo ./src/unix/UpdateTomcatHstsUnix.sh --mode configure --security-level maximu
 # Audit HSTS configuration (no changes)
 .\src\windows\UpdateIisHstsWin.ps1 -Mode audit
 
-# Configure HSTS to be OWASP compliant
+# Configure HSTS to be OWASP compliant (default: high security level)
 .\src\windows\UpdateIisHstsWin.ps1 -Mode configure
 
 # Preview changes without applying (dry run)
 .\src\windows\UpdateIisHstsWin.ps1 -Mode configure -DryRun
 
-# Configure IIS with a specific security level (e.g., veryhigh)
-.\src\windows\UpdateIisHstsWin.ps1 -Mode configure -SecurityLevel veryhigh
+# Security level examples:
+.\src\windows\UpdateIisHstsWin.ps1 -Mode configure -SecurityLevel basic     # max-age only
+.\src\windows\UpdateIisHstsWin.ps1 -Mode configure -SecurityLevel veryhigh  # + preload
+.\src\windows\UpdateIisHstsWin.ps1 -Mode configure -SecurityLevel maximum   # 2yr max-age + preload
+
+# Generate CSV report for compliance tracking
+.\src\windows\UpdateIisHstsWin.ps1 -Mode audit -OutputFormat csv -ReportPath "C:\reports\iis-hsts.csv"
 ```
 
 #### Windows - Remote Execution
