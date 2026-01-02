@@ -28,19 +28,75 @@
 
 **Primary Purpose:** This project eliminates configuration drift and ensures OWASP HSTS compliance by providing automated auditing, self-healing configuration, and enterprise-grade reporting for Linux and Windows infrastructure.
 
-## 🚀 One-Line Quick Start
+## 📋 Platform Support Matrix
 
-```bash
-# Unix/Linux Audit
-curl -sSL https://raw.githubusercontent.com/yourusername/HSTS_Compliance/main/quick-start.sh | sudo bash
-```
+| Platform | Server Type | Supported | Script Location |
+|----------|-------------|-----------|-----------------|
+| **Windows** | IIS | ✅ | `src/windows/UpdateIisHstsWin.ps1` |
+| **Windows** | Apache Tomcat | ✅ | `src/windows/UpdateTomcatHstsWin.ps1` |
+| **Linux/Unix** | Apache Tomcat | ✅ | `src/unix/UpdateTomcatHstsUnix.sh` |
+| **Linux/Unix** | IIS | ❌ | N/A |
 
-## Platforms and Servers
-
-- **Linux/Unix:** Apache Tomcat HSTS configuration (Ubuntu, Debian, Kali, RHEL, CentOS)
-- **Windows:** Apache Tomcat and Microsoft IIS HSTS configuration
+**Supported Linux Distributions:** Ubuntu, Debian, Kali, RHEL, CentOS, and other Unix-like systems
 
 **Supporting Tools:** Installation scripts are provided to help set up test environments, but the core functionality is HSTS security configuration.
+
+---
+
+## 🚀 One-Line Quick Start
+
+### Linux/Unix - Tomcat Audit
+
+```bash
+# Download latest release and run audit
+curl -sSL https://github.com/ZeroXSHDW/HSTS_Compliance_Apache-Tomcat_IIS/releases/latest/download/HSTS_Compliance.tar.gz | \
+  sudo tar -xz && cd HSTS_Compliance_Apache-Tomcat_IIS-* && \
+  sudo ./src/unix/UpdateTomcatHstsUnix.sh --mode audit
+```
+
+### Windows - Tomcat Audit (Local)
+
+```powershell
+# Download latest release and run audit (Run as Administrator)
+Invoke-WebRequest -Uri "https://github.com/ZeroXSHDW/HSTS_Compliance_Apache-Tomcat_IIS/releases/latest/download/HSTS_Compliance.zip" -OutFile "$env:TEMP\HSTS.zip"
+Expand-Archive -Path "$env:TEMP\HSTS.zip" -DestinationPath "$env:TEMP\HSTS" -Force
+Set-Location "$env:TEMP\HSTS\HSTS_Compliance_Apache-Tomcat_IIS-*"
+.\src\windows\UpdateTomcatHstsWin.ps1 -Mode audit
+```
+
+### Windows - IIS Audit (Local)
+
+```powershell
+# Download latest release and run audit (Run as Administrator)
+Invoke-WebRequest -Uri "https://github.com/ZeroXSHDW/HSTS_Compliance_Apache-Tomcat_IIS/releases/latest/download/HSTS_Compliance.zip" -OutFile "$env:TEMP\HSTS.zip"
+Expand-Archive -Path "$env:TEMP\HSTS.zip" -DestinationPath "$env:TEMP\HSTS" -Force
+Set-Location "$env:TEMP\HSTS\HSTS_Compliance_Apache-Tomcat_IIS-*"
+.\src\windows\UpdateIisHstsWin.ps1 -Mode audit
+```
+
+### Windows - Remote Execution (Tomcat)
+
+```powershell
+# Download and execute remote audit on multiple servers (Run as Administrator)
+Invoke-WebRequest -Uri "https://github.com/ZeroXSHDW/HSTS_Compliance_Apache-Tomcat_IIS/releases/latest/download/HSTS_Compliance.zip" -OutFile "$env:TEMP\HSTS.zip"
+Expand-Archive -Path "$env:TEMP\HSTS.zip" -DestinationPath "$env:TEMP\HSTS" -Force
+Set-Location "$env:TEMP\HSTS\HSTS_Compliance_Apache-Tomcat_IIS-*"
+$cred = Get-Credential
+.\src\windows\Remote_UpdateTomcatHstsWin.ps1 -ServerName "webserver01.example.com" -Mode audit -Credential $cred
+```
+
+### Windows - Remote Execution (IIS)
+
+```powershell
+# Download and execute remote audit on multiple servers (Run as Administrator)
+Invoke-WebRequest -Uri "https://github.com/ZeroXSHDW/HSTS_Compliance_Apache-Tomcat_IIS/releases/latest/download/HSTS_Compliance.zip" -OutFile "$env:TEMP\HSTS.zip"
+Expand-Archive -Path "$env:TEMP\HSTS.zip" -DestinationPath "$env:TEMP\HSTS" -Force
+Set-Location "$env:TEMP\HSTS\HSTS_Compliance_Apache-Tomcat_IIS-*"
+$cred = Get-Credential
+.\src\windows\Remote_UpdateIisHstsWin.ps1 -ServerName "webserver01.example.com" -Mode audit -Credential $cred
+```
+
+> **Note:** For production use, clone the repository instead of using one-liners to ensure version control and easier updates.
 
 ## Table of Contents
 

@@ -208,20 +208,175 @@ function Get-TomcatConfigPaths {
         "E:\Program Files\Apache Software Foundation\Tomcat 10.0\conf",
         "E:\Program Files\Apache Software Foundation\Tomcat 10.1\conf",
         "E:\Program Files\Apache Software Foundation\Tomcat 11.0\conf",
-        "E:\Tomcat\conf"
+        "E:\Tomcat\conf",
+        "F:\Program Files\Apache Software Foundation\Tomcat 7.0\conf",
+        "F:\Program Files\Apache Software Foundation\Tomcat 8.5\conf",
+        "F:\Program Files\Apache Software Foundation\Tomcat 9.0\conf",
+        "F:\Program Files\Apache Software Foundation\Tomcat 10.0\conf",
+        "F:\Program Files\Apache Software Foundation\Tomcat 10.1\conf",
+        "F:\Program Files\Apache Software Foundation\Tomcat 11.0\conf",
+        "F:\Tomcat\conf",
+        "G:\Program Files\Apache Software Foundation\Tomcat 7.0\conf",
+        "G:\Program Files\Apache Software Foundation\Tomcat 8.5\conf",
+        "G:\Program Files\Apache Software Foundation\Tomcat 9.0\conf",
+        "G:\Program Files\Apache Software Foundation\Tomcat 10.0\conf",
+        "G:\Program Files\Apache Software Foundation\Tomcat 10.1\conf",
+        "G:\Program Files\Apache Software Foundation\Tomcat 11.0\conf",
+        "G:\Tomcat\conf",
+        "H:\Program Files\Apache Software Foundation\Tomcat 7.0\conf",
+        "H:\Program Files\Apache Software Foundation\Tomcat 8.5\conf",
+        "H:\Program Files\Apache Software Foundation\Tomcat 9.0\conf",
+        "H:\Program Files\Apache Software Foundation\Tomcat 10.0\conf",
+        "H:\Program Files\Apache Software Foundation\Tomcat 10.1\conf",
+        "H:\Program Files\Apache Software Foundation\Tomcat 11.0\conf",
+        "H:\Tomcat\conf",
+        "I:\Program Files\Apache Software Foundation\Tomcat 7.0\conf",
+        "I:\Program Files\Apache Software Foundation\Tomcat 8.5\conf",
+        "I:\Program Files\Apache Software Foundation\Tomcat 9.0\conf",
+        "I:\Program Files\Apache Software Foundation\Tomcat 10.0\conf",
+        "I:\Program Files\Apache Software Foundation\Tomcat 10.1\conf",
+        "I:\Program Files\Apache Software Foundation\Tomcat 11.0\conf",
+        "I:\Tomcat\conf",
+        "J:\Program Files\Apache Software Foundation\Tomcat 7.0\conf",
+        "J:\Program Files\Apache Software Foundation\Tomcat 8.5\conf",
+        "J:\Program Files\Apache Software Foundation\Tomcat 9.0\conf",
+        "J:\Program Files\Apache Software Foundation\Tomcat 10.0\conf",
+        "J:\Program Files\Apache Software Foundation\Tomcat 10.1\conf",
+        "J:\Program Files\Apache Software Foundation\Tomcat 11.0\conf",
+        "J:\Tomcat\conf",
+        "K:\Program Files\Apache Software Foundation\Tomcat 7.0\conf",
+        "K:\Program Files\Apache Software Foundation\Tomcat 8.5\conf",
+        "K:\Program Files\Apache Software Foundation\Tomcat 9.0\conf",
+        "K:\Program Files\Apache Software Foundation\Tomcat 10.0\conf",
+        "K:\Program Files\Apache Software Foundation\Tomcat 10.1\conf",
+        "K:\Program Files\Apache Software Foundation\Tomcat 11.0\conf",
+        "K:\Tomcat\conf",
+        "C:\Apps\Tomcat\conf",
+        "C:\Apps\Tomcat7\conf",
+        "C:\Apps\Tomcat8\conf",
+        "C:\Apps\Tomcat9\conf",
+        "C:\Apps\Tomcat10\conf",
+        "C:\Apps\Tomcat11\conf",
+        "C:\Applications\Tomcat\conf",
+        "C:\Applications\Tomcat7\conf",
+        "C:\Applications\Tomcat8\conf",
+        "C:\Applications\Tomcat9\conf",
+        "C:\Applications\Tomcat10\conf",
+        "C:\Applications\Tomcat11\conf",
+        "C:\Software\Tomcat\conf",
+        "C:\Software\Apache\Tomcat\conf",
+        "D:\Apps\Tomcat\conf",
+        "D:\Applications\Tomcat\conf",
+        "E:\Apps\Tomcat\conf",
+        "E:\Applications\Tomcat\conf"
     )
     
-    $tomcatRoot = "C:\Program Files\Apache Software Foundation\Tomcat"
-    if (Test-Path $tomcatRoot) {
-        $subDirs = Get-ChildItem -Path $tomcatRoot -Directory -ErrorAction SilentlyContinue
-        foreach ($dir in $subDirs) {
-            $confPath = Join-Path $dir.FullName "conf"
-            if (Test-Path (Join-Path $confPath "server.xml")) {
-                if ($possiblePaths -notcontains $confPath) {
-                    $possiblePaths += $confPath
+    # Recursively search common Tomcat installation roots
+    $tomcatRoots = @(
+        "C:\Program Files\Apache Software Foundation",
+        "C:\Program Files (x86)\Apache Software Foundation",
+        "D:\Program Files\Apache Software Foundation",
+        "E:\Program Files\Apache Software Foundation",
+        "F:\Program Files\Apache Software Foundation",
+        "G:\Program Files\Apache Software Foundation",
+        "H:\Program Files\Apache Software Foundation",
+        "I:\Program Files\Apache Software Foundation",
+        "J:\Program Files\Apache Software Foundation",
+        "K:\Program Files\Apache Software Foundation"
+    )
+    
+    foreach ($root in $tomcatRoots) {
+        if (Test-Path $root) {
+            Write-LogMessage "Searching for Tomcat installations in: $root"
+            try {
+                $subDirs = Get-ChildItem -Path $root -Directory -ErrorAction SilentlyContinue | Where-Object { $_.Name -like "*Tomcat*" }
+                foreach ($dir in $subDirs) {
+                    $confPath = Join-Path $dir.FullName "conf"
+                    if (Test-Path (Join-Path $confPath "server.xml")) {
+                        if ($possiblePaths -notcontains $confPath) {
+                            $possiblePaths += $confPath
+                            Write-LogMessage "Found Tomcat installation via recursive search: $confPath"
+                        }
+                    }
+                }
+            }
+            catch {
+                Write-LogMessage "Warning: Could not search directory $root - $_"
+            }
+        }
+    }
+    
+    # Search alternative installation directories
+    $alternativeRoots = @(
+        "C:\Apps",
+        "C:\Applications",
+        "C:\Software",
+        "D:\Apps",
+        "D:\Applications",
+        "E:\Apps",
+        "E:\Applications"
+    )
+    
+    foreach ($altRoot in $alternativeRoots) {
+        if (Test-Path $altRoot) {
+            Write-LogMessage "Searching alternative installation root: $altRoot"
+            try {
+                $subDirs = Get-ChildItem -Path $altRoot -Directory -ErrorAction SilentlyContinue | 
+                Where-Object { $_.Name -like "*Tomcat*" -or $_.Name -like "*Apache*" }
+                foreach ($dir in $subDirs) {
+                    $confPath = Join-Path $dir.FullName "conf"
+                    if (Test-Path (Join-Path $confPath "server.xml")) {
+                        if ($possiblePaths -notcontains $confPath) {
+                            $possiblePaths += $confPath
+                            Write-LogMessage "Found Tomcat in alternative directory: $confPath"
+                        }
+                    }
+                }
+            }
+            catch {
+                Write-LogMessage "Warning: Could not search alternative directory $altRoot - $_"
+            }
+        }
+    }
+    
+    # Check mapped network drives for Tomcat installations
+    Write-LogMessage "Checking mapped network drives for Tomcat installations..."
+    try {
+        $networkDrives = Get-PSDrive -PSProvider FileSystem -ErrorAction SilentlyContinue | 
+        Where-Object { $_.DisplayRoot -like "\\*" }
+        
+        foreach ($drive in $networkDrives) {
+            $driveLetter = $drive.Name
+            Write-LogMessage "Scanning network drive ${driveLetter}: ($($drive.DisplayRoot))"
+            
+            # Check common paths on network drive
+            $networkPaths = @(
+                "${driveLetter}:\Program Files\Apache Software Foundation\Tomcat",
+                "${driveLetter}:\Tomcat",
+                "${driveLetter}:\Apache\Tomcat",
+                "${driveLetter}:\Apps\Tomcat",
+                "${driveLetter}:\Applications\Tomcat"
+            )
+            
+            foreach ($netPath in $networkPaths) {
+                if (Test-Path $netPath) {
+                    $subDirs = Get-ChildItem -Path $netPath -Directory -ErrorAction SilentlyContinue | 
+                    Where-Object { $_.Name -like "*Tomcat*" -or $_.Name -match "^\d+\.\d+" }
+                    foreach ($dir in $subDirs) {
+                        $confPath = Join-Path $dir.FullName "conf"
+                        if (Test-Path (Join-Path $confPath "server.xml")) {
+                            if ($possiblePaths -notcontains $confPath) {
+                                $possiblePaths += $confPath
+                                Write-LogMessage "Found Tomcat on network drive: $confPath"
+                            }
+                        }
+                    }
                 }
             }
         }
+    }
+    catch {
+        Write-LogMessage "Warning: Could not query network drives"
     }
     
     # Check environment variables (CATALINA_HOME, CATALINA_BASE)
@@ -245,6 +400,75 @@ function Get-TomcatConfigPaths {
                 Write-LogMessage "Found Tomcat via CATALINA_BASE: $envConfPath"
             }
         }
+    }
+    
+    # Check Windows Registry for Tomcat installations
+    try {
+        $regPaths = @(
+            "HKLM:\SOFTWARE\Apache Software Foundation\Tomcat",
+            "HKLM:\SOFTWARE\WOW6432Node\Apache Software Foundation\Tomcat"
+        )
+        
+        foreach ($regPath in $regPaths) {
+            if (Test-Path $regPath) {
+                Write-LogMessage "Checking registry path: $regPath"
+                $tomcatVersions = Get-ChildItem -Path $regPath -ErrorAction SilentlyContinue
+                foreach ($version in $tomcatVersions) {
+                    try {
+                        $installPath = (Get-ItemProperty -Path $version.PSPath -Name "InstallPath" -ErrorAction SilentlyContinue).InstallPath
+                        if ($installPath -and (Test-Path $installPath)) {
+                            $regConfPath = Join-Path $installPath "conf"
+                            if (Test-Path (Join-Path $regConfPath "server.xml")) {
+                                if ($possiblePaths -notcontains $regConfPath) {
+                                    $possiblePaths += $regConfPath
+                                    Write-LogMessage "Found Tomcat via registry ($($version.PSChildName)): $regConfPath"
+                                }
+                            }
+                        }
+                    }
+                    catch {
+                        # Ignore errors for individual registry entries
+                    }
+                }
+            }
+        }
+    }
+    catch {
+        Write-LogMessage "Warning: Could not search Windows Registry for Tomcat installations"
+    }
+    
+    # Check running Java processes for Tomcat via WMI
+    try {
+        Write-LogMessage "Checking running Java processes for Tomcat installations..."
+        $javaProcesses = Get-WmiObject Win32_Process -Filter "Name='java.exe' OR Name='javaw.exe'" -ErrorAction SilentlyContinue
+        foreach ($process in $javaProcesses) {
+            try {
+                $commandLine = $process.CommandLine
+                if ($commandLine) {
+                    # Look for -Dcatalina.home= or -Dcatalina.base= in command line
+                    if ($commandLine -match '-Dcatalina\.(home|base)=([^"\s]+)') {
+                        $catalinaPath = $Matches[2]
+                        # Remove quotes if present
+                        $catalinaPath = $catalinaPath.Trim('"').Trim("'")
+                        if (Test-Path $catalinaPath) {
+                            $wmiConfPath = Join-Path $catalinaPath "conf"
+                            if (Test-Path (Join-Path $wmiConfPath "server.xml")) {
+                                if ($possiblePaths -notcontains $wmiConfPath) {
+                                    $possiblePaths += $wmiConfPath
+                                    Write-LogMessage "Found Tomcat via running Java process (PID $($process.ProcessId)): $wmiConfPath"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            catch {
+                # Ignore errors for individual processes
+            }
+        }
+    }
+    catch {
+        Write-LogMessage "Warning: Could not query Java processes via WMI"
     }
     
     # Check Tomcat services to find installation paths
@@ -894,6 +1118,80 @@ function Test-HstsConfiguration {
     return $true
 }
 
+# Function: Pre-flight checks before configuration changes
+function Test-PreFlightChecks {
+    param(
+        [string]$ConfigPath
+    )
+    
+    $issues = @()
+    
+    # Check if file exists and is readable
+    if (-not (Test-Path $ConfigPath)) {
+        $issues += "Configuration file not found: $ConfigPath"
+        return @{ Success = $false; Issues = $issues }
+    }
+    
+    # Check if file is writable
+    try {
+        $fileInfo = Get-Item $ConfigPath
+        if ($fileInfo.IsReadOnly) {
+            $issues += "File is read-only: $ConfigPath"
+        }
+    }
+    catch {
+        $issues += "Cannot access file permissions: $ConfigPath"
+    }
+    
+    # Check if backup directory is writable
+    $backupDir = Split-Path $ConfigPath -Parent
+    if (-not (Test-Path $backupDir)) {
+        $issues += "Backup directory does not exist: $backupDir"
+    }
+    else {
+        try {
+            $testFile = Join-Path $backupDir ".hsts_write_test_$(Get-Date -Format 'yyyyMMddHHmmss')"
+            $null = New-Item -Path $testFile -ItemType File -Force -ErrorAction Stop
+            Remove-Item $testFile -Force -ErrorAction SilentlyContinue
+        }
+        catch {
+            $issues += "Backup directory is not writable: $backupDir"
+        }
+    }
+    
+    # Check available disk space (warn if less than 100MB)
+    try {
+        $drive = (Get-Item $ConfigPath).PSDrive
+        $freeSpace = (Get-PSDrive $drive.Name).Free
+        if ($freeSpace -lt 100MB) {
+            $issues += "Low disk space on $($drive.Name): Only $([math]::Round($freeSpace/1MB, 2)) MB available"
+        }
+    }
+    catch {
+        Write-LogMessage "Warning: Could not check disk space"
+    }
+    
+    # Check if Tomcat is running (warn only, not an error)
+    try {
+        $tomcatProcesses = Get-WmiObject Win32_Process -Filter "Name='java.exe' OR Name='javaw.exe'" -ErrorAction SilentlyContinue |
+        Where-Object { $_.CommandLine -like "*catalina*" -or $_.CommandLine -like "*tomcat*" }
+        
+        if ($tomcatProcesses) {
+            Write-LogMessage "WARNING: Tomcat appears to be running (PID: $($tomcatProcesses.ProcessId -join ', '))"
+            Write-LogMessage "WARNING: Tomcat restart will be required for changes to take effect"
+        }
+    }
+    catch {
+        # Silently continue if we can't check
+    }
+    
+    if ($issues.Count -gt 0) {
+        return @{ Success = $false; Issues = $issues }
+    }
+    
+    return @{ Success = $true; Issues = @() }
+}
+
 # Function: Create backup
 function New-ConfigBackup {
     param(
@@ -953,6 +1251,18 @@ function Invoke-WebXmlPatch {
             Write-LogMessage "Configuration required: Ensuring exactly one compliant HSTS definition exists"
             
             if (-not $DryRun) {
+                # PRE-FLIGHT: Check system state before making changes
+                Write-LogMessage "Running pre-flight checks..."
+                $preFlightResult = Test-PreFlightChecks -ConfigPath $WebXmlPath
+                if (-not $preFlightResult.Success) {
+                    Write-LogError "Pre-flight checks failed:"
+                    foreach ($issue in $preFlightResult.Issues) {
+                        Write-LogError "  - $issue"
+                    }
+                    return 2
+                }
+                Write-LogMessage "Pre-flight checks passed"
+                
                 if (-not $Force) {
                     Write-Host ""
                     Write-Host "WARNING: This will modify: $WebXmlPath"
@@ -972,32 +1282,56 @@ function Invoke-WebXmlPatch {
                 # SAFETY: Create backup before making any changes
                 $backupPath = New-ConfigBackup -ConfigPath $WebXmlPath
                 
-                # Apply compliant HSTS configuration (only modifies HSTS-related elements)
-                Invoke-HstsCompliantPatch -WebXml $webXml
-                
-                # SAFETY: Save to temporary file first, then validate
-                $tempXmlPath = [System.IO.Path]::GetTempFileName()
-                $webXml.Save($tempXmlPath)
-                
-                # SAFETY: Validate XML structure before applying
-                if (-not (Test-ValidXml -XmlFilePath $tempXmlPath)) {
-                    throw "SAFETY CHECK FAILED: Generated XML failed validation. Original file preserved at: $backupPath"
+                try {
+                    # Apply compliant HSTS configuration (only modifies HSTS-related elements)
+                    Invoke-HstsCompliantPatch -WebXml $webXml
+                    
+                    # SAFETY: Save to temporary file first, then validate
+                    $tempXmlPath = [System.IO.Path]::GetTempFileName()
+                    $webXml.Save($tempXmlPath)
+                    
+                    # SAFETY: Validate XML structure before applying
+                    if (-not (Test-ValidXml -XmlFilePath $tempXmlPath)) {
+                        throw "Generated XML failed validation"
+                    }
+                    
+                    # SAFETY: Reload and verify the configuration is correct before applying
+                    [xml]$tempXml = Get-Content -Path $tempXmlPath -Raw
+                    Test-HstsConfiguration -WebXml $tempXml
+                    
+                    # SAFETY: Atomic file operation - Move instead of Copy for atomicity
+                    # This ensures the file is either fully updated or not updated at all
+                    Move-Item -Path $tempXmlPath -Destination $WebXmlPath -Force -ErrorAction Stop
+                    
+                    # SAFETY: Final verification on the saved file
+                    [xml]$finalXml = Get-Content -Path $WebXmlPath -Raw
+                    Test-HstsConfiguration -WebXml $finalXml
+                    
+                    Write-LogMessage "SUCCESS: Compliant HSTS configuration applied successfully with all safety checks passed"
+                    Write-LogMessage "Backup available at: $backupPath"
                 }
-                
-                # SAFETY: Reload and verify the configuration is correct before applying
-                [xml]$tempXml = Get-Content -Path $tempXmlPath -Raw
-                Test-HstsConfiguration -WebXml $tempXml
-                
-                # SAFETY: Only apply if all checks pass
-                Copy-Item -Path $tempXmlPath -Destination $WebXmlPath -Force -ErrorAction Stop
-                Remove-Item -Path $tempXmlPath -Force -ErrorAction SilentlyContinue
-                
-                # SAFETY: Final verification on the saved file
-                [xml]$finalXml = Get-Content -Path $WebXmlPath -Raw
-                Test-HstsConfiguration -WebXml $finalXml
-                
-                Write-LogMessage "SUCCESS: Compliant HSTS configuration applied successfully with all safety checks passed"
-                Write-LogMessage "Backup available at: $backupPath"
+                catch {
+                    # AUTOMATIC ROLLBACK: Restore from backup on any failure
+                    Write-LogError "Configuration failed: $_"
+                    Write-LogMessage "ROLLBACK: Restoring original configuration from backup..."
+                    
+                    try {
+                        Copy-Item -Path $backupPath -Destination $WebXmlPath -Force -ErrorAction Stop
+                        Write-LogMessage "ROLLBACK: Successfully restored original configuration"
+                        Write-LogError "SAFETY CHECK FAILED: Original file has been restored from: $backupPath"
+                    }
+                    catch {
+                        Write-LogError "CRITICAL: Rollback failed! Manual restoration required from: $backupPath"
+                        Write-LogError "Rollback error: $_"
+                    }
+                    
+                    # Clean up temp file if it exists
+                    if (Test-Path $tempXmlPath) {
+                        Remove-Item -Path $tempXmlPath -Force -ErrorAction SilentlyContinue
+                    }
+                    
+                    throw
+                }
             }
             else {
                 # Apply configuration changes to in-memory XML for validation

@@ -25,7 +25,7 @@ if [ "$machine" == "Linux" ]; then
     else
         echo "Error: Script not found in current directory."
         echo "Please clone the repository and run this script from the root:"
-        echo "git clone https://github.com/yourusername/HSTS_Compliance_Apache-Tomcat_IIS.git"
+        echo "git clone https://github.com/ZeroXSHDW/HSTS_Compliance_Apache-Tomcat_IIS.git"
         echo "cd HSTS_Compliance_Apache-Tomcat_IIS"
     fi
 elif [[ "$machine" == "MinGw" || "$machine" == "Cygwin" ]]; then

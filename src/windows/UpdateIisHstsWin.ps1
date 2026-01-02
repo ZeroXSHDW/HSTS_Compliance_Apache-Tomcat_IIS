@@ -227,20 +227,48 @@ function Find-IisWebConfigFiles {
         "D:\inetpub\wwwroot",
         "E:\inetpub\wwwroot",
         "F:\inetpub\wwwroot",
+        "G:\inetpub\wwwroot",
+        "H:\inetpub\wwwroot",
+        "I:\inetpub\wwwroot",
+        "J:\inetpub\wwwroot",
+        "K:\inetpub\wwwroot",
         "C:\wwwroot",
         "D:\wwwroot",
         "E:\wwwroot",
         "F:\wwwroot",
+        "G:\wwwroot",
+        "H:\wwwroot",
+        "I:\wwwroot",
+        "J:\wwwroot",
+        "K:\wwwroot",
         "C:\WebSites",
         "D:\WebSites",
         "E:\WebSites",
+        "F:\WebSites",
+        "G:\WebSites",
+        "H:\WebSites",
+        "I:\WebSites",
+        "J:\WebSites",
+        "K:\WebSites",
         "C:\IIS\wwwroot",
         "D:\IIS\wwwroot",
-        "E:\IIS\wwwroot"
+        "E:\IIS\wwwroot",
+        "F:\IIS\wwwroot",
+        "G:\IIS\wwwroot",
+        "H:\IIS\wwwroot",
+        "I:\IIS\wwwroot",
+        "J:\IIS\wwwroot",
+        "K:\IIS\wwwroot",
+        "C:\Apps\WebSites",
+        "C:\Applications\WebSites",
+        "C:\Sites",
+        "D:\Apps\WebSites",
+        "D:\Sites",
+        "E:\Sites"
     )
     
     # Check inetpub root and scan for wwwroot subdirectories
-    $inetpubRoots = @("C:\inetpub", "D:\inetpub", "E:\inetpub", "F:\inetpub")
+    $inetpubRoots = @("C:\inetpub", "D:\inetpub", "E:\inetpub", "F:\inetpub", "G:\inetpub", "H:\inetpub", "I:\inetpub", "J:\inetpub", "K:\inetpub")
     foreach ($inetpubRoot in $inetpubRoots) {
         if (Test-Path $inetpubRoot) {
             $subDirs = Get-ChildItem -Path $inetpubRoot -Directory -ErrorAction SilentlyContinue
@@ -248,6 +276,20 @@ function Find-IisWebConfigFiles {
                 $wwwrootPath = $dir.FullName
                 if ($possibleWwwrootPaths -notcontains $wwwrootPath) {
                     $possibleWwwrootPaths += $wwwrootPath
+                }
+            }
+        }
+    }
+    
+    # Check alternative IIS installation directories
+    $alternativeIISRoots = @("C:\Apps", "C:\Applications", "C:\Sites", "D:\Apps", "D:\Sites", "E:\Sites")
+    foreach ($root in $alternativeIISRoots) {
+        if (Test-Path $root) {
+            Write-LogMessage "Searching alternative IIS root: $root"
+            $subDirs = Get-ChildItem -Path $root -Directory -ErrorAction SilentlyContinue
+            foreach ($dir in $subDirs) {
+                if ($possibleWwwrootPaths -notcontains $dir.FullName) {
+                    $possibleWwwrootPaths += $dir.FullName
                 }
             }
         }

@@ -14,6 +14,7 @@ This is the first stable release of the HSTS Compliance Tools for Apache Tomcat 
 ### Added
 
 #### Core Features
+
 - **Audit Mode**: Check HSTS configuration compliance without making changes
 - **Configure Mode**: Automatically fix HSTS configuration to OWASP standards
 - **Auto-Detection**: Automatically find Tomcat and IIS installations across common paths
@@ -23,12 +24,14 @@ This is the first stable release of the HSTS Compliance Tools for Apache Tomcat 
 - **Idempotency**: Ensures exactly one compliant HSTS definition (removes duplicates)
 
 #### Platform Support
+
 - **Windows**: PowerShell scripts for Tomcat and IIS
 - **Unix/Linux**: Bash scripts for Tomcat (Ubuntu, Debian, Kali, RHEL, CentOS)
 - **Remote Execution**: Windows scripts support remote execution via PowerShell Remoting (WinRM)
 - **Version Support**: Works with Tomcat 7.0+ and IIS 7.0+, including Tomcat 11.0 and native IIS 10.0+ HSTS
 
 #### Enterprise Features
+
 - **JSON Output**: Machine-readable output for SIEM/dashboard integration
 - **Consolidated Reporting**: Single master report (JSON/CSV) for entire server fleet
 - **Server List Files**: Execute on multiple servers from a list file
@@ -36,6 +39,7 @@ This is the first stable release of the HSTS Compliance Tools for Apache Tomcat 
 - **Report Generation**: Save detailed audit results for archival and compliance
 
 #### Security Features
+
 - Path traversal protection in all path-accepting parameters
 - Null byte detection
 - Symlink/junction detection and warnings
@@ -43,12 +47,14 @@ This is the first stable release of the HSTS Compliance Tools for Apache Tomcat 
 - No hardcoded passwords or credentials
 
 #### Installation Scripts
+
 - `TomcatManager.ps1`: Windows Tomcat installation (7.0, 8.5, 9.0, 10.0, 10.1)
 - `IisManager.ps1`: Windows IIS installation and configuration
 - `tomcat_manager.sh`: Unix/Linux Tomcat installation
 - Remote installation variants for all scripts
 
 #### Documentation
+
 - Comprehensive README with examples and troubleshooting
 - INSTALLATION.md with step-by-step guides
 - CONTRIBUTING.md with development guidelines
@@ -56,6 +62,7 @@ This is the first stable release of the HSTS Compliance Tools for Apache Tomcat 
 - DEPLOYMENT_EMAIL_TEMPLATE.md for enterprise rollouts
 
 #### Testing
+
 - 5-scenario test suite for Windows (Tomcat and IIS)
 - 4-scenario test suite for Unix/Linux (Tomcat)
 - CI/CD pipeline with syntax validation, linting, and security scanning
@@ -73,6 +80,7 @@ This is the first stable release of the HSTS Compliance Tools for Apache Tomcat 
 ## [Unreleased]
 
 ### Planned Features
+
 - Apache HTTP Server HSTS support
 - Nginx HSTS configuration support
 - Ansible playbook integration
@@ -88,5 +96,5 @@ This is the first stable release of the HSTS Compliance Tools for Apache Tomcat 
 
 ---
 
-[1.0.0]: https://github.com/yourusername/HSTS_Compliance_Apache-Tomcat_IIS/releases/tag/v1.0.0
-[Unreleased]: https://github.com/yourusername/HSTS_Compliance_Apache-Tomcat_IIS/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/ZeroXSHDW/HSTS_Compliance_Apache-Tomcat_IIS/releases/tag/v1.0.0
+[Unreleased]: https://github.com/ZeroXSHDW/HSTS_Compliance_Apache-Tomcat_IIS/compare/v1.0.0...HEAD

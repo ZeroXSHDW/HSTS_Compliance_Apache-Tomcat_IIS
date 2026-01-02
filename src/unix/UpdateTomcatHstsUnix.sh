@@ -525,6 +525,67 @@ apply_compliant_hsts() {
     return 0
 }
 
+# Function: Pre-flight checks before configuration changes
+# Parameters: config_path
+# Returns: 0 if all checks pass, 1 if any check fails
+pre_flight_checks() {
+    local config_path="$1"
+    local issues=0
+    
+    # Check if file exists and is readable
+    if [[ ! -f "$config_path" ]]; then
+        log_error "Configuration file not found: $config_path"
+        return 1
+    fi
+    
+    if [[ ! -r "$config_path" ]]; then
+        log_error "Configuration file is not readable: $config_path"
+        ((issues++))
+    fi
+    
+    # Check if file is writable
+    if [[ ! -w "$config_path" ]]; then
+        log_error "Configuration file is not writable: $config_path"
+        ((issues++))
+    fi
+    
+    # Check if backup directory is writable
+    local backup_dir=$(dirname "$config_path")
+    if [[ ! -w "$backup_dir" ]]; then
+        log_error "Backup directory is not writable: $backup_dir"
+        ((issues++))
+    fi
+    
+    # Check available disk space (warn if less than 100MB)
+    if command -v df > /dev/null 2>&1; then
+        local available_space=$(df -k "$backup_dir" | tail -1 | awk '{print $4}')
+        if [[ $available_space -lt 102400 ]]; then  # 100MB in KB
+            log_message "WARNING: Low disk space: Only $((available_space / 1024)) MB available"
+        fi
+    fi
+    
+    # Check if Tomcat is running (warn only, not an error)
+    if ps aux 2>/dev/null | grep -i "[t]omcat\|[c]atalina" > /dev/null 2>&1; then
+        log_message "WARNING: Tomcat appears to be running"
+        log_message "WARNING: Tomcat restart will be required for changes to take effect"
+    fi
+    
+    # Check for SELinux if enabled
+    if command -v getenforce > /dev/null 2>&1; then
+        if [[ $(getenforce 2>/dev/null) != "Disabled" ]]; then
+            log_message "INFO: SELinux is enabled - context will be preserved"
+        fi
+    fi
+    
+    if [[ $issues -gt 0 ]]; then
+        log_error "Pre-flight checks failed with $issues issue(s)"
+        return 1
+    fi
+    
+    log_message "Pre-flight checks passed"
+    return 0
+}
+
 # Function: Create backup of configuration file
 # Parameters: config_path
 # Returns: Path to backup file
@@ -619,12 +680,13 @@ configure_hsts_headers() {
             fi
         fi
         
-        # Preserve original file permissions and ownership
+        # Preserve original file permissions, ownership, and SELinux context
         local original_perms=""
         local original_owner=""
+        local original_selinux_context=""
         
         # Get original permissions (platform-independent approach)
-        if command -v stat >/dev/null 2>&1; then
+        if command -v stat > /dev/null 2>&1; then
             # Try GNU stat first (Linux)
             original_perms=$(stat -c '%a' "$config_path" 2>/dev/null) || \
             # Fallback to BSD stat (macOS/BSD)
@@ -635,34 +697,101 @@ configure_hsts_headers() {
             original_owner=$(stat -f '%Su:%Sg' "$config_path" 2>/dev/null) || true
         fi
         
-        # Write back to original file
-        if cp "$temp_file" "$config_path" 2>/dev/null; then
-            # Restore original permissions if we captured them
+        # Get SELinux context if SELinux is enabled
+        if command -v getenforce > /dev/null 2>&1 && [[ $(getenforce 2>/dev/null) != "Disabled" ]]; then
+            if command -v ls > /dev/null 2>&1; then
+                original_selinux_context=$(ls -Z "$config_path" 2>/dev/null | awk '{print $1}')
+            fi
+        fi
+        
+        # ATOMIC OPERATION: Use mv for atomic file replacement
+        # Create a temp file in the same directory for atomic move
+        local temp_atomic="${config_path}.tmp.$$"
+        
+        if cp "$temp_file" "$temp_atomic" 2>/dev/null; then
+            # Restore original permissions before atomic move
             if [[ -n "$original_perms" ]]; then
-                chmod "$original_perms" "$config_path" 2>/dev/null || {
+                chmod "$original_perms" "$temp_atomic" 2>/dev/null || {
                     log_message "WARNING: Could not restore original permissions ($original_perms)"
                 }
             fi
             
             # Restore original ownership if we captured it and have permission
             if [[ -n "$original_owner" ]] && [[ $EUID -eq 0 ]]; then
-                chown "$original_owner" "$config_path" 2>/dev/null || {
+                chown "$original_owner" "$temp_atomic" 2>/dev/null || {
                     log_message "WARNING: Could not restore original ownership ($original_owner)"
                 }
             fi
             
-            # Verify the file was written correctly
-            if [[ -f "$config_path" ]] && [[ -s "$config_path" ]]; then
-                success=0
-                message="Compliant HSTS configuration applied successfully. All duplicate/non-compliant headers removed."
-                # Clean up temp file on success
-                rm -f "$temp_file"
+            # Restore SELinux context if captured
+            if [[ -n "$original_selinux_context" ]] && command -v chcon > /dev/null 2>&1; then
+                chcon "$original_selinux_context" "$temp_atomic" 2>/dev/null || {
+                    log_message "WARNING: Could not restore SELinux context"
+                }
+            fi
+            
+            # ATOMIC MOVE: This is atomic on the same filesystem
+            if mv "$temp_atomic" "$config_path" 2>/dev/null; then
+                # Verify the file was written correctly
+                if [[ -f "$config_path" ]] && [[ -s "$config_path" ]]; then
+                    # Final validation
+                    if validate_xml "$config_path" 2>/dev/null || [[ ! $(head -1 "$config_path") =~ \<\?xml ]]; then
+                        success=0
+                        message="Compliant HSTS configuration applied successfully. All duplicate/non-compliant headers removed."
+                        # Clean up temp file on success
+                        rm -f "$temp_file"
+                    else
+                        # AUTOMATIC ROLLBACK: Validation failed after write
+                        log_error "Post-write validation failed"
+                        log_message "ROLLBACK: Restoring original configuration from backup..."
+                        if [[ -n "$BACKUP_PATH" ]] && [[ -f "$BACKUP_PATH" ]]; then
+                            if cp "$BACKUP_PATH" "$config_path" 2>/dev/null; then
+                                log_message "ROLLBACK: Successfully restored original configuration"
+                                message="Configuration validation failed - original file restored from backup"
+                            else
+                                log_error "CRITICAL: Rollback failed! Manual restoration required from: $BACKUP_PATH"
+                                message="CRITICAL: Rollback failed - manual restoration required"
+                            fi
+                        else
+                            log_error "CRITICAL: No backup available for rollback"
+                            message="CRITICAL: Validation failed and no backup available"
+                        fi
+                        success=1
+                    fi
+                else
+                    # AUTOMATIC ROLLBACK: File appears corrupted
+                    log_error "Configuration file appears to be empty or corrupted after write"
+                    log_message "ROLLBACK: Restoring original configuration from backup..."
+                    if [[ -n "$BACKUP_PATH" ]] && [[ -f "$BACKUP_PATH" ]]; then
+                        if cp "$BACKUP_PATH" "$config_path" 2>/dev/null; then
+                            log_message "ROLLBACK: Successfully restored original configuration"
+                            message="File corruption detected - original file restored from backup"
+                        else
+                            log_error "CRITICAL: Rollback failed! Manual restoration required from: $BACKUP_PATH"
+                            message="CRITICAL: Rollback failed - manual restoration required"
+                        fi
+                    fi
+                    success=1
+                fi
             else
-                message="Configuration file appears to be empty or corrupted after write"
+                # AUTOMATIC ROLLBACK: Atomic move failed
+                log_error "Atomic move operation failed"
+                log_message "ROLLBACK: Restoring original configuration from backup..."
+                rm -f "$temp_atomic"  # Clean up failed temp file
+                if [[ -n "$BACKUP_PATH" ]] && [[ -f "$BACKUP_PATH" ]]; then
+                    if cp "$BACKUP_PATH" "$config_path" 2>/dev/null; then
+                        log_message "ROLLBACK: Successfully restored original configuration"
+                        message="Write operation failed - original file restored from backup"
+                    else
+                        log_error "CRITICAL: Rollback failed! Manual restoration required from: $BACKUP_PATH"
+                        message="CRITICAL: Rollback failed - manual restoration required"
+                    fi
+                fi
                 success=1
             fi
         else
-            message="Failed to write configured file - check permissions"
+            message="Failed to create temporary file - check permissions"
+            success=1
         fi
     fi
     
@@ -926,6 +1055,76 @@ get_tomcat_conf_paths() {
         fi
     done < <(ps aux 2>/dev/null | grep -i "[t]omcat\|[c]atalina")
     
+    # Check package managers for Tomcat installations
+    log_message "Checking package managers for Tomcat installations..."
+    
+    # Debian/Ubuntu (dpkg/apt)
+    if command -v dpkg > /dev/null 2>&1; then
+        log_message "Checking dpkg for Tomcat packages..."
+        tomcat_packages=$(dpkg -l 2>/dev/null | grep -i tomcat | awk '{print $2}')
+        for package in $tomcat_packages; do
+            if [[ -n "$package" ]]; then
+                # Get package files and find conf/server.xml
+                conf_path=$(dpkg -L "$package" 2>/dev/null | grep "conf/server.xml" | sed 's|/server.xml||')
+                if [[ -n "$conf_path" ]] && [[ -f "$conf_path/server.xml" ]]; then
+                    # Check if not already in list
+                    local found_pkg=0
+                    for p in "${conf_paths[@]}"; do
+                        if [[ "$p" == "$conf_path" ]]; then found_pkg=1; break; fi
+                    done
+                    if [[ $found_pkg -eq 0 ]]; then
+                        conf_paths+=("$conf_path")
+                        log_message "Found Tomcat via dpkg package '$package': $conf_path"
+                    fi
+                fi
+            fi
+        done
+    fi
+    
+    # Red Hat/CentOS/Fedora (rpm/yum)
+    if command -v rpm > /dev/null 2>&1; then
+        log_message "Checking rpm for Tomcat packages..."
+        tomcat_packages=$(rpm -qa 2>/dev/null | grep -i tomcat)
+        for package in $tomcat_packages; do
+            if [[ -n "$package" ]]; then
+                # Get package files and find conf/server.xml
+                conf_path=$(rpm -ql "$package" 2>/dev/null | grep "conf/server.xml" | sed 's|/server.xml||')
+                if [[ -n "$conf_path" ]] && [[ -f "$conf_path/server.xml" ]]; then
+                    local found_rpm=0
+                    for p in "${conf_paths[@]}"; do
+                        if [[ "$p" == "$conf_path" ]]; then found_rpm=1; break; fi
+                    done
+                    if [[ $found_rpm -eq 0 ]]; then
+                        conf_paths+=("$conf_path")
+                        log_message "Found Tomcat via rpm package '$package': $conf_path"
+                    fi
+                fi
+            fi
+        done
+    fi
+    
+    # Arch Linux (pacman)
+    if command -v pacman > /dev/null 2>&1; then
+        log_message "Checking pacman for Tomcat packages..."
+        tomcat_packages=$(pacman -Q 2>/dev/null | grep -i tomcat | awk '{print $1}')
+        for package in $tomcat_packages; do
+            if [[ -n "$package" ]]; then
+                # Get package files and find conf/server.xml
+                conf_path=$(pacman -Ql "$package" 2>/dev/null | grep "conf/server.xml" | awk '{print $2}' | sed 's|/server.xml||')
+                if [[ -n "$conf_path" ]] && [[ -f "$conf_path/server.xml" ]]; then
+                    local found_pac=0
+                    for p in "${conf_paths[@]}"; do
+                        if [[ "$p" == "$conf_path" ]]; then found_pac=1; break; fi
+                    done
+                    if [[ $found_pac -eq 0 ]]; then
+                        conf_paths+=("$conf_path")
+                        log_message "Found Tomcat via pacman package '$package': $conf_path"
+                    fi
+                fi
+            fi
+        done
+    fi
+    
     # Search common paths
     log_message "Checking standard locations for Tomcat configurations..."
     for path in \
@@ -956,7 +1155,21 @@ get_tomcat_conf_paths() {
             "/opt/tomcat11/conf" \
             "/usr/local/tomcat11/conf" \
             "/var/lib/tomcat11/conf" \
-            "/etc/tomcat/conf"; do
+            "/etc/tomcat/conf" \
+            "/srv/tomcat/conf" \
+            "/srv/tomcat7/conf" \
+            "/srv/tomcat8/conf" \
+            "/srv/tomcat9/conf" \
+            "/srv/tomcat10/conf" \
+            "/srv/tomcat11/conf" \
+            "/srv/www/tomcat/conf" \
+            "/app/tomcat/conf" \
+            "/app/tomcat7/conf" \
+            "/app/tomcat8/conf" \
+            "/app/tomcat9/conf" \
+            "/app/tomcat10/conf" \
+            "/app/tomcat11/conf" \
+            "/applications/tomcat/conf"; do
             if [[ -d "${path}" ]] && [[ -f "${path}/server.xml" ]]; then
                 log_message "Found Tomcat configuration at: ${path}"
                 # Add to conf_paths if not already there
@@ -973,6 +1186,26 @@ get_tomcat_conf_paths() {
                 fi
             fi
         done
+    
+    # Search alternative installation directories
+    for root in "/srv" "/app" "/applications"; do
+        if [[ -d "$root" ]]; then
+            log_message "Searching for Tomcat in: $root"
+            while IFS= read -r tomcat_dir; do
+                if [[ -f "$tomcat_dir/conf/server.xml" ]]; then
+                    local srv_conf="$tomcat_dir/conf"
+                    local found_srv=0
+                    for p in "${conf_paths[@]}"; do
+                        if [[ "$p" == "$srv_conf" ]]; then found_srv=1; break; fi
+                    done
+                    if [[ $found_srv -eq 0 ]]; then
+                        conf_paths+=("$srv_conf")
+                        log_message "Found Tomcat in $root: $srv_conf"
+                    fi
+                fi
+            done < <(find "$root" -maxdepth 2 -type d -name "*tomcat*" 2>/dev/null)
+        fi
+    done
     
     # Fallback to find command (Linux/Unix servers only)
     # Search for all server.xml files in common locations
@@ -1146,6 +1379,15 @@ process_web_xml() {
                 return 2
             fi
             CONFIRMED=1
+        fi
+        
+        # PRE-FLIGHT: Check system state before making changes
+        if [[ "$DRY_RUN" != "true" ]]; then
+            log_message "Running pre-flight checks..."
+            if ! pre_flight_checks "$web_xml_path"; then
+                log_error "Pre-flight checks failed - skipping: $web_xml_path"
+                return 2
+            fi
         fi
         
         # Create backup

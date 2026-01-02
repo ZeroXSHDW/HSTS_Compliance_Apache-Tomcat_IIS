@@ -81,7 +81,7 @@ pre-commit install
 ### Cloning the Repository
 
 ```bash
-git clone https://github.com/yourusername/HSTS_Compliance_Apache-Tomcat_IIS.git
+git clone https://github.com/ZeroXSHDW/HSTS_Compliance_Apache-Tomcat_IIS.git
 cd HSTS_Compliance_Apache-Tomcat_IIS
 ```
 
