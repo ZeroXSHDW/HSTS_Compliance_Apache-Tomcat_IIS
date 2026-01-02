@@ -18,7 +18,8 @@
 </p>
 
 <p align="center">
-  <a href="#-one-line-quick-start">🚀 Quick Start</a> •
+  <a href="#-quick-reference">🚀 Quick Reference</a> •
+  <a href="#-getting-started">📖 Getting Started</a> •
   <a href="docs/INSTALLATION.md">📚 Installation</a> •
   <a href="docs/API_INTEGRATION.md">📊 SIEM Integration</a> •
   <a href="docs/VERIFICATION.md">✅ Verification</a>
@@ -27,6 +28,80 @@
 ---
 
 **Primary Purpose:** This project eliminates configuration drift and ensures OWASP HSTS compliance by providing automated auditing, self-healing configuration, and enterprise-grade reporting for Linux and Windows infrastructure.
+
+## 🚀 Quick Reference
+
+**Clone the repository first:**
+
+```bash
+git clone https://github.com/ZeroXSHDW/HSTS_Compliance_Apache-Tomcat_IIS.git
+cd HSTS_Compliance_Apache-Tomcat_IIS
+```
+
+### Most Common Commands
+
+#### Linux/Unix - Apache Tomcat
+
+```bash
+# Audit HSTS configuration (no changes)
+sudo ./src/unix/UpdateTomcatHstsUnix.sh --mode audit
+
+# Configure HSTS to be OWASP compliant
+sudo ./src/unix/UpdateTomcatHstsUnix.sh --mode configure
+
+# Preview changes without applying (dry run)
+sudo ./src/unix/UpdateTomcatHstsUnix.sh --mode configure --dry-run
+```
+
+#### Windows - Apache Tomcat (Local)
+
+```powershell
+# Run as Administrator
+
+# Audit HSTS configuration (no changes)
+.\src\windows\UpdateTomcatHstsWin.ps1 -Mode audit
+
+# Configure HSTS to be OWASP compliant
+.\src\windows\UpdateTomcatHstsWin.ps1 -Mode configure
+
+# Preview changes without applying (dry run)
+.\src\windows\UpdateTomcatHstsWin.ps1 -Mode configure -DryRun
+```
+
+#### Windows - IIS (Local)
+
+```powershell
+# Run as Administrator
+
+# Audit HSTS configuration (no changes)
+.\src\windows\UpdateIisHstsWin.ps1 -Mode audit
+
+# Configure HSTS to be OWASP compliant
+.\src\windows\UpdateIisHstsWin.ps1 -Mode configure
+
+# Preview changes without applying (dry run)
+.\src\windows\UpdateIisHstsWin.ps1 -Mode configure -DryRun
+```
+
+#### Windows - Remote Execution
+
+```powershell
+# Run as Administrator
+$cred = Get-Credential
+
+# Audit remote Tomcat server
+.\src\windows\Remote_UpdateTomcatHstsWin.ps1 -ServerName "webserver01.example.com" -Mode audit -Credential $cred
+
+# Audit remote IIS server
+.\src\windows\Remote_UpdateIisHstsWin.ps1 -ServerName "webserver01.example.com" -Mode audit -Credential $cred
+
+# Configure multiple servers from a list file
+.\src\windows\Remote_UpdateTomcatHstsWin.ps1 -ServerListFile "C:\servers.txt" -Mode configure -Credential $cred
+```
+
+> **📖 For detailed usage, custom paths, and advanced features, see the [Getting Started](#-getting-started) section below.**
+
+---
 
 ## 📋 Platform Support Matrix
 
@@ -206,7 +281,6 @@ This implementation follows OWASP recommendations:
 ├── SECURITY.md                  # Security policy
 ├── CODE_OF_CONDUCT.md           # Community standards
 ├── VERSION                      # Current version file
-├── quick-start.sh               # One-line quick start script
 ├── docs/                        # Project documentation
 │   ├── INSTALLATION.md          # Installation guide
 │   ├── VERIFICATION.md          # HSTS verification guide
@@ -247,6 +321,7 @@ This implementation follows OWASP recommendations:
     ├── test_web.config         # Example IIS web.config (minimal configuration)
     └── web.xml                 # Additional Tomcat web.xml example
 ```
+
 
 ## Prerequisites
 
@@ -316,10 +391,10 @@ For detailed manual installation instructions for Apache Tomcat, IIS, and PowerS
 
 See [docs/INSTALLATION.md](docs/INSTALLATION.md) for complete step-by-step instructions, troubleshooting guides, and verification checklists.
 
-> **After Installation:** Once Tomcat or IIS is installed, proceed to the [Quick Start](#quick-start) section to configure HSTS security headers.
+> **After Installation:** Once Tomcat or IIS is installed, proceed to the [Getting Started](#-getting-started) section to configure HSTS security headers.
 
     
-## Quick Start
+## 📖 Getting Started
 
 > **Primary Purpose:** The main functionality of this project is HSTS security configuration. Use the scripts below to audit and configure HSTS headers for OWASP compliance.
 
