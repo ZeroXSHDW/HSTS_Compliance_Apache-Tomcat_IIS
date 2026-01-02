@@ -51,6 +51,9 @@ sudo ./src/unix/UpdateTomcatHstsUnix.sh --mode configure
 
 # Preview changes without applying (dry run)
 sudo ./src/unix/UpdateTomcatHstsUnix.sh --mode configure --dry-run
+
+# Configure with a specific security level (e.g., maximum)
+sudo ./src/unix/UpdateTomcatHstsUnix.sh --mode configure --security-level maximum
 ```
 
 #### Windows - Apache Tomcat (Local)
@@ -81,6 +84,9 @@ sudo ./src/unix/UpdateTomcatHstsUnix.sh --mode configure --dry-run
 
 # Preview changes without applying (dry run)
 .\src\windows\UpdateIisHstsWin.ps1 -Mode configure -DryRun
+
+# Configure IIS with a specific security level (e.g., veryhigh)
+.\src\windows\UpdateIisHstsWin.ps1 -Mode configure -SecurityLevel veryhigh
 ```
 
 #### Windows - Remote Execution
@@ -217,6 +223,19 @@ This implementation follows OWASP recommendations:
 - ✅ **Required**: `includeSubDomains` (prevents cookie-related attacks from subdomains)
 - ℹ️ **Optional**: `preload` directive (allowed but not configured by default - see [Preload Considerations](#preload-considerations) below)
 
+### 🛡️ Parameterized Security Levels
+
+The suite supports four security tiers to provide flexibility in HSTS enforcement:
+
+| Level | `max-age` | `includeSubDomains` | `preload` | Description |
+|-------|-----------|--------------------|-----------|-------------|
+| `basic` | 1 Year | No | No | Minimum standard; avoids potential subdomain issues. |
+| `high` | 1 Year | ✅ Yes | No | **Default** - Follows standard OWASP recommendations. |
+| `veryhigh` | 1 Year | ✅ Yes | ✅ Yes | High security with preloading enabled. |
+| `maximum` | 2 Years | ✅ Yes | ✅ Yes | Maximum possible security (2yr max-age + preload). |
+
+**Usage Note:** The default level is `high`. Use the `--security-level` (Unix) or `-SecurityLevel` (Windows) parameter to choose a different tier.
+
 **Key Features:**
 
 **Core Functionality:**
@@ -235,6 +254,7 @@ This implementation follows OWASP recommendations:
 - ✅ **Dry Run**: Preview changes without applying them (configure mode only)
 - ✅ **XML Validation**: Validates XML structure before and after modifications
 - ✅ **Idempotency**: Ensures exactly one compliant HSTS definition (removes duplicates)
+- ✅ **Tiered Compliance**: Support for multiple security levels (Basic, High, Very High, Maximum)
 
 **Flexibility & Control:**
 
@@ -1055,7 +1075,7 @@ All scripts include automatic detection capabilities to simplify deployment:
 
 **Syntax:**
 ```bash
-sudo ./src/unix/UpdateTomcatHstsUnix.sh [--mode audit|configure] [--custom-conf=/path/to/conf] [--custom-paths-file=/path/to/file] [--log-file=/path/to/log] [--dry-run]
+sudo ./src/unix/UpdateTomcatHstsUnix.sh [--mode audit|configure] [--custom-conf=/path/to/conf] [--custom-paths-file=/path/to/file] [--log-file=/path/to/log] [--dry-run] [--security-level basic|high|veryhigh|maximum] [--json] [--report-file=path]
 ```
 
 **Options:**
@@ -1064,6 +1084,9 @@ sudo ./src/unix/UpdateTomcatHstsUnix.sh [--mode audit|configure] [--custom-conf=
 - `--custom-paths-file` (optional): File containing custom paths (one path per line, lines starting with # are comments)
 - `--log-file` (optional): Custom log file path (defaults to timestamped log in /var/log)
 - `--dry-run` (optional): Preview changes without applying (configure mode only)
+- `--security-level` (optional, default: high): Target security level (`basic`, `high`, `veryhigh`, `maximum`)
+- `--json` (optional): Output summary in JSON format
+- `--report-file` (optional): Path to save a detailed JSON report
 
 **Auto-Detection:**
 - Checks `CATALINA_BASE` and `CATALINA_HOME` environment variables
@@ -1074,16 +1097,14 @@ sudo ./src/unix/UpdateTomcatHstsUnix.sh [--mode audit|configure] [--custom-conf=
 
 **Syntax:**
 ```powershell
-.\src\windows\UpdateTomcatHstsWin.ps1 [-Mode audit|configure] [-TomcatConfPath <path>] [-CustomPaths <string[]>] [-CustomPathsFile <path>] [-DryRun] [-Force]
+.\src\windows\UpdateTomcatHstsWin.ps1 [-Mode audit|configure] [-TomcatConfPath <path>] [-CustomPaths <string[]>] [-CustomPathsFile <path>] [-DryRun] [-Force] [-SecurityLevel basic|high|veryhigh|maximum] [-OutputFormat json|csv|text] [-ReportPath <path>]
 ```
 
 **Parameters:**
-- `-Mode` (optional, default: configure): Operation mode - `audit` or `configure`
-- `-Force` (optional): Auto-approve all configuration changes without prompting (configure mode only)
-- `-TomcatConfPath` (optional): Single custom Tomcat conf directory path (auto-detects if not provided)
-- `-CustomPaths` (optional): Array of custom Tomcat conf directory paths (e.g., `@("C:\Tomcat1\conf", "C:\Tomcat2\conf")`)
-- `-CustomPathsFile` (optional): File containing custom paths (one path per line, lines starting with # are comments)
 - `-DryRun` (optional): Preview changes without applying
+- `-SecurityLevel` (optional, default: high): Target security level (`basic`, `high`, `veryhigh`, `maximum`)
+- `-OutputFormat` (optional, default: text): Output format for the console and report (`json`, `csv`, `text`)
+- `-ReportPath` (optional): Path to save the structured audit report
 
 **Auto-Detection:**
 - Searches common Windows Server paths: `C:\Program Files\Apache Software Foundation\Tomcat*\conf`, `C:\Tomcat*\conf`, etc.
@@ -1093,19 +1114,13 @@ sudo ./src/unix/UpdateTomcatHstsUnix.sh [--mode audit|configure] [--custom-conf=
 
 **Syntax:**
 ```powershell
-.\src\windows\Remote_UpdateTomcatHstsWin.ps1 [-ServerName <string[]>] [-ServerListFile <path>] [-Mode audit|configure] [-TomcatConfPath <path>] [-CustomPaths <string[]>] [-CustomPathsFile <path>] [-DryRun] [-Force] [-Credential <PSCredential>]
+.\src\windows\Remote_UpdateTomcatHstsWin.ps1 [-ServerName <string[]>] [-ServerListFile <path>] [-Mode audit|configure] [-TomcatConfPath <path>] [-CustomPaths <string[]>] [-CustomPathsFile <path>] [-DryRun] [-Force] [-Credential <PSCredential>] [-SecurityLevel basic|high|veryhigh|maximum] [-OutputFormat json|csv] [-ConsolidatedReportPath <path>]
 ```
 
-**Parameters:**
-- `-ServerName` (optional): Array of server names to process (e.g., `@("server1", "server2")`)
-- `-ServerListFile` (optional): File containing server names (one per line, lines starting with # are comments)
-- `-Mode` (optional, default: configure): Operation mode - `audit` or `configure`
-- `-TomcatConfPath` (optional): Single custom Tomcat conf directory path (auto-detects if not provided)
-- `-CustomPaths` (optional): Array of custom Tomcat conf directory paths (e.g., `@("C:\Tomcat1\conf", "C:\Tomcat2\conf")`)
-- `-CustomPathsFile` (optional): File containing custom paths (one path per line, lines starting with # are comments)
-- `-DryRun` (optional): Preview changes without applying
-- `-Force` (optional): Auto-approve all configuration changes without prompting (configure mode only)
 - `-Credential` (optional): PSCredential object for remote authentication (use `Get-Credential`)
+- `-SecurityLevel` (optional, default: high): Target security level (`basic`, `high`, `veryhigh`, `maximum`)
+- `-OutputFormat` (optional, default: csv): Output format for the consolidated report (`json`, `csv`)
+- `-ConsolidatedReportPath` (optional): Path to save the consolidated fleet audit report
 
 **Note:** Either `-ServerName` or `-ServerListFile` (or both) must be provided.
 
@@ -1123,7 +1138,7 @@ sudo ./src/unix/UpdateTomcatHstsUnix.sh [--mode audit|configure] [--custom-conf=
 
 **Syntax:**
 ```powershell
-.\src\windows\UpdateIisHstsWin.ps1 [-Mode audit|configure] [-ConfigPath <path>] [-CustomPaths <string[]>] [-CustomPathsFile <path>] [-DryRun] [-Force]
+.\src\windows\UpdateIisHstsWin.ps1 [-Mode audit|configure] [-ConfigPath <path>] [-CustomPaths <string[]>] [-CustomPathsFile <path>] [-DryRun] [-Force] [-SecurityLevel basic|high|veryhigh|maximum] [-OutputFormat json|csv|text] [-ReportPath <path>]
 ```
 
 **Parameters:**
@@ -1144,19 +1159,14 @@ sudo ./src/unix/UpdateTomcatHstsUnix.sh [--mode audit|configure] [--custom-conf=
 
 **Syntax:**
 ```powershell
-.\src\windows\Remote_UpdateIisHstsWin.ps1 [-ServerName <string[]>] [-ServerListFile <path>] [-Mode audit|configure] [-ConfigPath <path>] [-CustomPaths <string[]>] [-CustomPathsFile <path>] [-DryRun] [-Force] [-Credential <PSCredential>]
+.\src\windows\Remote_UpdateIisHstsWin.ps1 [-ServerName <string[]>] [-ServerListFile <path>] [-Mode audit|configure] [-ConfigPath <path>] [-CustomPaths <string[]>] [-CustomPathsFile <path>] [-DryRun] [-Force] [-Credential <PSCredential>] [-SecurityLevel basic|high|veryhigh|maximum] [-OutputFormat json|csv] [-ConsolidatedReportPath <path>]
 ```
 
 **Parameters:**
-- `-ServerName` (optional): Array of server names to process (e.g., `@("server1", "server2")`)
-- `-ServerListFile` (optional): File containing server names (one per line, lines starting with # are comments)
-- `-Mode` (optional, default: configure): Operation mode - `audit` or `configure`
-- `-ConfigPath` (optional): Single path to web.config file or directory containing web.config (auto-detects if not provided)
-- `-CustomPaths` (optional): Array of web.config file paths or directories (e.g., `@("C:\path1\web.config", "C:\path2")`)
-- `-CustomPathsFile` (optional): File containing custom paths (one path per line, lines starting with # are comments)
-- `-DryRun` (optional): Preview changes without applying
-- `-Force` (optional): Auto-approve all configuration changes without prompting (configure mode only)
 - `-Credential` (optional): PSCredential object for remote authentication (use `Get-Credential`)
+- `-SecurityLevel` (optional, default: high): Target security level (`basic`, `high`, `veryhigh`, `maximum`)
+- `-OutputFormat` (optional, default: csv): Output format for the consolidated report (`json`, `csv`)
+- `-ConsolidatedReportPath` (optional): Path to save the consolidated fleet audit report
 
 **Note:** Either `-ServerName` or `-ServerListFile` (or both) must be provided. For directories, the script will look for `web.config` files within them.
 

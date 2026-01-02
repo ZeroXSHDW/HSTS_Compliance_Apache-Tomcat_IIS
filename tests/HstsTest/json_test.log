@@ -1,18 +1,27 @@
-[2025-12-31 18:54:34] =========================================
-[2025-12-31 18:54:34] Tomcat HSTS Configuration Tool
-[2025-12-31 18:54:34] Hostname: MacBookPro.station
-[2025-12-31 18:54:34] Execution Time: 2025-12-31 18:54:34
-[2025-12-31 18:54:34] Mode: audit
-[2025-12-31 18:54:34] =========================================
-[2025-12-31 18:54:34] Checking custom configuration path: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/HstsTest/conf
-[2025-12-31 18:54:34] Found valid Tomcat configuration at custom path: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/HstsTest/conf
-[2025-12-31 18:54:34] Found Tomcat Configuration: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/HstsTest/conf (Version: 9.0.0)
-[2025-12-31 18:54:34] Searching for web.xml files...
-[2025-12-31 18:54:34]   Found: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/HstsTest/conf/web.xml (global configuration)
-[2025-12-31 18:54:34] Found 1 web.xml file(s) to process
-[2025-12-31 18:54:34] 
-[2025-12-31 18:54:34] =========================================
-[2025-12-31 18:54:34] Processing: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/HstsTest/conf/web.xml
-[2025-12-31 18:54:34] =========================================
-[2025-12-31 18:54:34] FAILURE: No HSTS header definitions found in configuration
-[2025-12-31 18:54:34] HSTS configuration needs to be updated.
+[2026-01-02 15:29:11] =========================================
+[2026-01-02 15:29:11] Tomcat HSTS Configuration Tool
+[2026-01-02 15:29:11] Hostname: MACBOOKPRO.station
+[2026-01-02 15:29:11] Execution Time: 2026-01-02 15:29:11
+[2026-01-02 15:29:11] Mode: audit
+[2026-01-02 15:29:11] =========================================
+[2026-01-02 15:29:11] Checking custom configuration path: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/HstsTest/conf
+[2026-01-02 15:29:11] Found valid Tomcat configuration at custom path: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/HstsTest/conf
+[2026-01-02 15:29:11] Found Tomcat Configuration: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/HstsTest/conf (Version: 9.0.0)
+[2026-01-02 15:29:11] Searching for web.xml files...
+[2026-01-02 15:29:11]   Found: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/HstsTest/conf/web.xml (global configuration)
+[2026-01-02 15:29:11] Found 1 web.xml file(s) to process
+[2026-01-02 15:29:11] 
+[2026-01-02 15:29:11] =========================================
+[2026-01-02 15:29:11] Processing: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/HstsTest/conf/web.xml
+[2026-01-02 15:29:11] =========================================
+[2026-01-02 15:29:11] === AUDIT: No HSTS Configuration Found ===
+[2026-01-02 15:29:11] No HSTS headers or filters detected in the configuration file.
+[2026-01-02 15:29:11] 
+[2026-01-02 15:29:11] Configuration Context:
+[2026-01-02 15:29:11]   No filters found in configuration
+[2026-01-02 15:29:11] 
+[2026-01-02 15:29:11] Recommended Action:
+[2026-01-02 15:29:11]   Add HSTS configuration with: max-age=31536000; includeSubDomains
+[2026-01-02 15:29:11] ==========================================
+[2026-01-02 15:29:11] FAILURE: No HSTS header definitions found in configuration
+[2026-01-02 15:29:11] HSTS configuration needs to be updated.

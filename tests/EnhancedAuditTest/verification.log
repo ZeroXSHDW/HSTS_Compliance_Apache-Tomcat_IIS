@@ -1,0 +1,90 @@
+[2026-01-02 12:55:50] --- Testing Scenario: No_HSTS ---
+[2026-01-02 12:55:50] FAILURE: No HSTS scenario output mismatch.
+[2026-01-02 12:56:02] --- Testing Scenario: No_HSTS ---
+[2026-01-02 12:56:02] FAILURE: No HSTS scenario output mismatch.
+[2026-01-02 12:56:15] --- Testing Scenario: No_HSTS ---
+[2026-01-02 12:56:15] SUCCESS: No HSTS scenario output verified.
+[2026-01-02 12:56:15] --- Testing Scenario: Non_Compliant ---
+[2026-01-02 12:56:15] FAILURE: Non-compliant filter scenario output mismatch.
+[2026-01-02 12:56:30] --- Testing Scenario: No_HSTS ---
+[2026-01-02 12:56:30] SUCCESS: No HSTS scenario output verified.
+[2026-01-02 12:56:30] --- Testing Scenario: Non_Compliant ---
+[2026-01-02 12:56:30] FAILURE: Non-compliant filter scenario output mismatch.
+[2026-01-02 12:56:47] --- Testing Scenario: No_HSTS ---
+[2026-01-02 12:56:47] SUCCESS: No HSTS scenario output verified.
+[2026-01-02 12:56:47] --- Testing Scenario: Non_Compliant ---
+[2026-01-02 12:56:47] --- Testing Scenario: Non_Compliant ---
+[2026-01-02 12:56:47] FAILURE: Non-compliant filter scenario output mismatch.
+[2026-01-02 12:57:52] --- Testing Scenario: No_HSTS ---
+[2026-01-02 12:57:52] SUCCESS: No HSTS scenario output verified.
+[2026-01-02 12:57:52] --- Testing Scenario: Non_Compliant ---
+[2026-01-02 12:57:52] --- Testing Scenario: Non_Compliant ---
+[2026-01-02 12:57:52] FAILURE: Non-compliant filter scenario output mismatch.
+[2026-01-02 12:58:11] --- Testing Scenario: No_HSTS ---
+[2026-01-02 12:58:11] SUCCESS: No HSTS scenario output verified.
+[2026-01-02 12:58:11] --- Testing Scenario: Non_Compliant ---
+[2026-01-02 12:58:11] --- Testing Scenario: Non_Compliant ---
+[2026-01-02 12:58:11] MISSING: Current Filter-Based HSTS Configuration: in /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/Non_Compliant_audit.log
+[2026-01-02 12:58:11] FAILURE: Non-compliant filter scenario output mismatch.
+[2026-01-02 12:58:42] --- Testing Scenario: No_HSTS ---
+[2026-01-02 12:58:42] SUCCESS: No HSTS scenario output verified.
+[2026-01-02 12:58:42] --- Testing Scenario: Non_Compliant ---
+[2026-01-02 12:58:42] --- Testing Scenario: Non_Compliant ---
+[2026-01-02 12:58:43] MISSING: Current Filter-Based HSTS Configuration: in /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/Non_Compliant_audit.log
+[2026-01-02 12:58:43] FAILURE: Non-compliant filter scenario output mismatch.
+[2026-01-02 13:49:24] --- Testing Scenario: No_HSTS ---
+[2026-01-02 13:49:25] SUCCESS: No HSTS scenario output verified.
+[2026-01-02 13:49:25] --- Testing Scenario: Non_Compliant ---
+[2026-01-02 13:49:25] SUCCESS: Non-compliant filter scenario output verified.
+[2026-01-02 13:49:25] --- Testing Scenario: Multiple_Headers ---
+[2026-01-02 13:49:25] MISSING: \[FAIL\] Direct header (non-compliant): Header set Strict-Transport-Security "max-age=60" in /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/Multiple_Headers_audit.log
+[2026-01-02 13:49:25] FAILURE: Multiple direct headers scenario output mismatch.
+[2026-01-02 13:50:20] --- Testing Scenario: No_HSTS ---
+[2026-01-02 13:50:20] SUCCESS: No HSTS scenario output verified.
+[2026-01-02 13:50:20] --- Testing Scenario: Non_Compliant ---
+[2026-01-02 13:50:21] SUCCESS: Non-compliant filter scenario output verified.
+[2026-01-02 13:50:21] --- Testing Scenario: Multiple_Headers ---
+[2026-01-02 13:50:21] MISSING: \[FAIL\] Direct header (non-compliant): Header set Strict-Transport-Security "max-age=60" in /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/Multiple_Headers_audit.log
+[2026-01-02 13:50:21] FAILURE: Multiple direct headers scenario output mismatch.
+[2026-01-02 13:50:58] --- Testing Scenario: No_HSTS ---
+[2026-01-02 13:50:58] SUCCESS: No HSTS scenario output verified.
+[2026-01-02 13:50:58] --- Testing Scenario: Non_Compliant ---
+[2026-01-02 13:50:59] SUCCESS: Non-compliant filter scenario output verified.
+[2026-01-02 13:50:59] --- Testing Scenario: Multiple_Headers ---
+[2026-01-02 13:50:59] SUCCESS: Multiple direct headers scenario output verified.
+[2026-01-02 13:50:59] === All Unix Enhanced Audit Verifications Passed ===
+[2026-01-02 13:51:16] --- Testing Scenario: No_HSTS ---
+[2026-01-02 13:51:16] SUCCESS: No HSTS scenario output verified.
+[2026-01-02 13:51:16] --- Testing Scenario: Non_Compliant ---
+[2026-01-02 13:51:16] SUCCESS: Non-compliant filter scenario output verified.
+[2026-01-02 13:51:16] --- Testing Scenario: Multiple_Headers ---
+[2026-01-02 13:51:16] SUCCESS: Multiple direct headers scenario output verified.
+[2026-01-02 13:51:16] === All Unix Enhanced Audit Verifications Passed ===
+[2026-01-02 13:52:00] --- Testing Scenario: No_HSTS ---
+[2026-01-02 13:52:00] SUCCESS: No HSTS scenario output verified.
+[2026-01-02 13:52:00] --- Testing Scenario: Non_Compliant ---
+[2026-01-02 13:52:00] SUCCESS: Non-compliant filter scenario output verified.
+[2026-01-02 13:52:00] --- Testing Scenario: Multiple_Headers ---
+[2026-01-02 13:52:00] SUCCESS: Multiple direct headers scenario output verified.
+[2026-01-02 13:52:00] === All Unix Enhanced Audit Verifications Passed ===
+[2026-01-02 13:52:27] --- Testing Scenario: No_HSTS ---
+[2026-01-02 13:52:27] SUCCESS: No HSTS scenario output verified.
+[2026-01-02 13:52:27] --- Testing Scenario: Non_Compliant ---
+[2026-01-02 13:52:28] SUCCESS: Non-compliant filter scenario output verified.
+[2026-01-02 13:52:28] --- Testing Scenario: Multiple_Headers ---
+[2026-01-02 13:52:28] SUCCESS: Multiple direct headers scenario output verified.
+[2026-01-02 13:52:28] === All Unix Enhanced Audit Verifications Passed ===
+[2026-01-02 13:53:17] --- Testing Scenario: No_HSTS ---
+[2026-01-02 13:53:18] SUCCESS: No HSTS scenario output verified.
+[2026-01-02 13:53:18] --- Testing Scenario: Non_Compliant ---
+[2026-01-02 13:53:18] SUCCESS: Non-compliant filter scenario output verified.
+[2026-01-02 13:53:18] --- Testing Scenario: Multiple_Headers ---
+[2026-01-02 13:53:18] SUCCESS: Multiple direct headers scenario output verified.
+[2026-01-02 13:53:18] === All Unix Enhanced Audit Verifications Passed ===
+[2026-01-02 13:54:02] --- Testing Scenario: No_HSTS ---
+[2026-01-02 13:54:03] SUCCESS: No HSTS scenario output verified.
+[2026-01-02 13:54:03] --- Testing Scenario: Non_Compliant ---
+[2026-01-02 13:54:03] SUCCESS: Non-compliant filter scenario output verified.
+[2026-01-02 13:54:03] --- Testing Scenario: Multiple_Headers ---
+[2026-01-02 13:54:03] SUCCESS: Multiple direct headers scenario output verified.
+[2026-01-02 13:54:03] === All Unix Enhanced Audit Verifications Passed ===

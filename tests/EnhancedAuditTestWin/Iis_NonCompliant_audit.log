@@ -1,0 +1,31 @@
+[2026-01-02 13:54:04] =========================================
+[2026-01-02 13:54:04] IIS HSTS Configuration Tool
+[2026-01-02 13:54:04] Hostname: 
+[2026-01-02 13:54:04] Execution Time: 2026-01-02 13:54:04
+[2026-01-02 13:54:04] Mode: audit
+[2026-01-02 13:54:04] =========================================
+[2026-01-02 13:54:04] Found: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTestWin/Iis_NonCompliant\web.config (custom file path)
+[2026-01-02 13:54:04] Found 1 web.config file(s) to process
+[2026-01-02 13:54:04] Detected IIS Version: Unknown
+[2026-01-02 13:54:04] 
+[2026-01-02 13:54:04] 
+[2026-01-02 13:54:04] =========================================
+[2026-01-02 13:54:04] Processing: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTestWin/Iis_NonCompliant\web.config
+[2026-01-02 13:54:04] =========================================
+[2026-01-02 13:54:04] Found 1 HSTS header definition(s)
+[2026-01-02 13:54:04] === Audit Result Breakdown ===
+[2026-01-02 13:54:04]   [FAIL] Source: CustomHeader (max-age=60)
+[2026-01-02 13:54:04]     - Missing or incorrect max-age (should be 31536000)
+[2026-01-02 13:54:04]     - Missing includeSubDomains directive
+[2026-01-02 13:54:04] ==============================
+[2026-01-02 13:54:04] FAILURE: HSTS header(s) found but none are compliant. Found 1 non-compliant definition(s).
+[2026-01-02 13:54:04] HSTS configuration needs to be updated.
+[2026-01-02 13:54:04] 
+[2026-01-02 13:54:04] =========================================
+[2026-01-02 13:54:04] Summary
+[2026-01-02 13:54:04] =========================================
+[2026-01-02 13:54:04] Total files processed: 1
+[2026-01-02 13:54:04] Successful: 0
+[2026-01-02 13:54:04] Failed: 1
+[2026-01-02 13:54:04] Overall Status: FAILURE (some files failed)
+[2026-01-02 13:54:04] Log file: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTestWin\Iis_NonCompliant_audit.log

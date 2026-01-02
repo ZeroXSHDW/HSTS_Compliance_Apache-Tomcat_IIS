@@ -35,7 +35,11 @@ param(
 
     [Parameter(Mandatory = $false)]
     [ValidateSet("json", "csv")]
-    [string]$OutputFormat = "csv"
+    [string]$OutputFormat = "csv",
+
+    [Parameter(Mandatory = $false)]
+    [ValidateSet("basic", "high", "veryhigh", "maximum")]
+    [string]$SecurityLevel = "high"
 )
 
 $ErrorActionPreference = "Stop"
@@ -96,16 +100,48 @@ foreach ($server in $uniqueServers) {
         $invokeParams = @{
             ComputerName = $server
             ScriptBlock  = {
-                param($Mode, $ConfigPath, $CustomPaths, $CustomPathsFile, $DryRun, $Force)
+                param($Mode, $ConfigPath, $CustomPaths, $CustomPathsFile, $DryRun, $Force, $SecurityLevel)
             
                 # Rename parameter for internal use to match function expectations
                 $CustomPathsArray = $CustomPaths
             
                 $ErrorActionPreference = "Stop"
-                $RecommendedHsts = "max-age=31536000; includeSubDomains"
-                $LogFile = "$env:LOCALAPPDATA\Temp\IisHsts.log"
                 $Hostname = $env:COMPUTERNAME
                 $Timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+
+                # Security Level Definitions
+                $MinMaxAge = 31536000
+                $RequireSubDomains = $true
+                $RequirePreload = $false
+
+                switch ($SecurityLevel.ToLower()) {
+                    "basic" {
+                        $MinMaxAge = 31536000
+                        $RequireSubDomains = $false
+                        $RequirePreload = $false
+                    }
+                    "high" {
+                        $MinMaxAge = 31536000
+                        $RequireSubDomains = $true
+                        $RequirePreload = $false
+                    }
+                    "veryhigh" {
+                        $MinMaxAge = 31536000
+                        $RequireSubDomains = $true
+                        $RequirePreload = $true
+                    }
+                    "maximum" {
+                        $MinMaxAge = 63072000
+                        $RequireSubDomains = $true
+                        $RequirePreload = $true
+                    }
+                }
+
+                $RecommendedHsts = "max-age=$MinMaxAge"
+                if ($RequireSubDomains) { $RecommendedHsts += "; includeSubDomains" }
+                if ($RequirePreload) { $RecommendedHsts += "; preload" }
+                
+                $LogFile = "$env:LOCALAPPDATA\Temp\IisHsts.log"
             
                 function Write-LogMessage {
                     param([string]$Message)
@@ -583,14 +619,33 @@ foreach ($server in $uniqueServers) {
                         return $false
                     }
                 
-                    # Check for max-age=31536000 (required per OWASP recommendation)
-                    if ($HeaderValue -notmatch "max-age=31536000") {
-                        return $false
+                    # Extract max-age value
+                    $maxAge = $null
+                    if ($HeaderValue -match "max-age=([0-9]+)") {
+                        $maxAge = [int64]$Matches[1]
                     }
                 
-                    # Check for includeSubDomains (required per OWASP recommendation)
-                    if ($HeaderValue -notmatch "includeSubDomains") {
-                        return $false
+                    if ($null -eq $maxAge) {
+                        return $false  # Missing max-age
+                    }
+                
+                    # Check for max-age against target level
+                    if ($maxAge -lt $MinMaxAge) {
+                        return $false  # max-age too short for selected level
+                    }
+                
+                    # Check for includeSubDomains if required for selected level
+                    if ($RequireSubDomains) {
+                        if ($HeaderValue -notmatch "includeSubDomains") {
+                            return $false
+                        }
+                    }
+                
+                    # Check for preload if required for selected level
+                    if ($RequirePreload) {
+                        if ($HeaderValue -notmatch "preload") {
+                            return $false
+                        }
                     }
                 
                     return $true
@@ -631,15 +686,17 @@ foreach ($server in $uniqueServers) {
                                 }
                             
                                 if ($null -ne $hstsHeaders) {
-                                    if ($hstsHeaders -is [System.Array]) {
-                                        foreach ($header in $hstsHeaders) {
-                                            if ($null -ne $header) {
-                                                $headers += $header
+                                    $hList = if ($hstsHeaders -is [System.Array]) { $hstsHeaders } else { @($hstsHeaders) }
+                                    foreach ($header in $hList) {
+                                        if ($null -ne $header) {
+                                            $hName = if ($header.Attributes['name']) { $header.Attributes['name'].Value } else { $header.name }
+                                            $hValue = if ($header.Attributes['value']) { $header.Attributes['value'].Value } else { $header.value }
+                                            $headers += [PSCustomObject]@{
+                                                name   = $hName
+                                                value  = $hValue
+                                                source = "CustomHeader"
                                             }
                                         }
-                                    }
-                                    else {
-                                        $headers += $hstsHeaders
                                     }
                                 }
                             }
@@ -656,8 +713,9 @@ foreach ($server in $uniqueServers) {
                             if ($hstsTag.preload -eq "true") { $val += "; preload" }
                             
                             $headers += [PSCustomObject]@{
-                                name  = "Strict-Transport-Security (IIS Native)"
-                                value = $val
+                                name   = "Strict-Transport-Security (IIS Native)"
+                                value  = $val
+                                source = "NativeHsts"
                             }
                         }
                     
@@ -679,14 +737,64 @@ foreach ($server in $uniqueServers) {
                     $compliantCount = 0
                     $nonCompliantCount = 0
                     $compliantHeaders = @()
+                    $weakHeaders = @()
                     $nonCompliantHeaders = @()
                 
                     try {
+                        # Find all custom headers for context
+                        $customHeaders = @()
+                        try {
+                            # XPath for IIS customHeaders (handles both native and local-name)
+                            $headerNodes = $ParsedConfig.SelectNodes("//customHeaders/add") -or $ParsedConfig.SelectNodes("//*[local-name()='customHeaders']/*[local-name()='add']")
+                            if ($headerNodes) {
+                                foreach ($node in $headerNodes) {
+                                    $customHeaders += @{
+                                        name  = $node.name
+                                        value = $node.value
+                                    }
+                                }
+                            }
+                        }
+                        catch { }
+
                         $allHeaders = Find-AllHstsHeaders -ParsedConfig $ParsedConfig
                         $headerCount = $allHeaders.Count
                     
                         if ($headerCount -eq 0) {
                             $details = "No HSTS header definitions found in configuration"
+                            Write-LogMessage "=== AUDIT: No HSTS Configuration Found ==="
+                            Write-LogMessage "No HSTS headers or native IIS HSTS settings detected."
+                            Write-LogMessage ""
+                            Write-LogMessage "Configuration Context:"
+                            
+                            if ($customHeaders.Count -gt 0) {
+                                Write-LogMessage "Custom headers found in configuration:"
+                                foreach ($h in ($customHeaders | Select-Object -First 10)) {
+                                    $hName = $h.name ?? "(unnamed)"
+                                    $hValue = $h.value ?? "(no value)"
+                                    Write-LogMessage "  - ${hName}: ${hValue}"
+                                }
+                            }
+                            else {
+                                Write-LogMessage "  No custom headers found in configuration"
+                            }
+                            
+                            # Check for httpProtocol section
+                            $httpProtocol = $ParsedConfig.SelectSingleNode("//httpProtocol")
+                            if (-not $httpProtocol) { $httpProtocol = $ParsedConfig.SelectSingleNode("//*[local-name()='httpProtocol']") }
+                            
+                            if ($httpProtocol) {
+                                Write-LogMessage "  <httpProtocol> section exists"
+                            }
+                            else {
+                                Write-LogMessage "  <httpProtocol> section is missing"
+                            }
+
+                            Write-LogMessage ""
+                            Write-LogMessage "Recommended Action:"
+                            Write-LogMessage "  Add HSTS header: Strict-Transport-Security: $RecommendedHsts"
+                            Write-LogMessage "=========================================="
+
                             return @{
                                 IsCorrect           = $false
                                 Details             = $details
@@ -699,63 +807,72 @@ foreach ($server in $uniqueServers) {
                         }
                     
                         Write-LogMessage "Found $headerCount HSTS header definition(s)"
+                        Write-LogMessage "=== Audit Result Breakdown ==="
                     
                         foreach ($header in $allHeaders) {
                             $headerValue = $header.value
-                        
+                            $source = $header.source
+                            
                             if ([string]::IsNullOrWhiteSpace($headerValue)) {
                                 $nonCompliantCount++
-                                $nonCompliantHeaders += "Empty HSTS header value"
+                                $nonCompliantHeaders += "[FAIL] Source: $source (empty value)"
+                                Write-LogMessage "  [FAIL] Source: $source (empty value)"
                                 continue
                             }
                         
-                            if (Test-CompliantHeader -HeaderValue $headerValue) {
+                            $result = Test-CompliantHeader -HeaderValue $headerValue
+                            
+                            # Additional details for reporting
+                            $maxAge = if ($headerValue -match "max-age=([0-9]+)") { $Matches[1] } else { "not found" }
+                            $hasSub = $headerValue -match "includeSubDomains"
+                            $hasPreload = $headerValue -match "preload"
+
+                            if ($result) {
                                 $compliantCount++
-                                $compliantHeaders += "Compliant: $headerValue"
+                                $compliantHeaders += "[PASS] Source: ${source} (Level: $SecurityLevel): max-age=$maxAge, includeSubDomains=$hasSub, preload=$hasPreload"
+                                Write-LogMessage "  [PASS] Source: ${source} (Level: $SecurityLevel): max-age=$maxAge, includeSubDomains=$hasSub, preload=$hasPreload"
                             }
                             else {
                                 $nonCompliantCount++
-                                $nonCompliantHeaders += "Non-compliant: $headerValue"
+                                $nonCompliantHeaders += "[FAIL] Source: $source (Target Level: $SecurityLevel): max-age=$maxAge, includeSubDomains=$hasSub, preload=$hasPreload"
+                                Write-LogMessage "  [FAIL] Source: $source (Target Level: $SecurityLevel): max-age=$maxAge, includeSubDomains=$hasSub, preload=$hasPreload"
                             }
                         }
+                        Write-LogMessage "=== Audit Result Breakdown ==="
+                        foreach ($h in $compliantHeaders) { Write-LogMessage "  $h" }
+                        foreach ($h in $nonCompliantHeaders) { Write-LogMessage "  $h" }
+                        Write-LogMessage "=============================="
                     
+                        # Determine overall status
+                        $headerCount = $compliantCount + $nonCompliantCount
                         if ($headerCount -gt 1) {
-                            $details = "Multiple HSTS header definitions found ($headerCount total). Only one compliant configuration should exist."
+                            $details = "Multiple HSTS configuration definitions found ($headerCount total). Only one compliant configuration should exist."
                             $isCorrect = $false
                         }
                         elseif ($compliantCount -eq 1 -and $nonCompliantCount -eq 0) {
-                            $details = "HSTS is correctly configured with exactly one compliant definition: max-age=31536000; includeSubDomains"
-                            $isCorrect = $true
+                            if ($weakHeaders.Count -gt 0) {
+                                $details = "HSTS is compliant but weak (missing includeSubDomains directive)."
+                                $isCorrect = $true
+                            }
+                            else {
+                                $details = "HSTS is correctly configured with exactly one compliant definition."
+                                $isCorrect = $true
+                            }
                         }
-                        elseif ($compliantCount -eq 0 -and $nonCompliantCount -gt 0) {
-                            $details = "HSTS header(s) found but none are compliant. Found $nonCompliantCount non-compliant definition(s)."
+                        elseif ($headerCount -eq 0) {
+                            $details = "No HSTS header definitions found in configuration"
                             $isCorrect = $false
                         }
                         else {
-                            $details = "HSTS configuration issue detected"
+                            $details = "Non-compliant HSTS configuration found: $nonCompliantCount failed issues."
                             $isCorrect = $false
                         }
-                    
-                        if ($compliantHeaders.Count -gt 0) {
-                            Write-LogMessage "Compliant headers found:"
-                            foreach ($header in $compliantHeaders) {
-                                Write-LogMessage "  - $header"
-                            }
-                        }
-                    
-                        if ($nonCompliantHeaders.Count -gt 0) {
-                            Write-LogMessage "Non-compliant headers found:"
-                            foreach ($header in $nonCompliantHeaders) {
-                                Write-LogMessage "  - $header"
-                            }
-                        }
-                    
                     }
                     catch {
                         $details = "Error checking HSTS configuration: $_"
                         $isCorrect = $false
                     }
-                
+                    
                     return @{
                         IsCorrect           = $isCorrect
                         Details             = $details
@@ -1027,16 +1144,32 @@ foreach ($server in $uniqueServers) {
                             }
                         
                             $backupPath = New-ConfigBackup -ConfigPath $WebConfigPath
-                            $configureResult = Invoke-HstsCompliantPatch -ParsedConfig $parsedConfig -ConfigPath $WebConfigPath
+                            
+                            try {
+                                $configureResult = Invoke-HstsCompliantPatch -ParsedConfig $parsedConfig -ConfigPath $WebConfigPath
                         
-                            if (-not $configureResult.Success) {
-                                Write-LogError "Failed to configure HSTS: $($configureResult.Message)"
+                                if (-not $configureResult.Success) {
+                                    throw $configureResult.Message
+                                }
+                        
+                                Write-LogMessage "SUCCESS: $($configureResult.Message)"
                                 Write-LogMessage "Backup available at: $backupPath"
+                            }
+                            catch {
+                                # AUTOMATIC ROLLBACK: Restore from backup on any failure
+                                Write-LogError "Configuration failed: $_"
+                                Write-LogMessage "ROLLBACK: Restoring original configuration from backup..."
+                                
+                                try {
+                                    Copy-Item -Path $backupPath -Destination $WebConfigPath -Force -ErrorAction Stop
+                                    Write-LogMessage "ROLLBACK: Successfully restored original configuration from $backupPath"
+                                }
+                                catch {
+                                    Write-LogError "CRITICAL: Rollback failed! Manual restoration required from: $backupPath"
+                                    Write-LogError "Rollback error: $_"
+                                }
                                 return 1
                             }
-                        
-                            Write-LogMessage "SUCCESS: $($configureResult.Message)"
-                            Write-LogMessage "Backup available at: $backupPath"
                         
                             return 0
                         }
@@ -1099,7 +1232,7 @@ foreach ($server in $uniqueServers) {
                     LogFile        = $LogFile
                 }
             }
-            ArgumentList = @($Mode, $ConfigPath, $CustomPaths, $CustomPathsFile, $DryRun.IsPresent, $Force.IsPresent)
+            ArgumentList = @($Mode, $ConfigPath, $CustomPaths, $CustomPathsFile, $DryRun.IsPresent, $Force.IsPresent, $SecurityLevel)
         }
         
         if ($Credential) {

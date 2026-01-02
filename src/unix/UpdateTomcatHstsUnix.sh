@@ -42,6 +42,10 @@ RECOMMENDED_HSTS_FULL="Strict-Transport-Security: max-age=31536000; includeSubDo
 HOSTNAME=$(hostname)
 OS_INFO=$(uname -sr)
 TIMESTAMP=$(date '+%Y-%m-%d %H:%M:%S')
+SECURITY_LEVEL="high"
+MIN_MAX_AGE=31536000
+REQUIRE_SUBDOMAINS=true
+REQUIRE_PRELOAD=false
 
 # Global variables for tracking results
 RESULTS_JSON=""
@@ -80,6 +84,11 @@ usage() {
     echo "  --json                       Output summary in JSON format to stdout"
     echo "  --report-file <path>         Path to save a detailed JSON report of all processed servers"
     echo "  --dry-run                    Show what would be changed without making changes (configure mode only)"
+    echo "  --security-level <level>     Target security level (basic, high, veryhigh, maximum). Default: high"
+    echo "                               basic:    max-age=1yr"
+    echo "                               high:     max-age=1yr, includeSubDomains"
+    echo "                               veryhigh: max-age=1yr, includeSubDomains, preload"
+    echo "                               maximum:  max-age=2yr, includeSubDomains, preload"
     echo ""
     echo "Examples:"
     echo "  sudo $SCRIPT_NAME                                    # Auto-detect and configure"
@@ -233,18 +242,30 @@ find_all_hsts_headers() {
 is_compliant_header() {
     local header_value="$1"
     
-    # Check for max-age=31536000 (required per OWASP recommendation)
-    if ! echo "$header_value" | grep -qi "max-age=31536000"; then
-        return 1
+    # Check for max-age directive
+    local max_age=$(echo "$header_value" | grep -oi "max-age=[0-9]\+" | head -1 | cut -d= -f2)
+    if [[ -z "$max_age" ]]; then
+        return 1  # Missing max-age is non-compliant
     fi
     
-    # Check for includeSubDomains (required per OWASP recommendation)
-    if ! echo "$header_value" | grep -qi "includeSubDomains"; then
-        return 1
+    # Check for max-age against target level
+    if [[ "$max_age" -lt "$MIN_MAX_AGE" ]]; then
+        return 1  # max-age too short for selected level
     fi
     
-    # Note: preload directive is optional and allowed but not required for compliance
-    # per OWASP HSTS Cheat Sheet recommendations
+    # Check for includeSubDomains if required for selected level
+    if [[ "$REQUIRE_SUBDOMAINS" == "true" ]]; then
+        if ! echo "$header_value" | grep -qi "includeSubDomains"; then
+            return 1
+        fi
+    fi
+    
+    # Check for preload if required for selected level
+    if [[ "$REQUIRE_PRELOAD" == "true" ]]; then
+        if ! echo "$header_value" | grep -qi "preload"; then
+            return 1
+        fi
+    fi
     
     return 0
 }
@@ -272,6 +293,24 @@ audit_hsts_headers() {
     
     if [[ $header_count -eq 0 ]]; then
         details="No HSTS header definitions found in configuration"
+        log_message "=== AUDIT: No HSTS Configuration Found ==="
+        log_message "No HSTS headers or filters detected in the configuration file."
+        log_message ""
+        log_message "Configuration Context:"
+        # Show what filters ARE present
+        local all_filters=$(echo "$config_content" | grep -i "<filter-name>" | sed 's/^[[:space:]]*//' | head -10)
+        if [[ -n "$all_filters" ]]; then
+            log_message "Other filters found in configuration:"
+            echo "$all_filters" | while IFS= read -r filter_line; do
+                log_message "  $filter_line"
+            done
+        else
+            log_message "  No filters found in configuration"
+        fi
+        log_message ""
+        log_message "Recommended Action:"
+        log_message "  Add HSTS configuration with: max-age=31536000; includeSubDomains"
+        log_message "=========================================="
         AUDIT_RESULT="$details"
         AUDIT_HEADER_COUNT=0
         AUDIT_COMPLIANT_COUNT=0
@@ -284,6 +323,7 @@ audit_hsts_headers() {
     # Check each header for compliance
     local compliant_headers=()
     local non_compliant_headers=()
+    local weak_headers=()
     
     # Check for filter-based HSTS configuration (Tomcat specific)
     if echo "$config_content" | grep -qi "hstsMaxAgeSeconds"; then
@@ -291,22 +331,57 @@ audit_hsts_headers() {
         local max_age_val=$(echo "$config_content" | sed -n '/hstsMaxAgeSeconds/{n;p;}' | grep -o '[0-9]\+')
         # Fallback if it's on the same line
         if [[ -z "$max_age_val" ]]; then
-            max_age_val=$(echo "$config_content" | grep "hstsMaxAgeSeconds" | sed 's/.*hstsMaxAgeSeconds.*>\([0-9]\+\)<.*/\1/' | grep -o '^[0-9]\+$')
+            max_age_val=$(echo "$config_content" | grep "hstsMaxAgeSeconds" | sed 's/.*hstsMaxAgeSeconds.*\>\([0-9]\+\)<.*/\1/' | grep -o '^[0-9]\+$')
         fi
         
-        local include_subdomains=$(echo "$config_content" | sed -n '/hstsIncludeSubDomains/{n;p;}' | grep -i "true" | wc -l | tr -d ' ')
+        # Extract includeSubDomains value
+        local include_subdomains_val=$(echo "$config_content" | sed -n '/hstsIncludeSubDomains/{n;p;}' | grep -io "true\|false" | head -1)
+        if [[ -z "$include_subdomains_val" ]]; then
+            include_subdomains_val=$(echo "$config_content" | grep "hstsIncludeSubDomains" | grep -io "true\|false" | head -1)
+        fi
         
-        if [[ -n "$max_age_val" ]] && [[ "$max_age_val" == "31536000" ]]; then
-            if [[ $include_subdomains -gt 0 ]]; then
-                compliant_count=$((compliant_count + 1))
-                compliant_headers+=("Filter-based HSTS configuration")
-            else
-                non_compliant_count=$((non_compliant_count + 1))
-                non_compliant_headers+=("Filter-based HSTS: max-age correct but includeSubDomains missing or false")
-            fi
+        log_message "=== Current Filter-Based HSTS Configuration ==="
+        log_message "  hstsMaxAgeSeconds: ${max_age_val:-not found}"
+        log_message "  hstsIncludeSubDomains: ${include_subdomains_val:-not found}"
+        log_message "==============================================="
+        
+        local filter_compliant=true
+        local filter_weak=false
+        
+        # Check max-age
+        if [[ -z "$max_age_val" ]] || [[ "$max_age_val" -lt "$MIN_MAX_AGE" ]]; then
+            filter_compliant=false
+        fi
+        
+        # Check subdomains
+        if [[ "$REQUIRE_SUBDOMAINS" == "true" ]] && [[ "$include_subdomains_val" != "true" ]]; then
+            filter_compliant=false
+            filter_weak=true
+        fi
+        
+        # Note: Preload is usually NOT supported natively in Tomcat HttpHeaderSecurityFilter param-names
+        # unless it is Tomcat 9.0.35+, 8.5.55+, 10.0.0-M5+ via hstsPreload
+        local preload_val=$(echo "$config_content" | sed -n '/hstsPreload/{n;p;}' | grep -io "true\|false" | head -1)
+        if [[ -z "$preload_val" ]]; then
+            preload_val=$(echo "$config_content" | grep "hstsPreload" | grep -io "true\|false" | head -1)
+        fi
+        
+        if [[ "$REQUIRE_PRELOAD" == "true" ]] && [[ "$preload_val" != "true" ]]; then
+            filter_compliant=false
+        fi
+
+        if [[ "$filter_compliant" == "true" ]]; then
+            compliant_count=$((compliant_count + 1))
+            compliant_headers+=("[PASS] Filter-based HSTS (Level: $SECURITY_LEVEL): max-age=$max_age_val; includeSubDomains=${include_subdomains_val:-false}; preload=${preload_val:-false}")
+        elif [[ "$filter_weak" == "true" ]] && [[ "$SECURITY_LEVEL" == "basic" ]]; then
+             # Technically if level is basic, missing subdomains is still pass? 
+             # No, if level is basic, we don't REQUIRE subdomains.
+             # Wait, my logic above: filter_compliant=false if REQUIRE_SUBDOMAINS=true.
+             compliant_count=$((compliant_count + 1))
+             compliant_headers+=("[PASS] Filter-based HSTS (Level: $SECURITY_LEVEL): max-age=$max_age_val")
         else
             non_compliant_count=$((non_compliant_count + 1))
-            non_compliant_headers+=("Filter-based HSTS: max-age is not 31536000 (found: ${max_age_val:-none})")
+            non_compliant_headers+=("[FAIL] Filter-based HSTS (Target Level: $SECURITY_LEVEL): max-age=${max_age_val:-not set}; includeSubDomains=${include_subdomains_val:-false}; preload=${preload_val:-false}")
         fi
     fi
     
@@ -314,54 +389,50 @@ audit_hsts_headers() {
     # Only count direct headers that are NOT part of filter configuration
     local direct_headers=$(echo "$config_content" | grep -i "Strict-Transport-Security" | grep -v "^#" | grep -v "^[[:space:]]*#" | grep -v "hstsMaxAgeSeconds\|hstsIncludeSubDomains\|HttpHeaderSecurityFilter\|HstsHeaderFilter" || true)
     if [[ -n "$direct_headers" ]]; then
-        local direct_count=$(echo "$direct_headers" | wc -l | tr -d ' ')
-        # Count direct headers separately from filter-based config
-        header_count=$((header_count + direct_count))
-        
-        while IFS= read -r header_line; do
-            if is_compliant_header "$header_line"; then
-                compliant_count=$((compliant_count + 1))
-                compliant_headers+=("Direct header: $header_line")
-            else
-                non_compliant_count=$((non_compliant_count + 1))
-                non_compliant_headers+=("Direct header (non-compliant): $header_line")
-            fi
-        done <<< "$direct_headers"
+        # Filter out empty lines if any
+        direct_headers=$(echo "$direct_headers" | grep . || true)
+        if [[ -n "$direct_headers" ]]; then
+            while IFS= read -r header_line; do
+                log_message "  Found direct header: $header_line"
+                if is_compliant_header "$header_line"; then
+                    compliant_count=$((compliant_count + 1))
+                    compliant_headers+=("[PASS] Direct header (Level: $SECURITY_LEVEL): $header_line")
+                else
+                    non_compliant_count=$((non_compliant_count + 1))
+                    non_compliant_headers+=("[FAIL] Direct header (Target Level: $SECURITY_LEVEL): $header_line")
+                fi
+            done <<< "$direct_headers"
+        fi
     fi
+    
+    # Consolidated Audit Result Breakdown
+    log_message "=== Audit Result Breakdown ==="
+    for h in ${compliant_headers[@]+"${compliant_headers[@]}"}; do log_message "  $h"; done
+    for h in ${weak_headers[@]+"${weak_headers[@]}"}; do log_message "  $h"; done
+    for h in ${non_compliant_headers[@]+"${non_compliant_headers[@]}"}; do log_message "  $h"; done
+    log_message "=============================="
+    
+    # Update total header count to reflect all detected configurations
+    header_count=$((compliant_count + non_compliant_count))
     
     # Determine overall status
-    local total_configs=$((compliant_count + non_compliant_count))
-    
-    if [[ $total_configs -gt 1 ]]; then
-        details="Multiple HSTS configurations found ($total_configs total). Only one compliant configuration should exist."
+    if [[ $header_count -gt 1 ]]; then
+        details="Multiple HSTS configurations found ($header_count total). Only one compliant configuration should exist."
         is_correct=1
     elif [[ $compliant_count -eq 1 ]] && [[ $non_compliant_count -eq 0 ]]; then
-        details="HSTS is correctly configured with exactly one compliant definition: max-age=31536000; includeSubDomains"
-        is_correct=0
-    elif [[ $compliant_count -eq 0 ]] && [[ $non_compliant_count -gt 0 ]]; then
-        details="HSTS header(s) found but none are compliant. Found $non_compliant_count non-compliant definition(s)."
-        is_correct=1
-    elif [[ $compliant_count -gt 0 ]] && [[ $non_compliant_count -gt 0 ]]; then
-        details="Mixed configuration: $compliant_count compliant and $non_compliant_count non-compliant HSTS definition(s) found."
+        if [[ ${#weak_headers[@]} -gt 0 ]]; then
+            details="HSTS is compliant but weak (missing includeSubDomains directive)."
+            is_correct=0 # Still counted as successful audit/compliant
+        else
+            details="HSTS is correctly configured with exactly one compliant definition."
+            is_correct=0
+        fi
+    elif [[ $header_count -eq 0 ]]; then
+        details="No HSTS header definitions found in configuration"
         is_correct=1
     else
-        details="HSTS configuration issue detected"
+        details="Non-compliant HSTS configuration found: $non_compliant_count failed issues."
         is_correct=1
-    fi
-    
-    # Log detailed findings
-    if [[ ${#compliant_headers[@]} -gt 0 ]]; then
-        log_message "Compliant headers found:"
-        for header in "${compliant_headers[@]}"; do
-            log_message "  - $header"
-        done
-    fi
-    
-    if [[ ${#non_compliant_headers[@]} -gt 0 ]]; then
-        log_message "Non-compliant headers found:"
-        for header in "${non_compliant_headers[@]}"; do
-            log_message "  - $header"
-        done
     fi
     
     AUDIT_RESULT="$details"
@@ -382,21 +453,33 @@ remove_all_hsts_configs() {
     local temp_xml=$(mktemp)
     echo "$config_content" > "$temp_xml"
     
-    # Remove filter blocks containing HSTS filter classes or names
-    # This AWK script removes entire <filter> or <filter-mapping> blocks if they contain HSTS keywords
+    # Remove filter and filter-mapping blocks containing HSTS keywords
+    # Use a more robust approach that handles single-line and multi-line blocks
+    # We use sed to first normalize potential single-line blocks into multi-line for easier processing
+    # but that might be overkill. A better awk script that checks for closing tags on the same line:
     awk '
-    /<filter>|<filter-mapping>/ {
-        block = $0
-        found = 0
-        while ((getline line) > 0) {
-            block = block "\n" line
-            if (line ~ /HstsHeaderFilter|HttpHeaderSecurityFilter|org\.apache\.catalina\.filters\.HttpHeaderSecurityFilter/) found = 1
-            if (line ~ /<\/filter>|<\/filter-mapping>/) break
+    {
+        if (/<filter>|<filter-mapping>/) {
+            block = $0
+            if (/<filter>.*<\/filter>|<filter-mapping>.*<\/filter-mapping>/) {
+                # Single line block
+                if (block !~ /HstsHeaderFilter|HttpHeaderSecurityFilter|org\.apache\.catalina\.filters\.HttpHeaderSecurityFilter/) {
+                    print block
+                }
+            } else {
+                # Multi-line block
+                found = (block ~ /HstsHeaderFilter|HttpHeaderSecurityFilter|org\.apache\.catalina\.filters\.HttpHeaderSecurityFilter/)
+                while ((getline line) > 0) {
+                    block = block "\n" line
+                    if (line ~ /HstsHeaderFilter|HttpHeaderSecurityFilter|org\.apache\.catalina\.filters\.HttpHeaderSecurityFilter/) found = 1
+                    if (line ~ /<\/filter>|<\/filter-mapping>/) break
+                }
+                if (!found) print block
+            }
+        } else {
+            print $0
         }
-        if (!found) print block
-        next
     }
-    { print }
     ' "$temp_xml" > "$output_file"
     
     rm -f "$temp_xml"
@@ -441,22 +524,32 @@ apply_compliant_hsts() {
         # XML-based configuration (web.xml, context.xml, server.xml)
         if [[ "$filename" == "web.xml" ]] || [[ "$filename" == "context.xml" ]] || echo "$filename" | grep -q "web\.xml$" || echo "$filename" | grep -q "context\.xml$"; then
             # Add compliant filter configuration
-            local filter_block='    <filter>
+            local filter_block="    <filter>
         <filter-name>HstsHeaderFilter</filter-name>
         <filter-class>org.apache.catalina.filters.HttpHeaderSecurityFilter</filter-class>
         <init-param>
             <param-name>hstsMaxAgeSeconds</param-name>
-            <param-value>31536000</param-value>
+            <param-value>$MIN_MAX_AGE</param-value>
         </init-param>
         <init-param>
             <param-name>hstsIncludeSubDomains</param-name>
+            <param-value>$REQUIRE_SUBDOMAINS</param-value>
+        </init-param>"
+            
+            if [[ "$REQUIRE_PRELOAD" == "true" ]]; then
+                filter_block="$filter_block
+        <init-param>
+            <param-name>hstsPreload</param-name>
             <param-value>true</param-value>
-        </init-param>
+        </init-param>"
+            fi
+            
+            filter_block="$filter_block
     </filter>
     <filter-mapping>
         <filter-name>HstsHeaderFilter</filter-name>
         <url-pattern>/*</url-pattern>
-    </filter-mapping>'
+    </filter-mapping>"
             
             # Insert before closing tag with proper indentation
             # Use a more reliable approach with temporary files
@@ -971,7 +1064,7 @@ get_tomcat_conf_paths() {
     fi
     
     # Check CATALINA_BASE
-    if [[ -n "${CATALINA_BASE}" ]] && [[ -d "${CATALINA_BASE}/conf" ]] && [[ -f "${CATALINA_BASE}/conf/server.xml" ]]; then
+    if [[ -n "${CATALINA_BASE:-}" ]] && [[ -d "${CATALINA_BASE:-}/conf" ]] && [[ -f "${CATALINA_BASE:-}/conf/server.xml" ]]; then
         local cb_conf="${CATALINA_BASE}/conf"
         # Add to conf_paths if not already there
         local found_cb=0
@@ -985,7 +1078,7 @@ get_tomcat_conf_paths() {
     fi
     
     # Check CATALINA_HOME
-    if [[ -n "${CATALINA_HOME}" ]] && [[ -d "${CATALINA_HOME}/conf" ]] && [[ -f "${CATALINA_HOME}/conf/server.xml" ]]; then
+    if [[ -n "${CATALINA_HOME:-}" ]] && [[ -d "${CATALINA_HOME:-}/conf" ]] && [[ -f "${CATALINA_HOME:-}/conf/server.xml" ]]; then
         local ch_conf="${CATALINA_HOME}/conf"
         local found_ch=0
         for p in "${conf_paths[@]}"; do
@@ -1483,6 +1576,18 @@ main() {
                 DRY_RUN=true
                 shift
                 ;;
+            --security-level|--security_level)
+                if [[ $# -lt 2 ]]; then
+                    log_error "Missing value for --security-level"
+                    usage
+                fi
+                SECURITY_LEVEL=$(echo "$2" | tr '[:upper:]' '[:lower:]')
+                shift 2
+                ;;
+            --security-level=*|--security_level=*)
+                SECURITY_LEVEL=$(echo "${1#*=}" | tr '[:upper:]' '[:lower:]')
+                shift
+                ;;
             --help|-h)
                 usage
                 ;;
@@ -1493,13 +1598,41 @@ main() {
         esac
     done
     
-    # Validate mode
-    if [[ "$MODE" != "audit" ]] && [[ "$MODE" != "configure" ]]; then
-        log_error "Invalid mode: $MODE. Must be 'audit' or 'configure'"
-        usage
-    fi
+    # Validate security level and set target values
+    case "$SECURITY_LEVEL" in
+        basic)
+            MIN_MAX_AGE=31536000
+            REQUIRE_SUBDOMAINS=false
+            REQUIRE_PRELOAD=false
+            ;;
+        high)
+            MIN_MAX_AGE=31536000
+            REQUIRE_SUBDOMAINS=true
+            REQUIRE_PRELOAD=false
+            ;;
+        veryhigh)
+            MIN_MAX_AGE=31536000
+            REQUIRE_SUBDOMAINS=true
+            REQUIRE_PRELOAD=true
+            ;;
+        maximum)
+            MIN_MAX_AGE=63072000
+            REQUIRE_SUBDOMAINS=true
+            REQUIRE_PRELOAD=true
+            ;;
+        *)
+            log_error "Invalid security level: $SECURITY_LEVEL. Must be 'basic', 'high', 'veryhigh', or 'maximum'."
+            usage
+            ;;
+    esac
     
-    # Initialize log file
+    # Update recommended strings based on level
+    RECOMMENDED_HSTS="max-age=$MIN_MAX_AGE"
+    [[ "$REQUIRE_SUBDOMAINS" == "true" ]] && RECOMMENDED_HSTS="$RECOMMENDED_HSTS; includeSubDomains"
+    [[ "$REQUIRE_PRELOAD" == "true" ]] && RECOMMENDED_HSTS="$RECOMMENDED_HSTS; preload"
+    RECOMMENDED_HSTS_FULL="Strict-Transport-Security: $RECOMMENDED_HSTS"
+    
+    # Validate mode
     if [[ -n "$LOG_FILE" ]]; then
         # Check if we can write to the log file or its directory
         if ! touch "$LOG_FILE" 2>/dev/null; then

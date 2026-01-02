@@ -1,0 +1,296 @@
+[2026-01-02 13:49:25] =========================================
+[2026-01-02 13:49:25] Tomcat HSTS Configuration Tool
+[2026-01-02 13:49:25] Hostname: MACBOOKPRO.station
+[2026-01-02 13:49:25] Execution Time: 2026-01-02 13:49:25
+[2026-01-02 13:49:25] Mode: audit
+[2026-01-02 13:49:25] =========================================
+[2026-01-02 13:49:25] Checking custom configuration path: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/conf
+[2026-01-02 13:49:25] Found valid Tomcat configuration at custom path: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/conf
+[2026-01-02 13:49:25] Found Tomcat Configuration: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/conf (Version: 9.0.50)
+[2026-01-02 13:49:25] Searching for web.xml files...
+[2026-01-02 13:49:25]   Found: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/conf/web.xml (global configuration)
+[2026-01-02 13:49:25] Found 1 web.xml file(s) to process
+[2026-01-02 13:49:25] 
+[2026-01-02 13:49:25] =========================================
+[2026-01-02 13:49:25] Processing: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/conf/web.xml
+[2026-01-02 13:49:25] =========================================
+[2026-01-02 13:49:25] Found 2 HSTS header definition(s)
+[2026-01-02 13:49:25] === Current Direct HSTS Headers ===
+[2026-01-02 13:49:25]   Found:     <!-- Header Strict-Transport-Security "max-age=31536000" -->
+[2026-01-02 13:49:25]   Found:     <!-- Header set Strict-Transport-Security "max-age=60" -->
+[2026-01-02 13:49:25] ====================================
+[2026-01-02 13:49:25] === Audit Result Breakdown ===
+[2026-01-02 13:49:25]   [FAIL] Direct header (non-compliant):     <!-- Header Strict-Transport-Security "max-age=31536000" -->
+[2026-01-02 13:49:25]   [FAIL] Direct header (non-compliant):     <!-- Header set Strict-Transport-Security "max-age=60" -->
+[2026-01-02 13:49:25] ==============================
+[2026-01-02 13:49:25] FAILURE: Multiple HSTS configurations found (2 total: 0 compliant, 2 non-compliant). Only one compliant configuration should exist.
+[2026-01-02 13:49:25] HSTS configuration needs to be updated.
+[2026-01-02 13:49:25] ACTION REQUIRED: Remove duplicate HSTS definitions. Only one compliant configuration should exist.
+[2026-01-02 13:49:25] 
+[2026-01-02 13:49:25] =========================================
+[2026-01-02 13:49:25] Summary
+[2026-01-02 13:49:25] =========================================
+[2026-01-02 13:49:25] Total files processed: 1
+[2026-01-02 13:49:25] Successful: 0
+[2026-01-02 13:49:25] Failed: 1
+[2026-01-02 13:49:25] Overall Status: FAILURE (some files failed)
+[2026-01-02 13:49:25] Log file: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/Multiple_Headers_audit.log
+[2026-01-02 13:50:21] =========================================
+[2026-01-02 13:50:21] Tomcat HSTS Configuration Tool
+[2026-01-02 13:50:21] Hostname: MACBOOKPRO.station
+[2026-01-02 13:50:21] Execution Time: 2026-01-02 13:50:21
+[2026-01-02 13:50:21] Mode: audit
+[2026-01-02 13:50:21] =========================================
+[2026-01-02 13:50:21] Checking custom configuration path: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/conf
+[2026-01-02 13:50:21] Found valid Tomcat configuration at custom path: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/conf
+[2026-01-02 13:50:21] Found Tomcat Configuration: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/conf (Version: 9.0.50)
+[2026-01-02 13:50:21] Searching for web.xml files...
+[2026-01-02 13:50:21]   Found: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/conf/web.xml (global configuration)
+[2026-01-02 13:50:21] Found 1 web.xml file(s) to process
+[2026-01-02 13:50:21] 
+[2026-01-02 13:50:21] =========================================
+[2026-01-02 13:50:21] Processing: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/conf/web.xml
+[2026-01-02 13:50:21] =========================================
+[2026-01-02 13:50:21] Found 2 HSTS header definition(s)
+[2026-01-02 13:50:21] === Current Direct HSTS Headers ===
+[2026-01-02 13:50:21]   Found:     Strict-Transport-Security "max-age=31536000; includeSubDomains"
+[2026-01-02 13:50:21]   Found:     Header set Strict-Transport-Security "max-age=60"
+[2026-01-02 13:50:21] ====================================
+[2026-01-02 13:50:21] === Audit Result Breakdown ===
+[2026-01-02 13:50:21]   [PASS] Direct header:     Strict-Transport-Security "max-age=31536000; includeSubDomains"
+[2026-01-02 13:50:21]   [FAIL] Direct header (non-compliant):     Header set Strict-Transport-Security "max-age=60"
+[2026-01-02 13:50:21] ==============================
+[2026-01-02 13:50:21] FAILURE: Multiple HSTS configurations found (2 total: 1 compliant, 1 non-compliant). Only one compliant configuration should exist.
+[2026-01-02 13:50:21] HSTS configuration needs to be updated.
+[2026-01-02 13:50:21] ACTION REQUIRED: Remove duplicate HSTS definitions. Only one compliant configuration should exist.
+[2026-01-02 13:50:21] 
+[2026-01-02 13:50:21] =========================================
+[2026-01-02 13:50:21] Summary
+[2026-01-02 13:50:21] =========================================
+[2026-01-02 13:50:21] Total files processed: 1
+[2026-01-02 13:50:21] Successful: 0
+[2026-01-02 13:50:21] Failed: 1
+[2026-01-02 13:50:21] Overall Status: FAILURE (some files failed)
+[2026-01-02 13:50:21] Log file: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/Multiple_Headers_audit.log
+[2026-01-02 13:50:59] =========================================
+[2026-01-02 13:50:59] Tomcat HSTS Configuration Tool
+[2026-01-02 13:50:59] Hostname: MACBOOKPRO.station
+[2026-01-02 13:50:59] Execution Time: 2026-01-02 13:50:59
+[2026-01-02 13:50:59] Mode: audit
+[2026-01-02 13:50:59] =========================================
+[2026-01-02 13:50:59] Checking custom configuration path: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/conf
+[2026-01-02 13:50:59] Found valid Tomcat configuration at custom path: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/conf
+[2026-01-02 13:50:59] Found Tomcat Configuration: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/conf (Version: 9.0.50)
+[2026-01-02 13:50:59] Searching for web.xml files...
+[2026-01-02 13:50:59]   Found: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/conf/web.xml (global configuration)
+[2026-01-02 13:50:59] Found 1 web.xml file(s) to process
+[2026-01-02 13:50:59] 
+[2026-01-02 13:50:59] =========================================
+[2026-01-02 13:50:59] Processing: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/conf/web.xml
+[2026-01-02 13:50:59] =========================================
+[2026-01-02 13:50:59] Found 2 HSTS header definition(s)
+[2026-01-02 13:50:59] === Current Direct HSTS Headers ===
+[2026-01-02 13:50:59]   Found:     Strict-Transport-Security "max-age=31536000; includeSubDomains"
+[2026-01-02 13:50:59]   Found:     Header set Strict-Transport-Security "max-age=60"
+[2026-01-02 13:50:59] ====================================
+[2026-01-02 13:50:59] === Audit Result Breakdown ===
+[2026-01-02 13:50:59]   [PASS] Direct header:     Strict-Transport-Security "max-age=31536000; includeSubDomains"
+[2026-01-02 13:50:59]   [FAIL] Direct header (non-compliant):     Header set Strict-Transport-Security "max-age=60"
+[2026-01-02 13:50:59] ==============================
+[2026-01-02 13:50:59] FAILURE: Multiple HSTS configurations found (2 total: 1 compliant, 1 non-compliant). Only one compliant configuration should exist.
+[2026-01-02 13:50:59] HSTS configuration needs to be updated.
+[2026-01-02 13:50:59] ACTION REQUIRED: Remove duplicate HSTS definitions. Only one compliant configuration should exist.
+[2026-01-02 13:50:59] 
+[2026-01-02 13:50:59] =========================================
+[2026-01-02 13:50:59] Summary
+[2026-01-02 13:50:59] =========================================
+[2026-01-02 13:50:59] Total files processed: 1
+[2026-01-02 13:50:59] Successful: 0
+[2026-01-02 13:50:59] Failed: 1
+[2026-01-02 13:50:59] Overall Status: FAILURE (some files failed)
+[2026-01-02 13:50:59] Log file: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/Multiple_Headers_audit.log
+[2026-01-02 13:51:16] =========================================
+[2026-01-02 13:51:16] Tomcat HSTS Configuration Tool
+[2026-01-02 13:51:16] Hostname: MACBOOKPRO.station
+[2026-01-02 13:51:16] Execution Time: 2026-01-02 13:51:16
+[2026-01-02 13:51:16] Mode: audit
+[2026-01-02 13:51:16] =========================================
+[2026-01-02 13:51:16] Checking custom configuration path: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/conf
+[2026-01-02 13:51:16] Found valid Tomcat configuration at custom path: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/conf
+[2026-01-02 13:51:16] Found Tomcat Configuration: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/conf (Version: 9.0.50)
+[2026-01-02 13:51:16] Searching for web.xml files...
+[2026-01-02 13:51:16]   Found: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/conf/web.xml (global configuration)
+[2026-01-02 13:51:16] Found 1 web.xml file(s) to process
+[2026-01-02 13:51:16] 
+[2026-01-02 13:51:16] =========================================
+[2026-01-02 13:51:16] Processing: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/conf/web.xml
+[2026-01-02 13:51:16] =========================================
+[2026-01-02 13:51:16] Found 2 HSTS header definition(s)
+[2026-01-02 13:51:16] === Current Direct HSTS Headers ===
+[2026-01-02 13:51:16]   Found:     Strict-Transport-Security "max-age=31536000; includeSubDomains"
+[2026-01-02 13:51:16]   Found:     Header set Strict-Transport-Security "max-age=60"
+[2026-01-02 13:51:16] ====================================
+[2026-01-02 13:51:16] === Audit Result Breakdown ===
+[2026-01-02 13:51:16]   [PASS] Direct header:     Strict-Transport-Security "max-age=31536000; includeSubDomains"
+[2026-01-02 13:51:16]   [FAIL] Direct header (non-compliant):     Header set Strict-Transport-Security "max-age=60"
+[2026-01-02 13:51:16] ==============================
+[2026-01-02 13:51:16] FAILURE: Multiple HSTS configurations found (2 total: 1 compliant, 1 non-compliant). Only one compliant configuration should exist.
+[2026-01-02 13:51:16] HSTS configuration needs to be updated.
+[2026-01-02 13:51:16] ACTION REQUIRED: Remove duplicate HSTS definitions. Only one compliant configuration should exist.
+[2026-01-02 13:51:16] 
+[2026-01-02 13:51:16] =========================================
+[2026-01-02 13:51:16] Summary
+[2026-01-02 13:51:16] =========================================
+[2026-01-02 13:51:16] Total files processed: 1
+[2026-01-02 13:51:16] Successful: 0
+[2026-01-02 13:51:16] Failed: 1
+[2026-01-02 13:51:16] Overall Status: FAILURE (some files failed)
+[2026-01-02 13:51:16] Log file: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/Multiple_Headers_audit.log
+[2026-01-02 13:52:00] =========================================
+[2026-01-02 13:52:00] Tomcat HSTS Configuration Tool
+[2026-01-02 13:52:00] Hostname: MACBOOKPRO.station
+[2026-01-02 13:52:00] Execution Time: 2026-01-02 13:52:00
+[2026-01-02 13:52:00] Mode: audit
+[2026-01-02 13:52:00] =========================================
+[2026-01-02 13:52:00] Checking custom configuration path: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/conf
+[2026-01-02 13:52:00] Found valid Tomcat configuration at custom path: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/conf
+[2026-01-02 13:52:00] Found Tomcat Configuration: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/conf (Version: 9.0.50)
+[2026-01-02 13:52:00] Searching for web.xml files...
+[2026-01-02 13:52:00]   Found: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/conf/web.xml (global configuration)
+[2026-01-02 13:52:00] Found 1 web.xml file(s) to process
+[2026-01-02 13:52:00] 
+[2026-01-02 13:52:00] =========================================
+[2026-01-02 13:52:00] Processing: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/conf/web.xml
+[2026-01-02 13:52:00] =========================================
+[2026-01-02 13:52:00] Found 2 HSTS header definition(s)
+[2026-01-02 13:52:00] === Current Direct HSTS Headers ===
+[2026-01-02 13:52:00]   Found:     Strict-Transport-Security "max-age=31536000; includeSubDomains"
+[2026-01-02 13:52:00]   Found:     Header set Strict-Transport-Security "max-age=60"
+[2026-01-02 13:52:00] ====================================
+[2026-01-02 13:52:00] === Audit Result Breakdown ===
+[2026-01-02 13:52:00]   [PASS] Direct header:     Strict-Transport-Security "max-age=31536000; includeSubDomains"
+[2026-01-02 13:52:00]   [FAIL] Direct header (non-compliant):     Header set Strict-Transport-Security "max-age=60"
+[2026-01-02 13:52:00] ==============================
+[2026-01-02 13:52:00] FAILURE: Multiple HSTS configurations found (2 total: 1 compliant, 1 non-compliant). Only one compliant configuration should exist.
+[2026-01-02 13:52:00] HSTS configuration needs to be updated.
+[2026-01-02 13:52:00] ACTION REQUIRED: Remove duplicate HSTS definitions. Only one compliant configuration should exist.
+[2026-01-02 13:52:00] 
+[2026-01-02 13:52:00] =========================================
+[2026-01-02 13:52:00] Summary
+[2026-01-02 13:52:00] =========================================
+[2026-01-02 13:52:00] Total files processed: 1
+[2026-01-02 13:52:00] Successful: 0
+[2026-01-02 13:52:00] Failed: 1
+[2026-01-02 13:52:00] Overall Status: FAILURE (some files failed)
+[2026-01-02 13:52:00] Log file: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/Multiple_Headers_audit.log
+[2026-01-02 13:52:28] =========================================
+[2026-01-02 13:52:28] Tomcat HSTS Configuration Tool
+[2026-01-02 13:52:28] Hostname: MACBOOKPRO.station
+[2026-01-02 13:52:28] Execution Time: 2026-01-02 13:52:28
+[2026-01-02 13:52:28] Mode: audit
+[2026-01-02 13:52:28] =========================================
+[2026-01-02 13:52:28] Checking custom configuration path: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/conf
+[2026-01-02 13:52:28] Found valid Tomcat configuration at custom path: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/conf
+[2026-01-02 13:52:28] Found Tomcat Configuration: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/conf (Version: 9.0.50)
+[2026-01-02 13:52:28] Searching for web.xml files...
+[2026-01-02 13:52:28]   Found: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/conf/web.xml (global configuration)
+[2026-01-02 13:52:28] Found 1 web.xml file(s) to process
+[2026-01-02 13:52:28] 
+[2026-01-02 13:52:28] =========================================
+[2026-01-02 13:52:28] Processing: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/conf/web.xml
+[2026-01-02 13:52:28] =========================================
+[2026-01-02 13:52:28] Found 2 HSTS header definition(s)
+[2026-01-02 13:52:28] === Current Direct HSTS Headers ===
+[2026-01-02 13:52:28]   Found:     Strict-Transport-Security "max-age=31536000; includeSubDomains"
+[2026-01-02 13:52:28]   Found:     Header set Strict-Transport-Security "max-age=60"
+[2026-01-02 13:52:28] ====================================
+[2026-01-02 13:52:28] === Audit Result Breakdown ===
+[2026-01-02 13:52:28]   [PASS] Direct header:     Strict-Transport-Security "max-age=31536000; includeSubDomains"
+[2026-01-02 13:52:28]   [FAIL] Direct header (non-compliant):     Header set Strict-Transport-Security "max-age=60"
+[2026-01-02 13:52:28] ==============================
+[2026-01-02 13:52:28] FAILURE: Multiple HSTS configurations found (2 total: 1 compliant, 1 non-compliant). Only one compliant configuration should exist.
+[2026-01-02 13:52:28] HSTS configuration needs to be updated.
+[2026-01-02 13:52:28] ACTION REQUIRED: Remove duplicate HSTS definitions. Only one compliant configuration should exist.
+[2026-01-02 13:52:28] 
+[2026-01-02 13:52:28] =========================================
+[2026-01-02 13:52:28] Summary
+[2026-01-02 13:52:28] =========================================
+[2026-01-02 13:52:28] Total files processed: 1
+[2026-01-02 13:52:28] Successful: 0
+[2026-01-02 13:52:28] Failed: 1
+[2026-01-02 13:52:28] Overall Status: FAILURE (some files failed)
+[2026-01-02 13:52:28] Log file: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/Multiple_Headers_audit.log
+[2026-01-02 13:53:18] =========================================
+[2026-01-02 13:53:18] Tomcat HSTS Configuration Tool
+[2026-01-02 13:53:18] Hostname: MACBOOKPRO.station
+[2026-01-02 13:53:18] Execution Time: 2026-01-02 13:53:18
+[2026-01-02 13:53:18] Mode: audit
+[2026-01-02 13:53:18] =========================================
+[2026-01-02 13:53:18] Checking custom configuration path: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/conf
+[2026-01-02 13:53:18] Found valid Tomcat configuration at custom path: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/conf
+[2026-01-02 13:53:18] Found Tomcat Configuration: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/conf (Version: 9.0.50)
+[2026-01-02 13:53:18] Searching for web.xml files...
+[2026-01-02 13:53:18]   Found: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/conf/web.xml (global configuration)
+[2026-01-02 13:53:18] Found 1 web.xml file(s) to process
+[2026-01-02 13:53:18] 
+[2026-01-02 13:53:18] =========================================
+[2026-01-02 13:53:18] Processing: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/conf/web.xml
+[2026-01-02 13:53:18] =========================================
+[2026-01-02 13:53:18] Found 2 HSTS header definition(s)
+[2026-01-02 13:53:18] === Current Direct HSTS Headers ===
+[2026-01-02 13:53:18]   Found:     Strict-Transport-Security "max-age=31536000; includeSubDomains"
+[2026-01-02 13:53:18]   Found:     Header set Strict-Transport-Security "max-age=60"
+[2026-01-02 13:53:18] ====================================
+[2026-01-02 13:53:18] === Audit Result Breakdown ===
+[2026-01-02 13:53:18]   [PASS] Direct header:     Strict-Transport-Security "max-age=31536000; includeSubDomains"
+[2026-01-02 13:53:18]   [FAIL] Direct header (non-compliant):     Header set Strict-Transport-Security "max-age=60"
+[2026-01-02 13:53:18] ==============================
+[2026-01-02 13:53:18] FAILURE: Multiple HSTS configurations found (2 total: 1 compliant, 1 non-compliant). Only one compliant configuration should exist.
+[2026-01-02 13:53:18] HSTS configuration needs to be updated.
+[2026-01-02 13:53:18] ACTION REQUIRED: Remove duplicate HSTS definitions. Only one compliant configuration should exist.
+[2026-01-02 13:53:18] 
+[2026-01-02 13:53:18] =========================================
+[2026-01-02 13:53:18] Summary
+[2026-01-02 13:53:18] =========================================
+[2026-01-02 13:53:18] Total files processed: 1
+[2026-01-02 13:53:18] Successful: 0
+[2026-01-02 13:53:18] Failed: 1
+[2026-01-02 13:53:18] Overall Status: FAILURE (some files failed)
+[2026-01-02 13:53:18] Log file: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/Multiple_Headers_audit.log
+[2026-01-02 13:54:03] =========================================
+[2026-01-02 13:54:03] Tomcat HSTS Configuration Tool
+[2026-01-02 13:54:03] Hostname: MACBOOKPRO.station
+[2026-01-02 13:54:03] Execution Time: 2026-01-02 13:54:03
+[2026-01-02 13:54:03] Mode: audit
+[2026-01-02 13:54:03] =========================================
+[2026-01-02 13:54:03] Checking custom configuration path: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/conf
+[2026-01-02 13:54:03] Found valid Tomcat configuration at custom path: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/conf
+[2026-01-02 13:54:03] Found Tomcat Configuration: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/conf (Version: 9.0.50)
+[2026-01-02 13:54:03] Searching for web.xml files...
+[2026-01-02 13:54:03]   Found: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/conf/web.xml (global configuration)
+[2026-01-02 13:54:03] Found 1 web.xml file(s) to process
+[2026-01-02 13:54:03] 
+[2026-01-02 13:54:03] =========================================
+[2026-01-02 13:54:03] Processing: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/conf/web.xml
+[2026-01-02 13:54:03] =========================================
+[2026-01-02 13:54:03] Found 2 HSTS header definition(s)
+[2026-01-02 13:54:03] === Current Direct HSTS Headers ===
+[2026-01-02 13:54:03]   Found:     Strict-Transport-Security "max-age=31536000; includeSubDomains"
+[2026-01-02 13:54:03]   Found:     Header set Strict-Transport-Security "max-age=60"
+[2026-01-02 13:54:03] ====================================
+[2026-01-02 13:54:03] === Audit Result Breakdown ===
+[2026-01-02 13:54:03]   [PASS] Direct header:     Strict-Transport-Security "max-age=31536000; includeSubDomains"
+[2026-01-02 13:54:03]   [FAIL] Direct header (non-compliant):     Header set Strict-Transport-Security "max-age=60"
+[2026-01-02 13:54:03] ==============================
+[2026-01-02 13:54:03] FAILURE: Multiple HSTS configurations found (2 total: 1 compliant, 1 non-compliant). Only one compliant configuration should exist.
+[2026-01-02 13:54:03] HSTS configuration needs to be updated.
+[2026-01-02 13:54:03] ACTION REQUIRED: Remove duplicate HSTS definitions. Only one compliant configuration should exist.
+[2026-01-02 13:54:03] 
+[2026-01-02 13:54:03] =========================================
+[2026-01-02 13:54:03] Summary
+[2026-01-02 13:54:03] =========================================
+[2026-01-02 13:54:03] Total files processed: 1
+[2026-01-02 13:54:03] Successful: 0
+[2026-01-02 13:54:03] Failed: 1
+[2026-01-02 13:54:03] Overall Status: FAILURE (some files failed)
+[2026-01-02 13:54:03] Log file: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/Multiple_Headers_audit.log

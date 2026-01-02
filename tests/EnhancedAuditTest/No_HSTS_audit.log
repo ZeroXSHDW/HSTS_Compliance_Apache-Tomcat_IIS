@@ -1,0 +1,592 @@
+[2026-01-02 12:55:50] =========================================
+[2026-01-02 12:55:50] Tomcat HSTS Configuration Tool
+[2026-01-02 12:55:50] Hostname: MACBOOKPRO.station
+[2026-01-02 12:55:50] Execution Time: 2026-01-02 12:55:50
+[2026-01-02 12:55:50] Mode: audit
+[2026-01-02 12:55:50] =========================================
+[2026-01-02 12:55:50] Checking custom configuration path: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/conf
+[2026-01-02 12:55:50] Found valid Tomcat configuration at custom path: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/conf
+[2026-01-02 12:55:50] Found Tomcat Configuration: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/conf (Version: 9.0.50)
+[2026-01-02 12:55:50] Searching for web.xml files...
+[2026-01-02 12:55:50]   Found: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/conf/web.xml (global configuration)
+[2026-01-02 12:55:50] Found 1 web.xml file(s) to process
+[2026-01-02 12:55:50] 
+[2026-01-02 12:55:50] =========================================
+[2026-01-02 12:55:50] Processing: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/conf/web.xml
+[2026-01-02 12:55:50] =========================================
+[2026-01-02 12:55:50] === AUDIT: No HSTS Configuration Found ===
+[2026-01-02 12:55:50] No HSTS headers or filters detected in the configuration file.
+[2026-01-02 12:55:50] 
+[2026-01-02 12:55:50] Configuration Context:
+[2026-01-02 12:55:50] Other filters found in configuration:
+[2026-01-02 12:55:50]   <?xml version="1.0" encoding="UTF-8"?><web-app><filter><filter-name>SomeOtherFilter</filter-name></filter></web-app>
+[2026-01-02 12:55:50] 
+[2026-01-02 12:55:50] Recommended Action:
+[2026-01-02 12:55:50]   Add HSTS configuration with: max-age=31536000; includeSubDomains
+[2026-01-02 12:55:50] ==========================================
+[2026-01-02 12:55:50] FAILURE: No HSTS header definitions found in configuration
+[2026-01-02 12:55:50] HSTS configuration needs to be updated.
+[2026-01-02 12:55:50] 
+[2026-01-02 12:55:50] =========================================
+[2026-01-02 12:55:50] Summary
+[2026-01-02 12:55:50] =========================================
+[2026-01-02 12:55:50] Total files processed: 1
+[2026-01-02 12:55:50] Successful: 0
+[2026-01-02 12:55:50] Failed: 1
+[2026-01-02 12:55:50] Overall Status: FAILURE (some files failed)
+[2026-01-02 12:55:50] Log file: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/No_HSTS_audit.log
+[2026-01-02 12:56:02] =========================================
+[2026-01-02 12:56:02] Tomcat HSTS Configuration Tool
+[2026-01-02 12:56:02] Hostname: MACBOOKPRO.station
+[2026-01-02 12:56:02] Execution Time: 2026-01-02 12:56:02
+[2026-01-02 12:56:02] Mode: audit
+[2026-01-02 12:56:02] =========================================
+[2026-01-02 12:56:02] Checking custom configuration path: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/conf
+[2026-01-02 12:56:02] Found valid Tomcat configuration at custom path: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/conf
+[2026-01-02 12:56:02] Found Tomcat Configuration: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/conf (Version: 9.0.50)
+[2026-01-02 12:56:02] Searching for web.xml files...
+[2026-01-02 12:56:02]   Found: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/conf/web.xml (global configuration)
+[2026-01-02 12:56:02] Found 1 web.xml file(s) to process
+[2026-01-02 12:56:02] 
+[2026-01-02 12:56:02] =========================================
+[2026-01-02 12:56:02] Processing: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/conf/web.xml
+[2026-01-02 12:56:02] =========================================
+[2026-01-02 12:56:02] === AUDIT: No HSTS Configuration Found ===
+[2026-01-02 12:56:02] No HSTS headers or filters detected in the configuration file.
+[2026-01-02 12:56:02] 
+[2026-01-02 12:56:02] Configuration Context:
+[2026-01-02 12:56:02] Other filters found in configuration:
+[2026-01-02 12:56:02]   <?xml version="1.0" encoding="UTF-8"?><web-app><filter><filter-name>SomeOtherFilter</filter-name></filter></web-app>
+[2026-01-02 12:56:02] 
+[2026-01-02 12:56:02] Recommended Action:
+[2026-01-02 12:56:02]   Add HSTS configuration with: max-age=31536000; includeSubDomains
+[2026-01-02 12:56:02] ==========================================
+[2026-01-02 12:56:02] FAILURE: No HSTS header definitions found in configuration
+[2026-01-02 12:56:02] HSTS configuration needs to be updated.
+[2026-01-02 12:56:02] 
+[2026-01-02 12:56:02] =========================================
+[2026-01-02 12:56:02] Summary
+[2026-01-02 12:56:02] =========================================
+[2026-01-02 12:56:02] Total files processed: 1
+[2026-01-02 12:56:02] Successful: 0
+[2026-01-02 12:56:02] Failed: 1
+[2026-01-02 12:56:02] Overall Status: FAILURE (some files failed)
+[2026-01-02 12:56:02] Log file: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/No_HSTS_audit.log
+[2026-01-02 12:56:15] =========================================
+[2026-01-02 12:56:15] Tomcat HSTS Configuration Tool
+[2026-01-02 12:56:15] Hostname: MACBOOKPRO.station
+[2026-01-02 12:56:15] Execution Time: 2026-01-02 12:56:15
+[2026-01-02 12:56:15] Mode: audit
+[2026-01-02 12:56:15] =========================================
+[2026-01-02 12:56:15] Checking custom configuration path: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/conf
+[2026-01-02 12:56:15] Found valid Tomcat configuration at custom path: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/conf
+[2026-01-02 12:56:15] Found Tomcat Configuration: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/conf (Version: 9.0.50)
+[2026-01-02 12:56:15] Searching for web.xml files...
+[2026-01-02 12:56:15]   Found: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/conf/web.xml (global configuration)
+[2026-01-02 12:56:15] Found 1 web.xml file(s) to process
+[2026-01-02 12:56:15] 
+[2026-01-02 12:56:15] =========================================
+[2026-01-02 12:56:15] Processing: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/conf/web.xml
+[2026-01-02 12:56:15] =========================================
+[2026-01-02 12:56:15] === AUDIT: No HSTS Configuration Found ===
+[2026-01-02 12:56:15] No HSTS headers or filters detected in the configuration file.
+[2026-01-02 12:56:15] 
+[2026-01-02 12:56:15] Configuration Context:
+[2026-01-02 12:56:15] Other filters found in configuration:
+[2026-01-02 12:56:15]   <?xml version="1.0" encoding="UTF-8"?><web-app><filter><filter-name>SomeOtherFilter</filter-name></filter></web-app>
+[2026-01-02 12:56:15] 
+[2026-01-02 12:56:15] Recommended Action:
+[2026-01-02 12:56:15]   Add HSTS configuration with: max-age=31536000; includeSubDomains
+[2026-01-02 12:56:15] ==========================================
+[2026-01-02 12:56:15] FAILURE: No HSTS header definitions found in configuration
+[2026-01-02 12:56:15] HSTS configuration needs to be updated.
+[2026-01-02 12:56:15] 
+[2026-01-02 12:56:15] =========================================
+[2026-01-02 12:56:15] Summary
+[2026-01-02 12:56:15] =========================================
+[2026-01-02 12:56:15] Total files processed: 1
+[2026-01-02 12:56:15] Successful: 0
+[2026-01-02 12:56:15] Failed: 1
+[2026-01-02 12:56:15] Overall Status: FAILURE (some files failed)
+[2026-01-02 12:56:15] Log file: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/No_HSTS_audit.log
+[2026-01-02 12:56:30] =========================================
+[2026-01-02 12:56:30] Tomcat HSTS Configuration Tool
+[2026-01-02 12:56:30] Hostname: MACBOOKPRO.station
+[2026-01-02 12:56:30] Execution Time: 2026-01-02 12:56:30
+[2026-01-02 12:56:30] Mode: audit
+[2026-01-02 12:56:30] =========================================
+[2026-01-02 12:56:30] Checking custom configuration path: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/conf
+[2026-01-02 12:56:30] Found valid Tomcat configuration at custom path: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/conf
+[2026-01-02 12:56:30] Found Tomcat Configuration: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/conf (Version: 9.0.50)
+[2026-01-02 12:56:30] Searching for web.xml files...
+[2026-01-02 12:56:30]   Found: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/conf/web.xml (global configuration)
+[2026-01-02 12:56:30] Found 1 web.xml file(s) to process
+[2026-01-02 12:56:30] 
+[2026-01-02 12:56:30] =========================================
+[2026-01-02 12:56:30] Processing: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/conf/web.xml
+[2026-01-02 12:56:30] =========================================
+[2026-01-02 12:56:30] === AUDIT: No HSTS Configuration Found ===
+[2026-01-02 12:56:30] No HSTS headers or filters detected in the configuration file.
+[2026-01-02 12:56:30] 
+[2026-01-02 12:56:30] Configuration Context:
+[2026-01-02 12:56:30] Other filters found in configuration:
+[2026-01-02 12:56:30]   <?xml version="1.0" encoding="UTF-8"?><web-app><filter><filter-name>SomeOtherFilter</filter-name></filter></web-app>
+[2026-01-02 12:56:30] 
+[2026-01-02 12:56:30] Recommended Action:
+[2026-01-02 12:56:30]   Add HSTS configuration with: max-age=31536000; includeSubDomains
+[2026-01-02 12:56:30] ==========================================
+[2026-01-02 12:56:30] FAILURE: No HSTS header definitions found in configuration
+[2026-01-02 12:56:30] HSTS configuration needs to be updated.
+[2026-01-02 12:56:30] 
+[2026-01-02 12:56:30] =========================================
+[2026-01-02 12:56:30] Summary
+[2026-01-02 12:56:30] =========================================
+[2026-01-02 12:56:30] Total files processed: 1
+[2026-01-02 12:56:30] Successful: 0
+[2026-01-02 12:56:30] Failed: 1
+[2026-01-02 12:56:30] Overall Status: FAILURE (some files failed)
+[2026-01-02 12:56:30] Log file: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/No_HSTS_audit.log
+[2026-01-02 12:56:47] =========================================
+[2026-01-02 12:56:47] Tomcat HSTS Configuration Tool
+[2026-01-02 12:56:47] Hostname: MACBOOKPRO.station
+[2026-01-02 12:56:47] Execution Time: 2026-01-02 12:56:47
+[2026-01-02 12:56:47] Mode: audit
+[2026-01-02 12:56:47] =========================================
+[2026-01-02 12:56:47] Checking custom configuration path: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/conf
+[2026-01-02 12:56:47] Found valid Tomcat configuration at custom path: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/conf
+[2026-01-02 12:56:47] Found Tomcat Configuration: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/conf (Version: 9.0.50)
+[2026-01-02 12:56:47] Searching for web.xml files...
+[2026-01-02 12:56:47]   Found: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/conf/web.xml (global configuration)
+[2026-01-02 12:56:47] Found 1 web.xml file(s) to process
+[2026-01-02 12:56:47] 
+[2026-01-02 12:56:47] =========================================
+[2026-01-02 12:56:47] Processing: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/conf/web.xml
+[2026-01-02 12:56:47] =========================================
+[2026-01-02 12:56:47] === AUDIT: No HSTS Configuration Found ===
+[2026-01-02 12:56:47] No HSTS headers or filters detected in the configuration file.
+[2026-01-02 12:56:47] 
+[2026-01-02 12:56:47] Configuration Context:
+[2026-01-02 12:56:47] Other filters found in configuration:
+[2026-01-02 12:56:47]   <?xml version="1.0" encoding="UTF-8"?><web-app><filter><filter-name>SomeOtherFilter</filter-name></filter></web-app>
+[2026-01-02 12:56:47] 
+[2026-01-02 12:56:47] Recommended Action:
+[2026-01-02 12:56:47]   Add HSTS configuration with: max-age=31536000; includeSubDomains
+[2026-01-02 12:56:47] ==========================================
+[2026-01-02 12:56:47] FAILURE: No HSTS header definitions found in configuration
+[2026-01-02 12:56:47] HSTS configuration needs to be updated.
+[2026-01-02 12:56:47] 
+[2026-01-02 12:56:47] =========================================
+[2026-01-02 12:56:47] Summary
+[2026-01-02 12:56:47] =========================================
+[2026-01-02 12:56:47] Total files processed: 1
+[2026-01-02 12:56:47] Successful: 0
+[2026-01-02 12:56:47] Failed: 1
+[2026-01-02 12:56:47] Overall Status: FAILURE (some files failed)
+[2026-01-02 12:56:47] Log file: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/No_HSTS_audit.log
+[2026-01-02 12:57:52] =========================================
+[2026-01-02 12:57:52] Tomcat HSTS Configuration Tool
+[2026-01-02 12:57:52] Hostname: MACBOOKPRO.station
+[2026-01-02 12:57:52] Execution Time: 2026-01-02 12:57:52
+[2026-01-02 12:57:52] Mode: audit
+[2026-01-02 12:57:52] =========================================
+[2026-01-02 12:57:52] Checking custom configuration path: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/conf
+[2026-01-02 12:57:52] Found valid Tomcat configuration at custom path: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/conf
+[2026-01-02 12:57:52] Found Tomcat Configuration: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/conf (Version: 9.0.50)
+[2026-01-02 12:57:52] Searching for web.xml files...
+[2026-01-02 12:57:52]   Found: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/conf/web.xml (global configuration)
+[2026-01-02 12:57:52] Found 1 web.xml file(s) to process
+[2026-01-02 12:57:52] 
+[2026-01-02 12:57:52] =========================================
+[2026-01-02 12:57:52] Processing: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/conf/web.xml
+[2026-01-02 12:57:52] =========================================
+[2026-01-02 12:57:52] === AUDIT: No HSTS Configuration Found ===
+[2026-01-02 12:57:52] No HSTS headers or filters detected in the configuration file.
+[2026-01-02 12:57:52] 
+[2026-01-02 12:57:52] Configuration Context:
+[2026-01-02 12:57:52] Other filters found in configuration:
+[2026-01-02 12:57:52]   <?xml version="1.0" encoding="UTF-8"?><web-app><filter><filter-name>SomeOtherFilter</filter-name></filter></web-app>
+[2026-01-02 12:57:52] 
+[2026-01-02 12:57:52] Recommended Action:
+[2026-01-02 12:57:52]   Add HSTS configuration with: max-age=31536000; includeSubDomains
+[2026-01-02 12:57:52] ==========================================
+[2026-01-02 12:57:52] FAILURE: No HSTS header definitions found in configuration
+[2026-01-02 12:57:52] HSTS configuration needs to be updated.
+[2026-01-02 12:57:52] 
+[2026-01-02 12:57:52] =========================================
+[2026-01-02 12:57:52] Summary
+[2026-01-02 12:57:52] =========================================
+[2026-01-02 12:57:52] Total files processed: 1
+[2026-01-02 12:57:52] Successful: 0
+[2026-01-02 12:57:52] Failed: 1
+[2026-01-02 12:57:52] Overall Status: FAILURE (some files failed)
+[2026-01-02 12:57:52] Log file: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/No_HSTS_audit.log
+[2026-01-02 12:58:11] =========================================
+[2026-01-02 12:58:11] Tomcat HSTS Configuration Tool
+[2026-01-02 12:58:11] Hostname: MACBOOKPRO.station
+[2026-01-02 12:58:11] Execution Time: 2026-01-02 12:58:11
+[2026-01-02 12:58:11] Mode: audit
+[2026-01-02 12:58:11] =========================================
+[2026-01-02 12:58:11] Checking custom configuration path: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/conf
+[2026-01-02 12:58:11] Found valid Tomcat configuration at custom path: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/conf
+[2026-01-02 12:58:11] Found Tomcat Configuration: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/conf (Version: 9.0.50)
+[2026-01-02 12:58:11] Searching for web.xml files...
+[2026-01-02 12:58:11]   Found: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/conf/web.xml (global configuration)
+[2026-01-02 12:58:11] Found 1 web.xml file(s) to process
+[2026-01-02 12:58:11] 
+[2026-01-02 12:58:11] =========================================
+[2026-01-02 12:58:11] Processing: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/conf/web.xml
+[2026-01-02 12:58:11] =========================================
+[2026-01-02 12:58:11] === AUDIT: No HSTS Configuration Found ===
+[2026-01-02 12:58:11] No HSTS headers or filters detected in the configuration file.
+[2026-01-02 12:58:11] 
+[2026-01-02 12:58:11] Configuration Context:
+[2026-01-02 12:58:11] Other filters found in configuration:
+[2026-01-02 12:58:11]   <?xml version="1.0" encoding="UTF-8"?><web-app><filter><filter-name>SomeOtherFilter</filter-name></filter></web-app>
+[2026-01-02 12:58:11] 
+[2026-01-02 12:58:11] Recommended Action:
+[2026-01-02 12:58:11]   Add HSTS configuration with: max-age=31536000; includeSubDomains
+[2026-01-02 12:58:11] ==========================================
+[2026-01-02 12:58:11] FAILURE: No HSTS header definitions found in configuration
+[2026-01-02 12:58:11] HSTS configuration needs to be updated.
+[2026-01-02 12:58:11] 
+[2026-01-02 12:58:11] =========================================
+[2026-01-02 12:58:11] Summary
+[2026-01-02 12:58:11] =========================================
+[2026-01-02 12:58:11] Total files processed: 1
+[2026-01-02 12:58:11] Successful: 0
+[2026-01-02 12:58:11] Failed: 1
+[2026-01-02 12:58:11] Overall Status: FAILURE (some files failed)
+[2026-01-02 12:58:11] Log file: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/No_HSTS_audit.log
+[2026-01-02 12:58:42] =========================================
+[2026-01-02 12:58:42] Tomcat HSTS Configuration Tool
+[2026-01-02 12:58:42] Hostname: MACBOOKPRO.station
+[2026-01-02 12:58:42] Execution Time: 2026-01-02 12:58:42
+[2026-01-02 12:58:42] Mode: audit
+[2026-01-02 12:58:42] =========================================
+[2026-01-02 12:58:42] Checking custom configuration path: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/conf
+[2026-01-02 12:58:42] Found valid Tomcat configuration at custom path: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/conf
+[2026-01-02 12:58:42] Found Tomcat Configuration: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/conf (Version: 9.0.50)
+[2026-01-02 12:58:42] Searching for web.xml files...
+[2026-01-02 12:58:42]   Found: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/conf/web.xml (global configuration)
+[2026-01-02 12:58:42] Found 1 web.xml file(s) to process
+[2026-01-02 12:58:42] 
+[2026-01-02 12:58:42] =========================================
+[2026-01-02 12:58:42] Processing: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/conf/web.xml
+[2026-01-02 12:58:42] =========================================
+[2026-01-02 12:58:42] === AUDIT: No HSTS Configuration Found ===
+[2026-01-02 12:58:42] No HSTS headers or filters detected in the configuration file.
+[2026-01-02 12:58:42] 
+[2026-01-02 12:58:42] Configuration Context:
+[2026-01-02 12:58:42] Other filters found in configuration:
+[2026-01-02 12:58:42]   <?xml version="1.0" encoding="UTF-8"?><web-app><filter><filter-name>SomeOtherFilter</filter-name></filter></web-app>
+[2026-01-02 12:58:42] 
+[2026-01-02 12:58:42] Recommended Action:
+[2026-01-02 12:58:42]   Add HSTS configuration with: max-age=31536000; includeSubDomains
+[2026-01-02 12:58:42] ==========================================
+[2026-01-02 12:58:42] FAILURE: No HSTS header definitions found in configuration
+[2026-01-02 12:58:42] HSTS configuration needs to be updated.
+[2026-01-02 12:58:42] 
+[2026-01-02 12:58:42] =========================================
+[2026-01-02 12:58:42] Summary
+[2026-01-02 12:58:42] =========================================
+[2026-01-02 12:58:42] Total files processed: 1
+[2026-01-02 12:58:42] Successful: 0
+[2026-01-02 12:58:42] Failed: 1
+[2026-01-02 12:58:42] Overall Status: FAILURE (some files failed)
+[2026-01-02 12:58:42] Log file: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/No_HSTS_audit.log
+[2026-01-02 13:49:24] =========================================
+[2026-01-02 13:49:24] Tomcat HSTS Configuration Tool
+[2026-01-02 13:49:24] Hostname: MACBOOKPRO.station
+[2026-01-02 13:49:24] Execution Time: 2026-01-02 13:49:24
+[2026-01-02 13:49:24] Mode: audit
+[2026-01-02 13:49:24] =========================================
+[2026-01-02 13:49:24] Checking custom configuration path: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/conf
+[2026-01-02 13:49:24] Found valid Tomcat configuration at custom path: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/conf
+[2026-01-02 13:49:24] Found Tomcat Configuration: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/conf (Version: 9.0.50)
+[2026-01-02 13:49:24] Searching for web.xml files...
+[2026-01-02 13:49:24]   Found: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/conf/web.xml (global configuration)
+[2026-01-02 13:49:24] Found 1 web.xml file(s) to process
+[2026-01-02 13:49:24] 
+[2026-01-02 13:49:24] =========================================
+[2026-01-02 13:49:24] Processing: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/conf/web.xml
+[2026-01-02 13:49:24] =========================================
+[2026-01-02 13:49:24] === AUDIT: No HSTS Configuration Found ===
+[2026-01-02 13:49:24] No HSTS headers or filters detected in the configuration file.
+[2026-01-02 13:49:24] 
+[2026-01-02 13:49:24] Configuration Context:
+[2026-01-02 13:49:24] Other filters found in configuration:
+[2026-01-02 13:49:24]   <?xml version="1.0" encoding="UTF-8"?><web-app><filter><filter-name>SomeOtherFilter</filter-name></filter></web-app>
+[2026-01-02 13:49:24] 
+[2026-01-02 13:49:24] Recommended Action:
+[2026-01-02 13:49:24]   Add HSTS configuration with: max-age=31536000; includeSubDomains
+[2026-01-02 13:49:24] ==========================================
+[2026-01-02 13:49:24] FAILURE: No HSTS header definitions found in configuration
+[2026-01-02 13:49:24] HSTS configuration needs to be updated.
+[2026-01-02 13:49:24] 
+[2026-01-02 13:49:24] =========================================
+[2026-01-02 13:49:25] Summary
+[2026-01-02 13:49:25] =========================================
+[2026-01-02 13:49:25] Total files processed: 1
+[2026-01-02 13:49:25] Successful: 0
+[2026-01-02 13:49:25] Failed: 1
+[2026-01-02 13:49:25] Overall Status: FAILURE (some files failed)
+[2026-01-02 13:49:25] Log file: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/No_HSTS_audit.log
+[2026-01-02 13:50:20] =========================================
+[2026-01-02 13:50:20] Tomcat HSTS Configuration Tool
+[2026-01-02 13:50:20] Hostname: MACBOOKPRO.station
+[2026-01-02 13:50:20] Execution Time: 2026-01-02 13:50:20
+[2026-01-02 13:50:20] Mode: audit
+[2026-01-02 13:50:20] =========================================
+[2026-01-02 13:50:20] Checking custom configuration path: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/conf
+[2026-01-02 13:50:20] Found valid Tomcat configuration at custom path: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/conf
+[2026-01-02 13:50:20] Found Tomcat Configuration: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/conf (Version: 9.0.50)
+[2026-01-02 13:50:20] Searching for web.xml files...
+[2026-01-02 13:50:20]   Found: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/conf/web.xml (global configuration)
+[2026-01-02 13:50:20] Found 1 web.xml file(s) to process
+[2026-01-02 13:50:20] 
+[2026-01-02 13:50:20] =========================================
+[2026-01-02 13:50:20] Processing: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/conf/web.xml
+[2026-01-02 13:50:20] =========================================
+[2026-01-02 13:50:20] === AUDIT: No HSTS Configuration Found ===
+[2026-01-02 13:50:20] No HSTS headers or filters detected in the configuration file.
+[2026-01-02 13:50:20] 
+[2026-01-02 13:50:20] Configuration Context:
+[2026-01-02 13:50:20] Other filters found in configuration:
+[2026-01-02 13:50:20]   <?xml version="1.0" encoding="UTF-8"?><web-app><filter><filter-name>SomeOtherFilter</filter-name></filter></web-app>
+[2026-01-02 13:50:20] 
+[2026-01-02 13:50:20] Recommended Action:
+[2026-01-02 13:50:20]   Add HSTS configuration with: max-age=31536000; includeSubDomains
+[2026-01-02 13:50:20] ==========================================
+[2026-01-02 13:50:20] FAILURE: No HSTS header definitions found in configuration
+[2026-01-02 13:50:20] HSTS configuration needs to be updated.
+[2026-01-02 13:50:20] 
+[2026-01-02 13:50:20] =========================================
+[2026-01-02 13:50:20] Summary
+[2026-01-02 13:50:20] =========================================
+[2026-01-02 13:50:20] Total files processed: 1
+[2026-01-02 13:50:20] Successful: 0
+[2026-01-02 13:50:20] Failed: 1
+[2026-01-02 13:50:20] Overall Status: FAILURE (some files failed)
+[2026-01-02 13:50:20] Log file: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/No_HSTS_audit.log
+[2026-01-02 13:50:58] =========================================
+[2026-01-02 13:50:58] Tomcat HSTS Configuration Tool
+[2026-01-02 13:50:58] Hostname: MACBOOKPRO.station
+[2026-01-02 13:50:58] Execution Time: 2026-01-02 13:50:58
+[2026-01-02 13:50:58] Mode: audit
+[2026-01-02 13:50:58] =========================================
+[2026-01-02 13:50:58] Checking custom configuration path: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/conf
+[2026-01-02 13:50:58] Found valid Tomcat configuration at custom path: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/conf
+[2026-01-02 13:50:58] Found Tomcat Configuration: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/conf (Version: 9.0.50)
+[2026-01-02 13:50:58] Searching for web.xml files...
+[2026-01-02 13:50:58]   Found: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/conf/web.xml (global configuration)
+[2026-01-02 13:50:58] Found 1 web.xml file(s) to process
+[2026-01-02 13:50:58] 
+[2026-01-02 13:50:58] =========================================
+[2026-01-02 13:50:58] Processing: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/conf/web.xml
+[2026-01-02 13:50:58] =========================================
+[2026-01-02 13:50:58] === AUDIT: No HSTS Configuration Found ===
+[2026-01-02 13:50:58] No HSTS headers or filters detected in the configuration file.
+[2026-01-02 13:50:58] 
+[2026-01-02 13:50:58] Configuration Context:
+[2026-01-02 13:50:58] Other filters found in configuration:
+[2026-01-02 13:50:58]   <?xml version="1.0" encoding="UTF-8"?><web-app><filter><filter-name>SomeOtherFilter</filter-name></filter></web-app>
+[2026-01-02 13:50:58] 
+[2026-01-02 13:50:58] Recommended Action:
+[2026-01-02 13:50:58]   Add HSTS configuration with: max-age=31536000; includeSubDomains
+[2026-01-02 13:50:58] ==========================================
+[2026-01-02 13:50:58] FAILURE: No HSTS header definitions found in configuration
+[2026-01-02 13:50:58] HSTS configuration needs to be updated.
+[2026-01-02 13:50:58] 
+[2026-01-02 13:50:58] =========================================
+[2026-01-02 13:50:58] Summary
+[2026-01-02 13:50:58] =========================================
+[2026-01-02 13:50:58] Total files processed: 1
+[2026-01-02 13:50:58] Successful: 0
+[2026-01-02 13:50:58] Failed: 1
+[2026-01-02 13:50:58] Overall Status: FAILURE (some files failed)
+[2026-01-02 13:50:58] Log file: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/No_HSTS_audit.log
+[2026-01-02 13:51:16] =========================================
+[2026-01-02 13:51:16] Tomcat HSTS Configuration Tool
+[2026-01-02 13:51:16] Hostname: MACBOOKPRO.station
+[2026-01-02 13:51:16] Execution Time: 2026-01-02 13:51:16
+[2026-01-02 13:51:16] Mode: audit
+[2026-01-02 13:51:16] =========================================
+[2026-01-02 13:51:16] Checking custom configuration path: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/conf
+[2026-01-02 13:51:16] Found valid Tomcat configuration at custom path: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/conf
+[2026-01-02 13:51:16] Found Tomcat Configuration: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/conf (Version: 9.0.50)
+[2026-01-02 13:51:16] Searching for web.xml files...
+[2026-01-02 13:51:16]   Found: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/conf/web.xml (global configuration)
+[2026-01-02 13:51:16] Found 1 web.xml file(s) to process
+[2026-01-02 13:51:16] 
+[2026-01-02 13:51:16] =========================================
+[2026-01-02 13:51:16] Processing: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/conf/web.xml
+[2026-01-02 13:51:16] =========================================
+[2026-01-02 13:51:16] === AUDIT: No HSTS Configuration Found ===
+[2026-01-02 13:51:16] No HSTS headers or filters detected in the configuration file.
+[2026-01-02 13:51:16] 
+[2026-01-02 13:51:16] Configuration Context:
+[2026-01-02 13:51:16] Other filters found in configuration:
+[2026-01-02 13:51:16]   <?xml version="1.0" encoding="UTF-8"?><web-app><filter><filter-name>SomeOtherFilter</filter-name></filter></web-app>
+[2026-01-02 13:51:16] 
+[2026-01-02 13:51:16] Recommended Action:
+[2026-01-02 13:51:16]   Add HSTS configuration with: max-age=31536000; includeSubDomains
+[2026-01-02 13:51:16] ==========================================
+[2026-01-02 13:51:16] FAILURE: No HSTS header definitions found in configuration
+[2026-01-02 13:51:16] HSTS configuration needs to be updated.
+[2026-01-02 13:51:16] 
+[2026-01-02 13:51:16] =========================================
+[2026-01-02 13:51:16] Summary
+[2026-01-02 13:51:16] =========================================
+[2026-01-02 13:51:16] Total files processed: 1
+[2026-01-02 13:51:16] Successful: 0
+[2026-01-02 13:51:16] Failed: 1
+[2026-01-02 13:51:16] Overall Status: FAILURE (some files failed)
+[2026-01-02 13:51:16] Log file: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/No_HSTS_audit.log
+[2026-01-02 13:52:00] =========================================
+[2026-01-02 13:52:00] Tomcat HSTS Configuration Tool
+[2026-01-02 13:52:00] Hostname: MACBOOKPRO.station
+[2026-01-02 13:52:00] Execution Time: 2026-01-02 13:52:00
+[2026-01-02 13:52:00] Mode: audit
+[2026-01-02 13:52:00] =========================================
+[2026-01-02 13:52:00] Checking custom configuration path: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/conf
+[2026-01-02 13:52:00] Found valid Tomcat configuration at custom path: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/conf
+[2026-01-02 13:52:00] Found Tomcat Configuration: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/conf (Version: 9.0.50)
+[2026-01-02 13:52:00] Searching for web.xml files...
+[2026-01-02 13:52:00]   Found: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/conf/web.xml (global configuration)
+[2026-01-02 13:52:00] Found 1 web.xml file(s) to process
+[2026-01-02 13:52:00] 
+[2026-01-02 13:52:00] =========================================
+[2026-01-02 13:52:00] Processing: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/conf/web.xml
+[2026-01-02 13:52:00] =========================================
+[2026-01-02 13:52:00] === AUDIT: No HSTS Configuration Found ===
+[2026-01-02 13:52:00] No HSTS headers or filters detected in the configuration file.
+[2026-01-02 13:52:00] 
+[2026-01-02 13:52:00] Configuration Context:
+[2026-01-02 13:52:00] Other filters found in configuration:
+[2026-01-02 13:52:00]   <?xml version="1.0" encoding="UTF-8"?><web-app><filter><filter-name>SomeOtherFilter</filter-name></filter></web-app>
+[2026-01-02 13:52:00] 
+[2026-01-02 13:52:00] Recommended Action:
+[2026-01-02 13:52:00]   Add HSTS configuration with: max-age=31536000; includeSubDomains
+[2026-01-02 13:52:00] ==========================================
+[2026-01-02 13:52:00] FAILURE: No HSTS header definitions found in configuration
+[2026-01-02 13:52:00] HSTS configuration needs to be updated.
+[2026-01-02 13:52:00] 
+[2026-01-02 13:52:00] =========================================
+[2026-01-02 13:52:00] Summary
+[2026-01-02 13:52:00] =========================================
+[2026-01-02 13:52:00] Total files processed: 1
+[2026-01-02 13:52:00] Successful: 0
+[2026-01-02 13:52:00] Failed: 1
+[2026-01-02 13:52:00] Overall Status: FAILURE (some files failed)
+[2026-01-02 13:52:00] Log file: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/No_HSTS_audit.log
+[2026-01-02 13:52:27] =========================================
+[2026-01-02 13:52:27] Tomcat HSTS Configuration Tool
+[2026-01-02 13:52:27] Hostname: MACBOOKPRO.station
+[2026-01-02 13:52:27] Execution Time: 2026-01-02 13:52:27
+[2026-01-02 13:52:27] Mode: audit
+[2026-01-02 13:52:27] =========================================
+[2026-01-02 13:52:27] Checking custom configuration path: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/conf
+[2026-01-02 13:52:27] Found valid Tomcat configuration at custom path: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/conf
+[2026-01-02 13:52:27] Found Tomcat Configuration: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/conf (Version: 9.0.50)
+[2026-01-02 13:52:27] Searching for web.xml files...
+[2026-01-02 13:52:27]   Found: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/conf/web.xml (global configuration)
+[2026-01-02 13:52:27] Found 1 web.xml file(s) to process
+[2026-01-02 13:52:27] 
+[2026-01-02 13:52:27] =========================================
+[2026-01-02 13:52:27] Processing: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/conf/web.xml
+[2026-01-02 13:52:27] =========================================
+[2026-01-02 13:52:27] === AUDIT: No HSTS Configuration Found ===
+[2026-01-02 13:52:27] No HSTS headers or filters detected in the configuration file.
+[2026-01-02 13:52:27] 
+[2026-01-02 13:52:27] Configuration Context:
+[2026-01-02 13:52:27] Other filters found in configuration:
+[2026-01-02 13:52:27]   <?xml version="1.0" encoding="UTF-8"?><web-app><filter><filter-name>SomeOtherFilter</filter-name></filter></web-app>
+[2026-01-02 13:52:27] 
+[2026-01-02 13:52:27] Recommended Action:
+[2026-01-02 13:52:27]   Add HSTS configuration with: max-age=31536000; includeSubDomains
+[2026-01-02 13:52:27] ==========================================
+[2026-01-02 13:52:27] FAILURE: No HSTS header definitions found in configuration
+[2026-01-02 13:52:27] HSTS configuration needs to be updated.
+[2026-01-02 13:52:27] 
+[2026-01-02 13:52:27] =========================================
+[2026-01-02 13:52:27] Summary
+[2026-01-02 13:52:27] =========================================
+[2026-01-02 13:52:27] Total files processed: 1
+[2026-01-02 13:52:27] Successful: 0
+[2026-01-02 13:52:27] Failed: 1
+[2026-01-02 13:52:27] Overall Status: FAILURE (some files failed)
+[2026-01-02 13:52:27] Log file: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/No_HSTS_audit.log
+[2026-01-02 13:53:17] =========================================
+[2026-01-02 13:53:17] Tomcat HSTS Configuration Tool
+[2026-01-02 13:53:17] Hostname: MACBOOKPRO.station
+[2026-01-02 13:53:17] Execution Time: 2026-01-02 13:53:17
+[2026-01-02 13:53:17] Mode: audit
+[2026-01-02 13:53:17] =========================================
+[2026-01-02 13:53:18] Checking custom configuration path: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/conf
+[2026-01-02 13:53:18] Found valid Tomcat configuration at custom path: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/conf
+[2026-01-02 13:53:18] Found Tomcat Configuration: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/conf (Version: 9.0.50)
+[2026-01-02 13:53:18] Searching for web.xml files...
+[2026-01-02 13:53:18]   Found: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/conf/web.xml (global configuration)
+[2026-01-02 13:53:18] Found 1 web.xml file(s) to process
+[2026-01-02 13:53:18] 
+[2026-01-02 13:53:18] =========================================
+[2026-01-02 13:53:18] Processing: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/conf/web.xml
+[2026-01-02 13:53:18] =========================================
+[2026-01-02 13:53:18] === AUDIT: No HSTS Configuration Found ===
+[2026-01-02 13:53:18] No HSTS headers or filters detected in the configuration file.
+[2026-01-02 13:53:18] 
+[2026-01-02 13:53:18] Configuration Context:
+[2026-01-02 13:53:18] Other filters found in configuration:
+[2026-01-02 13:53:18]   <?xml version="1.0" encoding="UTF-8"?><web-app><filter><filter-name>SomeOtherFilter</filter-name></filter></web-app>
+[2026-01-02 13:53:18] 
+[2026-01-02 13:53:18] Recommended Action:
+[2026-01-02 13:53:18]   Add HSTS configuration with: max-age=31536000; includeSubDomains
+[2026-01-02 13:53:18] ==========================================
+[2026-01-02 13:53:18] FAILURE: No HSTS header definitions found in configuration
+[2026-01-02 13:53:18] HSTS configuration needs to be updated.
+[2026-01-02 13:53:18] 
+[2026-01-02 13:53:18] =========================================
+[2026-01-02 13:53:18] Summary
+[2026-01-02 13:53:18] =========================================
+[2026-01-02 13:53:18] Total files processed: 1
+[2026-01-02 13:53:18] Successful: 0
+[2026-01-02 13:53:18] Failed: 1
+[2026-01-02 13:53:18] Overall Status: FAILURE (some files failed)
+[2026-01-02 13:53:18] Log file: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/No_HSTS_audit.log
+[2026-01-02 13:54:02] =========================================
+[2026-01-02 13:54:02] Tomcat HSTS Configuration Tool
+[2026-01-02 13:54:02] Hostname: MACBOOKPRO.station
+[2026-01-02 13:54:02] Execution Time: 2026-01-02 13:54:02
+[2026-01-02 13:54:02] Mode: audit
+[2026-01-02 13:54:02] =========================================
+[2026-01-02 13:54:02] Checking custom configuration path: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/conf
+[2026-01-02 13:54:02] Found valid Tomcat configuration at custom path: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/conf
+[2026-01-02 13:54:02] Found Tomcat Configuration: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/conf (Version: 9.0.50)
+[2026-01-02 13:54:03] Searching for web.xml files...
+[2026-01-02 13:54:03]   Found: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/conf/web.xml (global configuration)
+[2026-01-02 13:54:03] Found 1 web.xml file(s) to process
+[2026-01-02 13:54:03] 
+[2026-01-02 13:54:03] =========================================
+[2026-01-02 13:54:03] Processing: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/conf/web.xml
+[2026-01-02 13:54:03] =========================================
+[2026-01-02 13:54:03] === AUDIT: No HSTS Configuration Found ===
+[2026-01-02 13:54:03] No HSTS headers or filters detected in the configuration file.
+[2026-01-02 13:54:03] 
+[2026-01-02 13:54:03] Configuration Context:
+[2026-01-02 13:54:03] Other filters found in configuration:
+[2026-01-02 13:54:03]   <?xml version="1.0" encoding="UTF-8"?><web-app><filter><filter-name>SomeOtherFilter</filter-name></filter></web-app>
+[2026-01-02 13:54:03] 
+[2026-01-02 13:54:03] Recommended Action:
+[2026-01-02 13:54:03]   Add HSTS configuration with: max-age=31536000; includeSubDomains
+[2026-01-02 13:54:03] ==========================================
+[2026-01-02 13:54:03] FAILURE: No HSTS header definitions found in configuration
+[2026-01-02 13:54:03] HSTS configuration needs to be updated.
+[2026-01-02 13:54:03] 
+[2026-01-02 13:54:03] =========================================
+[2026-01-02 13:54:03] Summary
+[2026-01-02 13:54:03] =========================================
+[2026-01-02 13:54:03] Total files processed: 1
+[2026-01-02 13:54:03] Successful: 0
+[2026-01-02 13:54:03] Failed: 1
+[2026-01-02 13:54:03] Overall Status: FAILURE (some files failed)
+[2026-01-02 13:54:03] Log file: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTest/No_HSTS_audit.log

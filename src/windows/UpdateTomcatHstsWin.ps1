@@ -19,7 +19,7 @@ param(
     [string]$CustomPathsFile = $null,
     
     [Parameter(Mandatory = $false)]
-    [string]$LogFile = "$env:TEMP\TomcatHsts_$(Get-Date -Format 'yyyyMMdd_HHmmss').log",
+    [string]$LogFile = $null,
     
     [Parameter(Mandatory = $false)]
     [switch]$DryRun = $false,
@@ -32,22 +32,71 @@ param(
 
     [Parameter(Mandatory = $false)]
     [ValidateSet("json", "csv", "text")]
-    [string]$OutputFormat = "text"
+    [string]$OutputFormat = "text",
+
+    [Parameter(Mandatory = $false)]
+    [ValidateSet("basic", "high", "veryhigh", "maximum")]
+    [string]$SecurityLevel = "high"
 )
 
-$ErrorActionPreference = "Stop"
-$Hostname = $env:COMPUTERNAME
 $Timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
 
+# Security Level Definitions
+$MinMaxAge = 31536000
+$RequireSubDomains = $true
+$RequirePreload = $false
+
+switch ($SecurityLevel.ToLower()) {
+    "basic" {
+        $MinMaxAge = 31536000
+        $RequireSubDomains = $false
+        $RequirePreload = $false
+    }
+    "high" {
+        $MinMaxAge = 31536000
+        $RequireSubDomains = $true
+        $RequirePreload = $false
+    }
+    "veryhigh" {
+        $MinMaxAge = 31536000
+        $RequireSubDomains = $true
+        $RequirePreload = $true
+    }
+    "maximum" {
+        $MinMaxAge = 63072000
+        $RequireSubDomains = $true
+        $RequirePreload = $true
+    }
+}
+
+$RecommendedHsts = "max-age=$MinMaxAge"
+if ($RequireSubDomains) { $RecommendedHsts += "; includeSubDomains" }
+if ($RequirePreload) { $RecommendedHsts += "; preload" }
+
 # Initialize log file
-if ($LogFile -eq "") {
-    $LogFile = "$env:TEMP\TomcatHsts_$(Get-Date -Format 'yyyyMMdd_HHmmss').log"
+if ($LogFile -eq "" -or $null -eq $LogFile) {
+    if ($env:TEMP) {
+        $LogFile = Join-Path $env:TEMP "TomcatHsts_$(Get-Date -Format 'yyyyMMdd_HHmmss').log"
+    }
+    else {
+        $LogFile = "/tmp/TomcatHsts_$(Get-Date -Format 'yyyyMMdd_HHmmss').log"
+    }
 }
 try {
     $null = New-Item -Path $LogFile -ItemType File -Force -ErrorAction Stop
 }
 catch {
     Write-Host "WARNING: Cannot create log file: $LogFile"
+    # Fallback to current directory
+    try {
+        $LogFile = "./TomcatHsts_$(Get-Date -Format 'yyyyMMdd_HHmmss').log"
+        $null = New-Item -Path $LogFile -ItemType File -Force -ErrorAction Stop
+        Write-Host "Logging to: $LogFile"
+    }
+    catch {
+        Write-Host "WARNING: Still cannot create log file. Console only."
+        $LogFile = $null
+    }
 }
 
 # Function: Log message to console and optionally to file
@@ -614,7 +663,7 @@ function Find-WebXmlFiles {
     $webappsPath = Join-Path $tomcatHome "webapps"
     if (Test-Path $webappsPath) {
         $appWebXmls = Get-ChildItem -Path $webappsPath -Recurse -Filter "web.xml" -ErrorAction SilentlyContinue | 
-        Where-Object { $_.FullName -like "*\WEB-INF\web.xml" }
+        Where-Object { $_.FullName -match "[\\/]WEB-INF[\\/]web\.xml$" }
         foreach ($webxml in $appWebXmls) {
             $webXmlFiles += $webxml.FullName
             Write-LogMessage "Found: $($webxml.FullName) (application-specific)"
@@ -671,8 +720,8 @@ function Test-FilterCompliant {
     param(
         [System.Xml.XmlElement]$Filter
     )
-    $hasMaxAge = $false
-    $hasIncludeSubDomains = $false
+    $maxAge = $null
+    $includeSubDomains = $null
     
     # Try to find init-param elements (with and without namespace)
     $initParams = $null
@@ -685,49 +734,70 @@ function Test-FilterCompliant {
                 break
             }
         }
-        catch {
-            # Continue to next XPath
+        catch { }
+    }
+    
+    if ($initParams) {
+        foreach ($param in $initParams) {
+            $name = $null
+            $value = $null
+            
+            $nameXpaths = @("param-name", ".//param-name", ".//*[local-name()='param-name']")
+            $valueXpaths = @("param-value", ".//param-value", ".//*[local-name()='param-value']")
+            
+            foreach ($xpath in $nameXpaths) {
+                try {
+                    $name = $param.SelectSingleNode($xpath)
+                    if ($name) { break }
+                }
+                catch { }
+            }
+            
+            foreach ($xpath in $valueXpaths) {
+                try {
+                    $value = $param.SelectSingleNode($xpath)
+                    if ($value) { break }
+                }
+                catch { }
+            }
+            
+            if ($name -and $value) {
+                if ($name.InnerText -eq "hstsMaxAgeSeconds") {
+                    $maxAge = [int64]$value.InnerText
+                }
+                if ($name.InnerText -eq "hstsIncludeSubDomains") {
+                    $includeSubDomains = $value.InnerText -eq "true"
+                }
+                if ($name.InnerText -eq "hstsPreload") {
+                    $preload = $value.InnerText -eq "true"
+                }
+            }
         }
     }
     
-    if (-not $initParams) {
-        return $false
+    $isCompliant = $true
+    $isWeak = $false
+    
+    if ($null -eq $maxAge -or $maxAge -lt $MinMaxAge) {
+        $isCompliant = $false
     }
     
-    foreach ($param in $initParams) {
-        # Try to find param-name and param-value (with and without namespace)
-        $name = $null
-        $value = $null
-        
-        $nameXpaths = @("param-name", ".//param-name", ".//*[local-name()='param-name']")
-        $valueXpaths = @("param-value", ".//param-value", ".//*[local-name()='param-value']")
-        
-        foreach ($xpath in $nameXpaths) {
-            try {
-                $name = $param.SelectSingleNode($xpath)
-                if ($name) { break }
-            }
-            catch { }
-        }
-        
-        foreach ($xpath in $valueXpaths) {
-            try {
-                $value = $param.SelectSingleNode($xpath)
-                if ($value) { break }
-            }
-            catch { }
-        }
-        
-        if ($name -and $value) {
-            if ($name.InnerText -eq "hstsMaxAgeSeconds" -and $value.InnerText -eq "31536000") {
-                $hasMaxAge = $true
-            }
-            if ($name.InnerText -eq "hstsIncludeSubDomains" -and $value.InnerText -eq "true") {
-                $hasIncludeSubDomains = $true
-            }
-        }
+    if ($RequireSubDomains -and $includeSubDomains -ne $true) {
+        $isCompliant = $false
+        $isWeak = $true
     }
-    return ($hasMaxAge -and $hasIncludeSubDomains)
+    
+    if ($RequirePreload -and $preload -ne $true) {
+        $isCompliant = $false
+    }
+    
+    return [PSCustomObject]@{
+        IsCompliant       = $isCompliant
+        IsWeak            = $isWeak
+        MaxAge            = $maxAge
+        IncludeSubDomains = $includeSubDomains
+        Preload           = $preload
+    }
 }
 
 # Function: Test if HSTS configuration is compliant (checks entire document)
@@ -749,14 +819,13 @@ function Test-CompliantHsts {
                 break
             }
         }
-        catch {
-            # Continue to next XPath
-        }
+        catch { }
     }
     
     if ($filters) {
         foreach ($filter in $filters) {
-            if (Test-FilterCompliant -Filter $filter) {
+            $result = Test-FilterCompliant -Filter $filter
+            if ($result.IsCompliant) {
                 return $true
             }
         }
@@ -789,9 +858,7 @@ function Test-HstsHeaders {
                 break
             }
         }
-        catch {
-            # Continue to next XPath
-        }
+        catch { }
     }
     
     if (-not $filters) {
@@ -800,6 +867,40 @@ function Test-HstsHeaders {
     $headerCount = $filters.Count
     if ($headerCount -eq 0) {
         $details = "No HSTS header definitions found in configuration"
+        Write-LogMessage "=== AUDIT: No HSTS Configuration Found ==="
+        Write-LogMessage "No HSTS filters detected in the configuration file."
+        Write-LogMessage ""
+        Write-LogMessage "Configuration Context:"
+        
+        # Show what filters ARE present
+        $allFilters = @()
+        $filterXpaths = @("//filter-name", "//*[local-name()='filter-name']")
+        foreach ($xpath in $filterXpaths) {
+            try {
+                $nodes = $WebXml.SelectNodes($xpath)
+                if ($nodes) {
+                    foreach ($node in $nodes) { $allFilters += $node.InnerText }
+                    break
+                }
+            }
+            catch { }
+        }
+        
+        if ($allFilters.Count -gt 0) {
+            Write-LogMessage "Other filters found in configuration:"
+            foreach ($f in ($allFilters | Select-Object -First 10)) {
+                Write-LogMessage "  - $f"
+            }
+        }
+        else {
+            Write-LogMessage "  No filters found in configuration"
+        }
+        
+        Write-LogMessage ""
+        Write-LogMessage "Recommended Action:"
+        Write-LogMessage "  Add HSTS configuration with: hstsMaxAgeSeconds=31536000; hstsIncludeSubDomains=true"
+        Write-LogMessage "=========================================="
+
         return @{
             IsCorrect         = $false
             Details           = $details
@@ -808,29 +909,61 @@ function Test-HstsHeaders {
             NonCompliantCount = 0
         }
     }
+    
     Write-LogMessage "Found $headerCount HSTS filter definition(s)"
+    Write-LogMessage "=== Audit Result Breakdown ==="
+    
+    $compliantHeaders = @()
+    $weakHeaders = @()
+    $nonCompliantHeaders = @()
+    
     foreach ($filter in $filters) {
-        if (Test-FilterCompliant -Filter $filter) {
+        $result = Test-FilterCompliant -Filter $filter
+        $filterName = "Unknown"
+        try {
+            $nameNode = $filter.SelectSingleNode("filter-name")
+            if (-not $nameNode) { $nameNode = $filter.SelectSingleNode(".//*[local-name()='filter-name']") }
+            if ($nameNode) { $filterName = $nameNode.InnerText.Trim() }
+        }
+        catch { }
+        
+        $maxAge = if ($null -ne $result.MaxAge) { $result.MaxAge } else { 'not found' }
+        $includeSub = if ($null -ne $result.IncludeSubDomains) { $result.IncludeSubDomains } else { 'not found' }
+        $preload = if ($null -ne $result.Preload) { $result.Preload } else { 'not found' }
+
+        if ($result.IsCompliant) {
             $compliantCount++
+            $compliantHeaders += "[PASS] Filter: $filterName (Level: $SecurityLevel): max-age=$maxAge, includeSubDomains=$includeSub, preload=$preload"
+            Write-LogMessage "  [PASS] Filter: $filterName (Level: $SecurityLevel): max-age=$maxAge, includeSubDomains=$includeSub, preload=$preload"
         }
         else {
             $nonCompliantCount++
+            $nonCompliantHeaders += "[FAIL] Filter: $filterName (Target Level: $SecurityLevel): max-age=$maxAge, includeSubDomains=$includeSub, preload=$preload"
+            Write-LogMessage "  [FAIL] Filter: $filterName (Target Level: $SecurityLevel): max-age=$maxAge, includeSubDomains=$includeSub, preload=$preload"
         }
     }
+    Write-LogMessage "=============================="
+
     if ($headerCount -gt 1) {
-        $details = "Multiple HSTS header definitions found ($headerCount total). Only one compliant configuration should exist."
+        $details = "Multiple HSTS configuration definitions found ($headerCount total). Only one compliant configuration should exist."
         $isCorrect = $false
     }
     elseif ($compliantCount -eq 1 -and $nonCompliantCount -eq 0) {
-        $details = "HSTS is correctly configured with exactly one compliant definition: max-age=31536000; includeSubDomains"
-        $isCorrect = $true
+        if ($weakHeaders.Count -gt 0) {
+            $details = "HSTS is compliant but weak (missing includeSubDomains directive)."
+            $isCorrect = $true
+        }
+        else {
+            $details = "HSTS is correctly configured with exactly one compliant definition."
+            $isCorrect = $true
+        }
     }
-    elseif ($compliantCount -eq 0 -and $nonCompliantCount -gt 0) {
-        $details = "HSTS header(s) found but none are compliant. Found $nonCompliantCount non-compliant definition(s)."
+    elseif ($headerCount -eq 0) {
+        $details = "No HSTS header definitions found in configuration"
         $isCorrect = $false
     }
     else {
-        $details = "HSTS configuration issue detected"
+        $details = "Non-compliant HSTS configuration found: $nonCompliantCount failed issues."
         $isCorrect = $false
     }
     return @{
@@ -1003,9 +1136,8 @@ function Invoke-HstsCompliantPatch {
     $requiredFilterName = "HstsHeaderFilter"
     $requiredFilterClass = "org.apache.catalina.filters.HttpHeaderSecurityFilter"
     $requiredMaxAgeParam = "hstsMaxAgeSeconds"
-    $requiredMaxAgeValue = "31536000"  # Exactly 1 year in seconds
+    $requiredMaxAgeValue = $MinMaxAge.ToString()
     $requiredIncludeSubDomainsParam = "hstsIncludeSubDomains"
-    $requiredIncludeSubDomainsValue = "true"
     $requiredUrlPattern = "/*"
     
     # Create filter element with SAFETY: Only set the exact required values
@@ -1018,24 +1150,27 @@ function Invoke-HstsCompliantPatch {
     $filterClass.InnerText = $requiredFilterClass
     $filter.AppendChild($filterClass) | Out-Null
     
-    # SAFETY: Only add the two required init-params with exact values
-    $initParam1 = $WebXml.CreateElement("init-param")
-    $paramName1 = $WebXml.CreateElement("param-name")
-    $paramName1.InnerText = $requiredMaxAgeParam
-    $paramValue1 = $WebXml.CreateElement("param-value")
-    $paramValue1.InnerText = $requiredMaxAgeValue
-    $initParam1.AppendChild($paramName1) | Out-Null
-    $initParam1.AppendChild($paramValue1) | Out-Null
-    $filter.AppendChild($initParam1) | Out-Null
+    # max-age param
+    $maxAgeParam = $WebXml.CreateElement("init-param")
+    $maxAgeParam.AppendChild($WebXml.CreateElement("param-name")).InnerText = $requiredMaxAgeParam
+    $maxAgeParam.AppendChild($WebXml.CreateElement("param-value")).InnerText = $requiredMaxAgeValue
+    $filter.AppendChild($maxAgeParam) | Out-Null
     
-    $initParam2 = $WebXml.CreateElement("init-param")
-    $paramName2 = $WebXml.CreateElement("param-name")
-    $paramName2.InnerText = $requiredIncludeSubDomainsParam
-    $paramValue2 = $WebXml.CreateElement("param-value")
-    $paramValue2.InnerText = $requiredIncludeSubDomainsValue
-    $initParam2.AppendChild($paramName2) | Out-Null
-    $initParam2.AppendChild($paramValue2) | Out-Null
-    $filter.AppendChild($initParam2) | Out-Null
+    # includeSubDomains param
+    if ($RequireSubDomains) {
+        $subDomainsParam = $WebXml.CreateElement("init-param")
+        $subDomainsParam.AppendChild($WebXml.CreateElement("param-name")).InnerText = $requiredIncludeSubDomainsParam
+        $subDomainsParam.AppendChild($WebXml.CreateElement("param-value")).InnerText = "true"
+        $filter.AppendChild($subDomainsParam) | Out-Null
+    }
+    
+    # preload param
+    if ($RequirePreload) {
+        $preloadParam = $WebXml.CreateElement("init-param")
+        $preloadParam.AppendChild($WebXml.CreateElement("param-name")).InnerText = "hstsPreload"
+        $preloadParam.AppendChild($WebXml.CreateElement("param-value")).InnerText = "true"
+        $filter.AppendChild($preloadParam) | Out-Null
+    }
     
     # Create filter-mapping with SAFETY: Only set the exact required values
     $filterMapping = $WebXml.CreateElement("filter-mapping")
@@ -1051,7 +1186,7 @@ function Invoke-HstsCompliantPatch {
     $webApp.InsertBefore($filter, $webApp.LastChild) | Out-Null
     $webApp.InsertBefore($filterMapping, $webApp.LastChild) | Out-Null
     
-    Write-LogMessage "Applied compliant HSTS configuration with exact values: max-age=31536000, includeSubDomains=true"
+    Write-LogMessage "Applied compliant HSTS configuration ($SecurityLevel): max-age=$MinMaxAge, includeSubDomains=$RequireSubDomains, preload=$RequirePreload"
 }
 
 # SAFETY: Verification function to ensure only expected HSTS configuration exists
@@ -1366,7 +1501,7 @@ try {
         Write-LogError "  - Or specify a custom path: -TomcatConfPath 'C:\path\to\tomcat\conf'"
         Write-LogError "  - Or specify multiple paths: -CustomPaths @('C:\path1\conf', 'C:\path2\conf')"
         Write-LogError "  - Or specify a paths file: -CustomPathsFile 'C:\paths.txt' (one path per line)"
-        exit 1
+        return 1
     }
     
     # Collect all web.xml files from all configuration directories
@@ -1390,7 +1525,7 @@ try {
     
     if ($webXmlFiles.Count -eq 0) {
         Write-LogError "No web.xml files found to process"
-        exit 1
+        return 1
     }
     
     # Process each web.xml file
@@ -1473,10 +1608,10 @@ try {
     }
     Write-Output $finalResult
     
-    exit $overallSuccess
+    return $overallSuccess
 }
 catch {
     Write-LogError "An unexpected error occurred: $_"
-    exit 2
+    return 2
 }
 
