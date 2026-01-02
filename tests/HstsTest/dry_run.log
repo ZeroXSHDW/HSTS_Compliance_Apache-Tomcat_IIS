@@ -1,198 +1,216 @@
-[2026-01-02 15:29:09] =========================================
-[2026-01-02 15:29:09] Tomcat HSTS Configuration Tool
-[2026-01-02 15:29:09] Hostname: MACBOOKPRO.station
-[2026-01-02 15:29:09] Execution Time: 2026-01-02 15:29:09
-[2026-01-02 15:29:09] Mode: configure
-[2026-01-02 15:29:09] =========================================
-[2026-01-02 15:29:09] Checking custom configuration path: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/HstsTest/conf
-[2026-01-02 15:29:09] Found valid Tomcat configuration at custom path: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/HstsTest/conf
-[2026-01-02 15:29:09] Found Tomcat Configuration: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/HstsTest/conf (Version: 9.0.50)
-[2026-01-02 15:29:09] Searching for web.xml files...
-[2026-01-02 15:29:09]   Found: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/HstsTest/conf/web.xml (global configuration)
-[2026-01-02 15:29:09] Found 1 web.xml file(s) to process
-[2026-01-02 15:29:09] 
-[2026-01-02 15:29:09] =========================================
-[2026-01-02 15:29:09] Processing: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/HstsTest/conf/web.xml
-[2026-01-02 15:29:09] =========================================
-[2026-01-02 15:29:09] DRY RUN mode: No changes will be made
-[2026-01-02 15:29:09] === AUDIT: No HSTS Configuration Found ===
-[2026-01-02 15:29:09] No HSTS headers or filters detected in the configuration file.
-[2026-01-02 15:29:09] 
-[2026-01-02 15:29:09] Configuration Context:
-[2026-01-02 15:29:09]   No filters found in configuration
-[2026-01-02 15:29:09] 
-[2026-01-02 15:29:09] Recommended Action:
-[2026-01-02 15:29:09]   Add HSTS configuration with: max-age=31536000; includeSubDomains
-[2026-01-02 15:29:09] ==========================================
-[2026-01-02 15:29:09] Current state: No HSTS header definitions found in configuration
-[2026-01-02 15:29:09] Configuration required: Ensuring exactly one compliant HSTS definition exists
-[2026-01-02 15:29:09] Backup created: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/HstsTest/conf/web.xml.backup.20260102_152909
-[2026-01-02 15:29:09] DRY RUN: Would apply compliant HSTS configuration (see diff below)
-[2026-01-02 15:29:09] SUCCESS: DRY RUN: Would apply compliant HSTS configuration (see diff below)
-[2026-01-02 15:29:09] Backup available at: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/HstsTest/conf/web.xml.backup.20260102_152909
-[2026-01-02 15:29:09] 
-[2026-01-02 15:29:09] =========================================
-[2026-01-02 15:29:09] Summary
-[2026-01-02 15:29:09] =========================================
-[2026-01-02 15:29:09] Total files processed: 1
-[2026-01-02 15:29:09] Successful: 1
-[2026-01-02 15:29:09] Failed: 0
-[2026-01-02 15:29:09] Overall Status: SUCCESS
-[2026-01-02 15:29:09] Log file: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/HstsTest/dry_run.log
-[2026-01-02 15:29:09] =========================================
-[2026-01-02 15:29:09] Tomcat HSTS Configuration Tool
-[2026-01-02 15:29:09] Hostname: MACBOOKPRO.station
-[2026-01-02 15:29:09] Execution Time: 2026-01-02 15:29:09
-[2026-01-02 15:29:09] Mode: configure
-[2026-01-02 15:29:09] =========================================
-[2026-01-02 15:29:09] Checking custom configuration path: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/HstsTest/conf
-[2026-01-02 15:29:09] Found valid Tomcat configuration at custom path: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/HstsTest/conf
-[2026-01-02 15:29:09] Found Tomcat Configuration: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/HstsTest/conf (Version: 9.0.50)
-[2026-01-02 15:29:09] Searching for web.xml files...
-[2026-01-02 15:29:09]   Found: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/HstsTest/conf/web.xml (global configuration)
-[2026-01-02 15:29:09] Found 1 web.xml file(s) to process
-[2026-01-02 15:29:09] 
-[2026-01-02 15:29:09] =========================================
-[2026-01-02 15:29:09] Processing: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/HstsTest/conf/web.xml
-[2026-01-02 15:29:09] =========================================
-[2026-01-02 15:29:09] DRY RUN mode: No changes will be made
-[2026-01-02 15:29:09] Found 5 HSTS header definition(s)
-[2026-01-02 15:29:09] === Current Filter-Based HSTS Configuration ===
-[2026-01-02 15:29:09]   hstsMaxAgeSeconds: 86400
-[2026-01-02 15:29:09]   hstsIncludeSubDomains: true
-[2026-01-02 15:29:10] ===============================================
-[2026-01-02 15:29:10] === Audit Result Breakdown ===
-[2026-01-02 15:29:10]   [FAIL] Filter-based HSTS (Target Level: high): max-age=86400; includeSubDomains=true; preload=false
-[2026-01-02 15:29:10] ==============================
-[2026-01-02 15:29:10] Current state: Non-compliant HSTS configuration found: 1 failed issues.
-[2026-01-02 15:29:10] Configuration required: Ensuring exactly one compliant HSTS definition exists
-[2026-01-02 15:29:10] Backup created: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/HstsTest/conf/web.xml.backup.20260102_152910
-[2026-01-02 15:29:10] DRY RUN: Would apply compliant HSTS configuration (see diff below)
-[2026-01-02 15:29:10] SUCCESS: DRY RUN: Would apply compliant HSTS configuration (see diff below)
-[2026-01-02 15:29:10] Backup available at: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/HstsTest/conf/web.xml.backup.20260102_152910
-[2026-01-02 15:29:10] 
-[2026-01-02 15:29:10] =========================================
-[2026-01-02 15:29:10] Summary
-[2026-01-02 15:29:10] =========================================
-[2026-01-02 15:29:10] Total files processed: 1
-[2026-01-02 15:29:10] Successful: 1
-[2026-01-02 15:29:10] Failed: 0
-[2026-01-02 15:29:10] Overall Status: SUCCESS
-[2026-01-02 15:29:10] Log file: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/HstsTest/dry_run.log
-[2026-01-02 15:29:10] =========================================
-[2026-01-02 15:29:10] Tomcat HSTS Configuration Tool
-[2026-01-02 15:29:10] Hostname: MACBOOKPRO.station
-[2026-01-02 15:29:10] Execution Time: 2026-01-02 15:29:10
-[2026-01-02 15:29:10] Mode: configure
-[2026-01-02 15:29:10] =========================================
-[2026-01-02 15:29:10] Checking custom configuration path: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/HstsTest/conf
-[2026-01-02 15:29:10] Found valid Tomcat configuration at custom path: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/HstsTest/conf
-[2026-01-02 15:29:10] Found Tomcat Configuration: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/HstsTest/conf (Version: 9.0.50)
-[2026-01-02 15:29:10] Searching for web.xml files...
-[2026-01-02 15:29:10]   Found: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/HstsTest/conf/web.xml (global configuration)
-[2026-01-02 15:29:10] Found 1 web.xml file(s) to process
-[2026-01-02 15:29:10] 
-[2026-01-02 15:29:10] =========================================
-[2026-01-02 15:29:10] Processing: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/HstsTest/conf/web.xml
-[2026-01-02 15:29:10] =========================================
-[2026-01-02 15:29:10] DRY RUN mode: No changes will be made
-[2026-01-02 15:29:10] Found 5 HSTS header definition(s)
-[2026-01-02 15:29:10] === Current Filter-Based HSTS Configuration ===
-[2026-01-02 15:29:10]   hstsMaxAgeSeconds: 31536000
-[2026-01-02 15:29:10]   hstsIncludeSubDomains: false
-[2026-01-02 15:29:10] ===============================================
-[2026-01-02 15:29:10] === Audit Result Breakdown ===
-[2026-01-02 15:29:10]   [FAIL] Filter-based HSTS (Target Level: high): max-age=31536000; includeSubDomains=false; preload=false
-[2026-01-02 15:29:10] ==============================
-[2026-01-02 15:29:10] Current state: Non-compliant HSTS configuration found: 1 failed issues.
-[2026-01-02 15:29:10] Configuration required: Ensuring exactly one compliant HSTS definition exists
-[2026-01-02 15:29:10] Backup created: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/HstsTest/conf/web.xml.backup.20260102_152910
-[2026-01-02 15:29:10] DRY RUN: Would apply compliant HSTS configuration (see diff below)
-[2026-01-02 15:29:10] SUCCESS: DRY RUN: Would apply compliant HSTS configuration (see diff below)
-[2026-01-02 15:29:10] Backup available at: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/HstsTest/conf/web.xml.backup.20260102_152910
-[2026-01-02 15:29:10] 
-[2026-01-02 15:29:10] =========================================
-[2026-01-02 15:29:10] Summary
-[2026-01-02 15:29:10] =========================================
-[2026-01-02 15:29:10] Total files processed: 1
-[2026-01-02 15:29:10] Successful: 1
-[2026-01-02 15:29:10] Failed: 0
-[2026-01-02 15:29:10] Overall Status: SUCCESS
-[2026-01-02 15:29:10] Log file: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/HstsTest/dry_run.log
-[2026-01-02 15:29:11] =========================================
-[2026-01-02 15:29:11] Tomcat HSTS Configuration Tool
-[2026-01-02 15:29:11] Hostname: MACBOOKPRO.station
-[2026-01-02 15:29:11] Execution Time: 2026-01-02 15:29:11
-[2026-01-02 15:29:11] Mode: configure
-[2026-01-02 15:29:11] =========================================
-[2026-01-02 15:29:11] Checking custom configuration path: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/HstsTest/conf
-[2026-01-02 15:29:11] Found valid Tomcat configuration at custom path: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/HstsTest/conf
-[2026-01-02 15:29:11] Found Tomcat Configuration: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/HstsTest/conf (Version: 9.0.50)
-[2026-01-02 15:29:11] Searching for web.xml files...
-[2026-01-02 15:29:11]   Found: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/HstsTest/conf/web.xml (global configuration)
-[2026-01-02 15:29:11] Found 1 web.xml file(s) to process
-[2026-01-02 15:29:11] 
-[2026-01-02 15:29:11] =========================================
-[2026-01-02 15:29:11] Processing: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/HstsTest/conf/web.xml
-[2026-01-02 15:29:11] =========================================
-[2026-01-02 15:29:11] DRY RUN mode: No changes will be made
-[2026-01-02 15:29:11] Found 5 HSTS header definition(s)
-[2026-01-02 15:29:11] === Current Filter-Based HSTS Configuration ===
-[2026-01-02 15:29:11]   hstsMaxAgeSeconds: 31536000
-[2026-01-02 15:29:11]   hstsIncludeSubDomains: true
-[2026-01-02 15:29:11] ===============================================
-[2026-01-02 15:29:11] === Audit Result Breakdown ===
-[2026-01-02 15:29:11]   [PASS] Filter-based HSTS (Level: high): max-age=31536000; includeSubDomains=true; preload=false
-[2026-01-02 15:29:11] ==============================
-[2026-01-02 15:29:11] Current state: HSTS is correctly configured with exactly one compliant definition.
-[2026-01-02 15:29:11] SUCCESS: HSTS is already correctly configured with exactly one compliant definition
-[2026-01-02 15:29:11] 
-[2026-01-02 15:29:11] =========================================
-[2026-01-02 15:29:11] Summary
-[2026-01-02 15:29:11] =========================================
-[2026-01-02 15:29:11] Total files processed: 1
-[2026-01-02 15:29:11] Successful: 1
-[2026-01-02 15:29:11] Failed: 0
-[2026-01-02 15:29:11] Overall Status: SUCCESS
-[2026-01-02 15:29:11] Log file: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/HstsTest/dry_run.log
-[2026-01-02 15:29:11] =========================================
-[2026-01-02 15:29:11] Tomcat HSTS Configuration Tool
-[2026-01-02 15:29:11] Hostname: MACBOOKPRO.station
-[2026-01-02 15:29:11] Execution Time: 2026-01-02 15:29:11
-[2026-01-02 15:29:11] Mode: configure
-[2026-01-02 15:29:11] =========================================
-[2026-01-02 15:29:11] Checking custom configuration path: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/HstsTest/conf
-[2026-01-02 15:29:11] Found valid Tomcat configuration at custom path: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/HstsTest/conf
-[2026-01-02 15:29:11] Found Tomcat Configuration: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/HstsTest/conf (Version: 11.0.0)
-[2026-01-02 15:29:11] Searching for web.xml files...
-[2026-01-02 15:29:11]   Found: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/HstsTest/conf/web.xml (global configuration)
-[2026-01-02 15:29:11] Found 1 web.xml file(s) to process
-[2026-01-02 15:29:11] 
-[2026-01-02 15:29:11] =========================================
-[2026-01-02 15:29:11] Processing: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/HstsTest/conf/web.xml
-[2026-01-02 15:29:11] =========================================
-[2026-01-02 15:29:11] DRY RUN mode: No changes will be made
-[2026-01-02 15:29:11] === AUDIT: No HSTS Configuration Found ===
-[2026-01-02 15:29:11] No HSTS headers or filters detected in the configuration file.
-[2026-01-02 15:29:11] 
-[2026-01-02 15:29:11] Configuration Context:
-[2026-01-02 15:29:11]   No filters found in configuration
-[2026-01-02 15:29:11] 
-[2026-01-02 15:29:11] Recommended Action:
-[2026-01-02 15:29:11]   Add HSTS configuration with: max-age=31536000; includeSubDomains
-[2026-01-02 15:29:11] ==========================================
-[2026-01-02 15:29:11] Current state: No HSTS header definitions found in configuration
-[2026-01-02 15:29:11] Configuration required: Ensuring exactly one compliant HSTS definition exists
-[2026-01-02 15:29:11] Backup created: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/HstsTest/conf/web.xml.backup.20260102_152911
-[2026-01-02 15:29:11] DRY RUN: Would apply compliant HSTS configuration (see diff below)
-[2026-01-02 15:29:11] SUCCESS: DRY RUN: Would apply compliant HSTS configuration (see diff below)
-[2026-01-02 15:29:11] Backup available at: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/HstsTest/conf/web.xml.backup.20260102_152911
-[2026-01-02 15:29:11] 
-[2026-01-02 15:29:11] =========================================
-[2026-01-02 15:29:11] Summary
-[2026-01-02 15:29:11] =========================================
-[2026-01-02 15:29:11] Total files processed: 1
-[2026-01-02 15:29:11] Successful: 1
-[2026-01-02 15:29:11] Failed: 0
-[2026-01-02 15:29:11] Overall Status: SUCCESS
-[2026-01-02 15:29:11] Log file: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/HstsTest/dry_run.log
+[2026-01-02 16:47:37] =========================================
+[2026-01-02 16:47:37] Tomcat HSTS Configuration Tool
+[2026-01-02 16:47:37] Hostname: MACBOOKPRO.station
+[2026-01-02 16:47:37] Execution Time: 2026-01-02 16:47:37
+[2026-01-02 16:47:37] Mode: configure
+[2026-01-02 16:47:37] =========================================
+[2026-01-02 16:47:37] Checking custom configuration path: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/HstsTest/conf
+[2026-01-02 16:47:37] Found valid Tomcat configuration at custom path: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/HstsTest/conf
+[2026-01-02 16:47:38] Found Tomcat Configuration: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/HstsTest/conf (Version: 9.0.50)
+[2026-01-02 16:47:38] Searching for web.xml files...
+[2026-01-02 16:47:38]   Found: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/HstsTest/conf/web.xml (global configuration)
+[2026-01-02 16:47:38] Found 1 web.xml file(s) to process
+[2026-01-02 16:47:38] 
+[2026-01-02 16:47:38] =========================================
+[2026-01-02 16:47:38] Processing: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/HstsTest/conf/web.xml
+[2026-01-02 16:47:38] =========================================
+[2026-01-02 16:47:38] DRY RUN mode: No changes will be made
+[2026-01-02 16:47:38] === AUDIT: No HSTS Configuration Found ===
+[2026-01-02 16:47:38] No HSTS headers or filters detected in the configuration file.
+[2026-01-02 16:47:38] 
+[2026-01-02 16:47:38] Configuration Context:
+[2026-01-02 16:47:38]   No filters found in configuration
+[2026-01-02 16:47:38] 
+[2026-01-02 16:47:38] Recommended Action:
+[2026-01-02 16:47:38]   Add HSTS configuration with: max-age=31536000; includeSubDomains
+[2026-01-02 16:47:38] 
+[2026-01-02 16:47:38] To fix, run the configure command:
+[2026-01-02 16:47:38]   sudo /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/unix/../../src/unix/UpdateTomcatHstsUnix.sh --mode configure --security-level high
+[2026-01-02 16:47:38] 
+[2026-01-02 16:47:38] Available security levels:
+[2026-01-02 16:47:38]   --security-level basic     (max-age only)
+[2026-01-02 16:47:38]   --security-level high      (max-age + includeSubDomains) [default]
+[2026-01-02 16:47:38]   --security-level veryhigh  (max-age + includeSubDomains + preload)
+[2026-01-02 16:47:38]   --security-level maximum   (2yr max-age + includeSubDomains + preload)
+[2026-01-02 16:47:38] ==========================================
+[2026-01-02 16:47:38] Current state: No HSTS header definitions found in configuration
+[2026-01-02 16:47:38] Configuration required: Ensuring exactly one compliant HSTS definition exists
+[2026-01-02 16:47:38] Backup created: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/HstsTest/conf/web.xml.backup.20260102_164738
+[2026-01-02 16:47:38] DRY RUN: Would apply compliant HSTS configuration (see diff below)
+[2026-01-02 16:47:38] SUCCESS: DRY RUN: Would apply compliant HSTS configuration (see diff below)
+[2026-01-02 16:47:38] Backup available at: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/HstsTest/conf/web.xml.backup.20260102_164738
+[2026-01-02 16:47:38] 
+[2026-01-02 16:47:38] =========================================
+[2026-01-02 16:47:38] Summary
+[2026-01-02 16:47:38] =========================================
+[2026-01-02 16:47:38] Total files processed: 1
+[2026-01-02 16:47:38] Successful: 1
+[2026-01-02 16:47:38] Failed: 0
+[2026-01-02 16:47:38] Overall Status: SUCCESS
+[2026-01-02 16:47:38] Log file: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/HstsTest/dry_run.log
+[2026-01-02 16:47:38] =========================================
+[2026-01-02 16:47:38] Tomcat HSTS Configuration Tool
+[2026-01-02 16:47:38] Hostname: MACBOOKPRO.station
+[2026-01-02 16:47:38] Execution Time: 2026-01-02 16:47:38
+[2026-01-02 16:47:38] Mode: configure
+[2026-01-02 16:47:38] =========================================
+[2026-01-02 16:47:38] Checking custom configuration path: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/HstsTest/conf
+[2026-01-02 16:47:38] Found valid Tomcat configuration at custom path: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/HstsTest/conf
+[2026-01-02 16:47:38] Found Tomcat Configuration: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/HstsTest/conf (Version: 9.0.50)
+[2026-01-02 16:47:38] Searching for web.xml files...
+[2026-01-02 16:47:38]   Found: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/HstsTest/conf/web.xml (global configuration)
+[2026-01-02 16:47:38] Found 1 web.xml file(s) to process
+[2026-01-02 16:47:38] 
+[2026-01-02 16:47:38] =========================================
+[2026-01-02 16:47:38] Processing: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/HstsTest/conf/web.xml
+[2026-01-02 16:47:38] =========================================
+[2026-01-02 16:47:38] DRY RUN mode: No changes will be made
+[2026-01-02 16:47:38] Found 5 HSTS header definition(s)
+[2026-01-02 16:47:38] === Current Filter-Based HSTS Configuration ===
+[2026-01-02 16:47:38]   hstsMaxAgeSeconds: 86400
+[2026-01-02 16:47:38]   hstsIncludeSubDomains: true
+[2026-01-02 16:47:38] ===============================================
+[2026-01-02 16:47:38] === Audit Result Breakdown ===
+[2026-01-02 16:47:38]   [FAIL] Filter-based HSTS (Target Level: high): max-age=86400; includeSubDomains=true; preload=false
+[2026-01-02 16:47:38] ==============================
+[2026-01-02 16:47:38] Current state: Non-compliant HSTS configuration found: 1 failed issues.
+[2026-01-02 16:47:38] Configuration required: Ensuring exactly one compliant HSTS definition exists
+[2026-01-02 16:47:38] Backup created: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/HstsTest/conf/web.xml.backup.20260102_164738
+[2026-01-02 16:47:38] DRY RUN: Would apply compliant HSTS configuration (see diff below)
+[2026-01-02 16:47:38] SUCCESS: DRY RUN: Would apply compliant HSTS configuration (see diff below)
+[2026-01-02 16:47:38] Backup available at: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/HstsTest/conf/web.xml.backup.20260102_164738
+[2026-01-02 16:47:38] 
+[2026-01-02 16:47:38] =========================================
+[2026-01-02 16:47:38] Summary
+[2026-01-02 16:47:38] =========================================
+[2026-01-02 16:47:38] Total files processed: 1
+[2026-01-02 16:47:38] Successful: 1
+[2026-01-02 16:47:38] Failed: 0
+[2026-01-02 16:47:38] Overall Status: SUCCESS
+[2026-01-02 16:47:38] Log file: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/HstsTest/dry_run.log
+[2026-01-02 16:47:39] =========================================
+[2026-01-02 16:47:39] Tomcat HSTS Configuration Tool
+[2026-01-02 16:47:39] Hostname: MACBOOKPRO.station
+[2026-01-02 16:47:39] Execution Time: 2026-01-02 16:47:39
+[2026-01-02 16:47:39] Mode: configure
+[2026-01-02 16:47:39] =========================================
+[2026-01-02 16:47:39] Checking custom configuration path: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/HstsTest/conf
+[2026-01-02 16:47:39] Found valid Tomcat configuration at custom path: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/HstsTest/conf
+[2026-01-02 16:47:39] Found Tomcat Configuration: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/HstsTest/conf (Version: 9.0.50)
+[2026-01-02 16:47:39] Searching for web.xml files...
+[2026-01-02 16:47:39]   Found: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/HstsTest/conf/web.xml (global configuration)
+[2026-01-02 16:47:39] Found 1 web.xml file(s) to process
+[2026-01-02 16:47:39] 
+[2026-01-02 16:47:39] =========================================
+[2026-01-02 16:47:39] Processing: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/HstsTest/conf/web.xml
+[2026-01-02 16:47:39] =========================================
+[2026-01-02 16:47:39] DRY RUN mode: No changes will be made
+[2026-01-02 16:47:39] Found 5 HSTS header definition(s)
+[2026-01-02 16:47:39] === Current Filter-Based HSTS Configuration ===
+[2026-01-02 16:47:39]   hstsMaxAgeSeconds: 31536000
+[2026-01-02 16:47:39]   hstsIncludeSubDomains: false
+[2026-01-02 16:47:39] ===============================================
+[2026-01-02 16:47:39] === Audit Result Breakdown ===
+[2026-01-02 16:47:39]   [FAIL] Filter-based HSTS (Target Level: high): max-age=31536000; includeSubDomains=false; preload=false
+[2026-01-02 16:47:39] ==============================
+[2026-01-02 16:47:39] Current state: Non-compliant HSTS configuration found: 1 failed issues.
+[2026-01-02 16:47:39] Configuration required: Ensuring exactly one compliant HSTS definition exists
+[2026-01-02 16:47:39] Backup created: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/HstsTest/conf/web.xml.backup.20260102_164739
+[2026-01-02 16:47:39] DRY RUN: Would apply compliant HSTS configuration (see diff below)
+[2026-01-02 16:47:39] SUCCESS: DRY RUN: Would apply compliant HSTS configuration (see diff below)
+[2026-01-02 16:47:39] Backup available at: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/HstsTest/conf/web.xml.backup.20260102_164739
+[2026-01-02 16:47:39] 
+[2026-01-02 16:47:39] =========================================
+[2026-01-02 16:47:39] Summary
+[2026-01-02 16:47:39] =========================================
+[2026-01-02 16:47:39] Total files processed: 1
+[2026-01-02 16:47:39] Successful: 1
+[2026-01-02 16:47:39] Failed: 0
+[2026-01-02 16:47:39] Overall Status: SUCCESS
+[2026-01-02 16:47:39] Log file: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/HstsTest/dry_run.log
+[2026-01-02 16:47:39] =========================================
+[2026-01-02 16:47:39] Tomcat HSTS Configuration Tool
+[2026-01-02 16:47:39] Hostname: MACBOOKPRO.station
+[2026-01-02 16:47:39] Execution Time: 2026-01-02 16:47:39
+[2026-01-02 16:47:39] Mode: configure
+[2026-01-02 16:47:39] =========================================
+[2026-01-02 16:47:39] Checking custom configuration path: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/HstsTest/conf
+[2026-01-02 16:47:39] Found valid Tomcat configuration at custom path: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/HstsTest/conf
+[2026-01-02 16:47:39] Found Tomcat Configuration: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/HstsTest/conf (Version: 9.0.50)
+[2026-01-02 16:47:39] Searching for web.xml files...
+[2026-01-02 16:47:39]   Found: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/HstsTest/conf/web.xml (global configuration)
+[2026-01-02 16:47:39] Found 1 web.xml file(s) to process
+[2026-01-02 16:47:39] 
+[2026-01-02 16:47:39] =========================================
+[2026-01-02 16:47:39] Processing: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/HstsTest/conf/web.xml
+[2026-01-02 16:47:39] =========================================
+[2026-01-02 16:47:39] DRY RUN mode: No changes will be made
+[2026-01-02 16:47:39] Found 5 HSTS header definition(s)
+[2026-01-02 16:47:39] === Current Filter-Based HSTS Configuration ===
+[2026-01-02 16:47:39]   hstsMaxAgeSeconds: 31536000
+[2026-01-02 16:47:39]   hstsIncludeSubDomains: true
+[2026-01-02 16:47:40] ===============================================
+[2026-01-02 16:47:40] === Audit Result Breakdown ===
+[2026-01-02 16:47:40]   [PASS] Filter-based HSTS (Level: high): max-age=31536000; includeSubDomains=true; preload=false
+[2026-01-02 16:47:40] ==============================
+[2026-01-02 16:47:40] Current state: HSTS is correctly configured with exactly one compliant definition.
+[2026-01-02 16:47:40] SUCCESS: HSTS is already correctly configured with exactly one compliant definition
+[2026-01-02 16:47:40] 
+[2026-01-02 16:47:40] =========================================
+[2026-01-02 16:47:40] Summary
+[2026-01-02 16:47:40] =========================================
+[2026-01-02 16:47:40] Total files processed: 1
+[2026-01-02 16:47:40] Successful: 1
+[2026-01-02 16:47:40] Failed: 0
+[2026-01-02 16:47:40] Overall Status: SUCCESS
+[2026-01-02 16:47:40] Log file: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/HstsTest/dry_run.log
+[2026-01-02 16:47:40] =========================================
+[2026-01-02 16:47:40] Tomcat HSTS Configuration Tool
+[2026-01-02 16:47:40] Hostname: MACBOOKPRO.station
+[2026-01-02 16:47:40] Execution Time: 2026-01-02 16:47:40
+[2026-01-02 16:47:40] Mode: configure
+[2026-01-02 16:47:40] =========================================
+[2026-01-02 16:47:40] Checking custom configuration path: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/HstsTest/conf
+[2026-01-02 16:47:40] Found valid Tomcat configuration at custom path: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/HstsTest/conf
+[2026-01-02 16:47:40] Found Tomcat Configuration: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/HstsTest/conf (Version: 11.0.0)
+[2026-01-02 16:47:40] Searching for web.xml files...
+[2026-01-02 16:47:40]   Found: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/HstsTest/conf/web.xml (global configuration)
+[2026-01-02 16:47:40] Found 1 web.xml file(s) to process
+[2026-01-02 16:47:40] 
+[2026-01-02 16:47:40] =========================================
+[2026-01-02 16:47:40] Processing: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/HstsTest/conf/web.xml
+[2026-01-02 16:47:40] =========================================
+[2026-01-02 16:47:40] DRY RUN mode: No changes will be made
+[2026-01-02 16:47:40] === AUDIT: No HSTS Configuration Found ===
+[2026-01-02 16:47:40] No HSTS headers or filters detected in the configuration file.
+[2026-01-02 16:47:40] 
+[2026-01-02 16:47:40] Configuration Context:
+[2026-01-02 16:47:40]   No filters found in configuration
+[2026-01-02 16:47:40] 
+[2026-01-02 16:47:40] Recommended Action:
+[2026-01-02 16:47:40]   Add HSTS configuration with: max-age=31536000; includeSubDomains
+[2026-01-02 16:47:40] 
+[2026-01-02 16:47:40] To fix, run the configure command:
+[2026-01-02 16:47:40]   sudo /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/unix/../../src/unix/UpdateTomcatHstsUnix.sh --mode configure --security-level high
+[2026-01-02 16:47:40] 
+[2026-01-02 16:47:40] Available security levels:
+[2026-01-02 16:47:40]   --security-level basic     (max-age only)
+[2026-01-02 16:47:40]   --security-level high      (max-age + includeSubDomains) [default]
+[2026-01-02 16:47:40]   --security-level veryhigh  (max-age + includeSubDomains + preload)
+[2026-01-02 16:47:40]   --security-level maximum   (2yr max-age + includeSubDomains + preload)
+[2026-01-02 16:47:40] ==========================================
+[2026-01-02 16:47:40] Current state: No HSTS header definitions found in configuration
+[2026-01-02 16:47:40] Configuration required: Ensuring exactly one compliant HSTS definition exists
+[2026-01-02 16:47:40] Backup created: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/HstsTest/conf/web.xml.backup.20260102_164740
+[2026-01-02 16:47:40] DRY RUN: Would apply compliant HSTS configuration (see diff below)
+[2026-01-02 16:47:40] SUCCESS: DRY RUN: Would apply compliant HSTS configuration (see diff below)
+[2026-01-02 16:47:40] Backup available at: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/HstsTest/conf/web.xml.backup.20260102_164740
+[2026-01-02 16:47:40] 
+[2026-01-02 16:47:40] =========================================
+[2026-01-02 16:47:40] Summary
+[2026-01-02 16:47:40] =========================================
+[2026-01-02 16:47:40] Total files processed: 1
+[2026-01-02 16:47:40] Successful: 1
+[2026-01-02 16:47:40] Failed: 0
+[2026-01-02 16:47:40] Overall Status: SUCCESS
+[2026-01-02 16:47:40] Log file: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/HstsTest/dry_run.log

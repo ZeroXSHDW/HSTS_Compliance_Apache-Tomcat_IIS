@@ -830,6 +830,15 @@ function Test-HstsHeaders {
             Write-LogMessage ""
             Write-LogMessage "Recommended Action:"
             Write-LogMessage "  Add HSTS header: Strict-Transport-Security: max-age=31536000; includeSubDomains"
+            Write-LogMessage ""
+            Write-LogMessage "To fix, run the configure command:"
+            Write-LogMessage "  .\UpdateIisHstsWin.ps1 -Mode configure -SecurityLevel $SecurityLevel"
+            Write-LogMessage ""
+            Write-LogMessage "Available security levels:"
+            Write-LogMessage "  -SecurityLevel basic     (max-age only)"
+            Write-LogMessage "  -SecurityLevel high      (max-age + includeSubDomains) [default]"
+            Write-LogMessage "  -SecurityLevel veryhigh  (max-age + includeSubDomains + preload)"
+            Write-LogMessage "  -SecurityLevel maximum   (2yr max-age + includeSubDomains + preload)"
             Write-LogMessage "=========================================="
 
             return @{

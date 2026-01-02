@@ -935,6 +935,15 @@ foreach ($server in $uniqueServers) {
                         Write-LogMessage ""
                         Write-LogMessage "Recommended Action:"
                         Write-LogMessage "  Add HSTS configuration with: $RecommendedHsts"
+                        Write-LogMessage ""
+                        Write-LogMessage "To fix, run the configure command:"
+                        Write-LogMessage "  .\Remote_UpdateTomcatHstsWin.ps1 -ServerName <server> -Mode configure -SecurityLevel $SecurityLevel"
+                        Write-LogMessage ""
+                        Write-LogMessage "Available security levels:"
+                        Write-LogMessage "  -SecurityLevel basic     (max-age only)"
+                        Write-LogMessage "  -SecurityLevel high      (max-age + includeSubDomains) [default]"
+                        Write-LogMessage "  -SecurityLevel veryhigh  (max-age + includeSubDomains + preload)"
+                        Write-LogMessage "  -SecurityLevel maximum   (2yr max-age + includeSubDomains + preload)"
                         Write-LogMessage "=========================================="
 
                         return @{

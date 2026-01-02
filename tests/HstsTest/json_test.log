@@ -1,27 +1,36 @@
-[2026-01-02 15:29:11] =========================================
-[2026-01-02 15:29:11] Tomcat HSTS Configuration Tool
-[2026-01-02 15:29:11] Hostname: MACBOOKPRO.station
-[2026-01-02 15:29:11] Execution Time: 2026-01-02 15:29:11
-[2026-01-02 15:29:11] Mode: audit
-[2026-01-02 15:29:11] =========================================
-[2026-01-02 15:29:11] Checking custom configuration path: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/HstsTest/conf
-[2026-01-02 15:29:11] Found valid Tomcat configuration at custom path: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/HstsTest/conf
-[2026-01-02 15:29:11] Found Tomcat Configuration: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/HstsTest/conf (Version: 9.0.0)
-[2026-01-02 15:29:11] Searching for web.xml files...
-[2026-01-02 15:29:11]   Found: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/HstsTest/conf/web.xml (global configuration)
-[2026-01-02 15:29:11] Found 1 web.xml file(s) to process
-[2026-01-02 15:29:11] 
-[2026-01-02 15:29:11] =========================================
-[2026-01-02 15:29:11] Processing: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/HstsTest/conf/web.xml
-[2026-01-02 15:29:11] =========================================
-[2026-01-02 15:29:11] === AUDIT: No HSTS Configuration Found ===
-[2026-01-02 15:29:11] No HSTS headers or filters detected in the configuration file.
-[2026-01-02 15:29:11] 
-[2026-01-02 15:29:11] Configuration Context:
-[2026-01-02 15:29:11]   No filters found in configuration
-[2026-01-02 15:29:11] 
-[2026-01-02 15:29:11] Recommended Action:
-[2026-01-02 15:29:11]   Add HSTS configuration with: max-age=31536000; includeSubDomains
-[2026-01-02 15:29:11] ==========================================
-[2026-01-02 15:29:11] FAILURE: No HSTS header definitions found in configuration
-[2026-01-02 15:29:11] HSTS configuration needs to be updated.
+[2026-01-02 16:47:40] =========================================
+[2026-01-02 16:47:40] Tomcat HSTS Configuration Tool
+[2026-01-02 16:47:40] Hostname: MACBOOKPRO.station
+[2026-01-02 16:47:40] Execution Time: 2026-01-02 16:47:40
+[2026-01-02 16:47:40] Mode: audit
+[2026-01-02 16:47:40] =========================================
+[2026-01-02 16:47:40] Checking custom configuration path: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/HstsTest/conf
+[2026-01-02 16:47:40] Found valid Tomcat configuration at custom path: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/HstsTest/conf
+[2026-01-02 16:47:40] Found Tomcat Configuration: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/HstsTest/conf (Version: 9.0.0)
+[2026-01-02 16:47:40] Searching for web.xml files...
+[2026-01-02 16:47:40]   Found: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/HstsTest/conf/web.xml (global configuration)
+[2026-01-02 16:47:40] Found 1 web.xml file(s) to process
+[2026-01-02 16:47:40] 
+[2026-01-02 16:47:40] =========================================
+[2026-01-02 16:47:40] Processing: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/HstsTest/conf/web.xml
+[2026-01-02 16:47:40] =========================================
+[2026-01-02 16:47:40] === AUDIT: No HSTS Configuration Found ===
+[2026-01-02 16:47:40] No HSTS headers or filters detected in the configuration file.
+[2026-01-02 16:47:40] 
+[2026-01-02 16:47:40] Configuration Context:
+[2026-01-02 16:47:40]   No filters found in configuration
+[2026-01-02 16:47:40] 
+[2026-01-02 16:47:40] Recommended Action:
+[2026-01-02 16:47:40]   Add HSTS configuration with: max-age=31536000; includeSubDomains
+[2026-01-02 16:47:40] 
+[2026-01-02 16:47:40] To fix, run the configure command:
+[2026-01-02 16:47:40]   sudo /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/unix/../../src/unix/UpdateTomcatHstsUnix.sh --mode configure --security-level high
+[2026-01-02 16:47:40] 
+[2026-01-02 16:47:40] Available security levels:
+[2026-01-02 16:47:40]   --security-level basic     (max-age only)
+[2026-01-02 16:47:40]   --security-level high      (max-age + includeSubDomains) [default]
+[2026-01-02 16:47:40]   --security-level veryhigh  (max-age + includeSubDomains + preload)
+[2026-01-02 16:47:40]   --security-level maximum   (2yr max-age + includeSubDomains + preload)
+[2026-01-02 16:47:40] ==========================================
+[2026-01-02 16:47:40] FAILURE: No HSTS header definitions found in configuration
+[2026-01-02 16:47:40] HSTS configuration needs to be updated.
