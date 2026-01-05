@@ -839,14 +839,29 @@ configure_hsts_headers() {
         return 1
     fi
     
-    # Verify the configuration was applied - use dynamic MIN_MAX_AGE value
+    # Verify the configuration was applied - check for either filter-based or direct header
     local new_content=$(cat "$temp_file")
-    if ! echo "$new_content" | grep -qi "hstsMaxAgeSeconds" || ! echo "$new_content" | grep -qi "$MIN_MAX_AGE"; then
-        if ! echo "$new_content" | grep -qi "max-age=$MIN_MAX_AGE"; then
-            message="Failed to apply compliant HSTS configuration - verification failed (expected max-age=$MIN_MAX_AGE)"
-            CONFIGURE_RESULT="$message"
-            return 1
+    local has_filter_config=false
+    local has_direct_header=false
+    
+    # Check for filter-based configuration (hstsMaxAgeSeconds)
+    if echo "$new_content" | grep -qi "hstsMaxAgeSeconds"; then
+        # Verify the max-age value is correct
+        if echo "$new_content" | grep -q "$MIN_MAX_AGE"; then
+            has_filter_config=true
         fi
+    fi
+    
+    # Check for direct header configuration
+    if echo "$new_content" | grep -qi "max-age=$MIN_MAX_AGE\\|max-age: *$MIN_MAX_AGE"; then
+        has_direct_header=true
+    fi
+    
+    # At least one configuration method must be present
+    if [[ "$has_filter_config" == "false" ]] && [[ "$has_direct_header" == "false" ]]; then
+        message="Failed to apply compliant HSTS configuration - verification failed (expected max-age=$MIN_MAX_AGE)"
+        CONFIGURE_RESULT="$message"
+        return 1
     fi
     
     if [[ "$REQUIRE_SUBDOMAINS" == "true" ]]; then

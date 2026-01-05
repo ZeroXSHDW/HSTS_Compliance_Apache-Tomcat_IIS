@@ -88,3 +88,19 @@
 [2026-01-05 17:36:50] ==============================
 [2026-01-05 17:36:50] FAILURE: Non-compliant HSTS configuration found: 1 failed issues.
 [2026-01-05 17:36:50] HSTS configuration needs to be updated.
+[2026-01-05 17:56:36] Checking custom configuration path: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/unix/tests/EnhancedAuditTest/conf
+[2026-01-05 17:56:36] Found valid Tomcat configuration at custom path: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/unix/tests/EnhancedAuditTest/conf
+[2026-01-05 17:56:36] Found Tomcat Configuration: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/unix/tests/EnhancedAuditTest/conf (Version: 9.0.50)
+[2026-01-05 17:56:36] Searching for web.xml files...
+[2026-01-05 17:56:36]   Found: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/unix/tests/EnhancedAuditTest/conf/web.xml (global configuration)
+[2026-01-05 17:56:36] Found 1 web.xml file(s) to process
+[2026-01-05 17:56:36] Found 4 HSTS header definition(s)
+[2026-01-05 17:56:36] === Current Filter-Based HSTS Configuration ===
+[2026-01-05 17:56:36]   hstsMaxAgeSeconds: 86400
+[2026-01-05 17:56:36]   hstsIncludeSubDomains: false
+[2026-01-05 17:56:36] ===============================================
+[2026-01-05 17:56:36] === Audit Result Breakdown ===
+[2026-01-05 17:56:36]   [FAIL] Filter-based HSTS (Target Level: high): max-age=86400; includeSubDomains=false; preload=false
+[2026-01-05 17:56:36] ==============================
+[2026-01-05 17:56:36] FAILURE: Non-compliant HSTS configuration found: 1 failed issues.
+[2026-01-05 17:56:36] HSTS configuration needs to be updated.
