@@ -1,7 +1,7 @@
 # Remote_UpdateIisHstsWin.ps1
 # Remote Audit and Configure HSTS (HTTP Strict Transport Security) in IIS
 # For Windows Server environments only
-#Requires -RunAsAdministrator
+# Note: Requires admin rights on remote servers for configure mode
 
 [CmdletBinding()]
 param(
@@ -42,7 +42,10 @@ param(
     [string]$SecurityLevel = "high",
 
     [Parameter(Mandatory = $false)]
-    [switch]$All = $false
+    [switch]$All = $false,
+
+    [Parameter(Mandatory = $false)]
+    [switch]$Force = $false
 )
 
 $ErrorActionPreference = "Stop"

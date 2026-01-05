@@ -1,7 +1,7 @@
 # UpdateIisHstsWin.ps1
 # Audit and Configure HSTS (HTTP Strict Transport Security) in IIS
 # For Windows Server environments only
-#Requires -RunAsAdministrator
+# Note: Audit mode works without admin rights; Configure mode requires admin
 
 [CmdletBinding()]
 param(
@@ -39,8 +39,33 @@ param(
     [string]$SecurityLevel = "high",
 
     [Parameter(Mandatory = $false)]
-    [switch]$All = $false
+    [switch]$All = $false,
+
+    [Parameter(Mandatory = $false)]
+    [switch]$Quiet = $false
 )
+
+# Check admin rights - required for configure mode, optional for audit
+$isAdmin = $false
+try {
+    if ($IsWindows -or (-not $IsMacOS -and -not $IsLinux)) {
+        $isAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+    }
+    else {
+        # On Unix/macOS, check if running as root
+        $isAdmin = (id -u) -eq 0
+    }
+}
+catch {
+    $isAdmin = $false
+}
+if ($Mode -eq "configure" -and -not $isAdmin -and -not $DryRun -and -not $Force) {
+    Write-Error "Configure mode requires administrator privileges. Run PowerShell as Administrator, use -DryRun to preview changes, or use -Force to override."
+    exit 1
+}
+if (-not $isAdmin) {
+    Write-Warning "Running without administrator privileges. Some paths may not be accessible."
+}
 
 $ErrorActionPreference = "Stop"
 $Timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
@@ -127,23 +152,31 @@ catch {
     }
 }
 
-# Function: Log message to console and optionally to file
+# Function: Log message
 function Write-LogMessage {
     param(
-        [string]$Message
+        [string]$Message,
+        [string]$Color = "White",
+        [switch]$NoNewline = $false
     )
     
-    $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
-    $logEntry = "[$timestamp] $Message"
-    
-    Write-Host $logEntry
-    
-    if ($LogFile -ne "") {
-        try {
-            Add-Content -Path $LogFile -Value $logEntry -ErrorAction SilentlyContinue
+    if (-not $Quiet) {
+        $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+        $logEntry = "[$timestamp] $Message"
+        if ($NoNewline) {
+            Write-Host $Message -ForegroundColor $Color -No Newline
         }
-        catch {
-            # Silently fail if log file cannot be written
+        else {
+            Write-Host $Message -ForegroundColor $Color
+        }
+        
+        if ($LogFile -ne "") {
+            try {
+                Add-Content -Path $LogFile -Value $logEntry -ErrorAction SilentlyContinue
+            }
+            catch {
+                # Silently fail if log file cannot be written
+            }
         }
     }
 }
@@ -154,7 +187,61 @@ function Write-LogError {
         [string]$Message
     )
     
-    Write-LogMessage "ERROR: $Message"
+    Write-LogMessage "ERROR: $Message" -Color Red
+}
+
+# Function: Write compliance status with color
+function Write-ComplianceStatus {
+    param(
+        [string]$FilePath,
+        [string]$Status,
+        [string]$Details = ""
+    )
+    
+    $fileName = Split-Path $FilePath -Leaf
+    
+    switch ($Status) {
+        "COMPLIANT" {
+            Write-Host "  " -NoNewline
+            Write-Host "✓" -ForegroundColor Green -NoNewline
+            Write-Host " $fileName" -NoNewline
+            Write-Host " [COMPLIANT]" -ForegroundColor Green -NoNewline
+            if ($Details) { Write-Host " - $Details" -ForegroundColor Gray }
+            else { Write-Host "" }
+        }
+        "NOT_CONFIGURED" {
+            Write-Host "  " -NoNewline
+            Write-Host "✗" -ForegroundColor Red -NoNewline
+            Write-Host " $fileName" -NoNewline
+            Write-Host " [NOT CONFIGURED]" -ForegroundColor Red -NoNewline
+            if ($Details) { Write-Host " - $Details" -ForegroundColor Gray }
+            else { Write-Host "" }
+        }
+        "WEAK" {
+            Write-Host "  " -NoNewline
+            Write-Host "⚠" -ForegroundColor Yellow -NoNewline
+            Write-Host " $fileName" -NoNewline
+            Write-Host " [WEAK]" -ForegroundColor Yellow -NoNewline
+            if ($Details) { Write-Host " - $Details" -ForegroundColor Gray }
+            else { Write-Host "" }
+        }
+        "NON_COMPLIANT" {
+            Write-Host "  " -NoNewline
+            Write-Host "✗" -ForegroundColor Red -NoNewline
+            Write-Host " $fileName" -NoNewline
+            Write-Host " [NON-COMPLIANT]" -ForegroundColor Red -NoNewline
+            if ($Details) { Write-Host " - $Details" -ForegroundColor Gray }
+            else { Write-Host "" }
+        }
+        "SUCCESS" {
+            Write-Host "  " -NoNewline
+            Write-Host "✓" -ForegroundColor Green -NoNewline
+            Write-Host " $fileName" -NoNewline
+            Write-Host " [CONFIGURED]" -ForegroundColor Green -NoNewline
+            if ($Details) { Write-Host " - $Details" -ForegroundColor Gray }
+            else { Write-Host "" }
+        }
+    }
 }
 
 Write-LogMessage "========================================="
@@ -1284,20 +1371,9 @@ function Confirm-Configure {
         return $true
     }
     
-    Write-Host ""
-    Write-Host "WARNING: This will modify the configuration file: $ConfigPath"
-    Write-Host "All existing HSTS configurations will be removed and replaced with one compliant version."
-    Write-Host "A backup will be created before making changes."
-    Write-Host ""
-    $response = Read-Host "Do you want to continue? (yes/no)"
-    
-    if ($response -match "^(yes|y)$") {
-        return $true
-    }
-    else {
-        Write-LogMessage "Configuration operation cancelled by user"
-        return $false
-    }
+    # Interactive mode removed.
+    # Recommendations are printed above.
+    return $true
 }
 
 # Function: Process a single web.config file
@@ -1346,19 +1422,13 @@ function Invoke-WebConfigPatch {
             Write-LogMessage "Configuration required: Ensuring exactly one compliant HSTS definition exists"
             
             if (-not $DryRun) {
-                if (-not $Force) {
-                    Write-Host ""
-                    Write-Host "WARNING: This will modify: $WebConfigPath"
-                    Write-Host "A backup will be created before making changes."
-                    $response = Read-Host "Do you want to continue? (yes/no)"
-                    if ($response -notmatch "^(yes|y)$") {
-                        Write-LogMessage "Configuration operation cancelled by user"
-                        return 2
-                    }
-                }
-                else {
+                if ($Force) {
                     Write-LogMessage "Force mode enabled: Auto-approving configuration changes"
                 }
+                
+                # Interactive mode removed.
+                # Recommendations are printed above.
+                $continue = $true
             }
             
             if (-not $DryRun) {
@@ -1563,10 +1633,10 @@ try {
     }
     Write-Output $finalResult
     
-    return $overallSuccess
+    exit $overallSuccess
 }
 catch {
     Write-LogError "An unexpected error occurred: $_"
-    return 2
+    exit 2
 }
 

@@ -1,7 +1,7 @@
 # Remote_UpdateTomcatHstsWin.ps1
 # Remote Audit and Configure HSTS (HTTP Strict Transport Security) in Apache Tomcat
 # For Windows Server environments only
-#Requires -RunAsAdministrator
+# Note: Requires admin rights on remote servers for configure mode
 
 [CmdletBinding()]
 param(
@@ -42,7 +42,13 @@ param(
     [string]$SecurityLevel = "high",
 
     [Parameter(Mandatory = $false)]
-    [switch]$All = $false
+    [switch]$All = $false,
+
+    [Parameter(Mandatory = $false)]
+    [switch]$Force = $false,
+
+    [Parameter(Mandatory = $false)]
+    [switch]$Quiet = $false
 )
 
 $ErrorActionPreference = "Stop"
@@ -172,23 +178,31 @@ foreach ($server in $uniqueServers) {
                 
                 $LogFile = "$env:LOCALAPPDATA\Temp\TomcatHsts.log"
             
-                # Function: Log message to console and optionally to file
+                # Function: Log message
                 function Write-LogMessage {
                     param(
-                        [string]$Message
+                        [string]$Message,
+                        [string]$Color = "White",
+                        [switch]$NoNewline = $false
                     )
-                
-                    $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
-                    $logEntry = "[$timestamp] $Message"
-                
-                    Write-Host $logEntry
-                
-                    if ($LogFile -ne "") {
-                        try {
-                            Add-Content -Path $LogFile -Value $logEntry -ErrorAction SilentlyContinue
+                    
+                    if (-not $Quiet) {
+                        $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+                        $logEntry = "[$timestamp] $Message"
+                        if ($NoNewline) {
+                            Write-Host $Message -ForegroundColor $Color -NoNewline
                         }
-                        catch {
-                            # Silently fail if log file cannot be written
+                        else {
+                            Write-Host $Message -ForegroundColor $Color
+                        }
+                        
+                        if ($LogFile) {
+                            try {
+                                Add-Content -Path $LogFile -Value $logEntry -ErrorAction SilentlyContinue
+                            }
+                            catch {
+                                # Silently fail if log file cannot be written
+                            }
                         }
                     }
                 }
@@ -198,8 +212,62 @@ foreach ($server in $uniqueServers) {
                     param(
                         [string]$Message
                     )
-                
-                    Write-LogMessage "ERROR: $Message"
+                    
+                    Write-LogMessage "ERROR: $Message" -Color Red
+                }
+
+                # Function: Write compliance status with color
+                function Write-ComplianceStatus {
+                    param(
+                        [string]$FilePath,
+                        [string]$Status,
+                        [string]$Details = ""
+                    )
+                    
+                    $fileName = Split-Path $FilePath -Leaf
+                    
+                    switch ($Status) {
+                        "COMPLIANT" {
+                            Write-Host "  " -NoNewline
+                            Write-Host "✓" -ForegroundColor Green -NoNewline
+                            Write-Host " $fileName" -NoNewline
+                            Write-Host " [COMPLIANT]" -ForegroundColor Green -NoNewline
+                            if ($Details) { Write-Host " - $Details" -ForegroundColor Gray }
+                            else { Write-Host "" }
+                        }
+                        "NOT_CONFIGURED" {
+                            Write-Host "  " -NoNewline
+                            Write-Host "✗" -ForegroundColor Red -NoNewline
+                            Write-Host " $fileName" -NoNewline
+                            Write-Host " [NOT CONFIGURED]" -ForegroundColor Red -NoNewline
+                            if ($Details) { Write-Host " - $Details" -ForegroundColor Gray }
+                            else { Write-Host "" }
+                        }
+                        "WEAK" {
+                            Write-Host "  " -NoNewline
+                            Write-Host "⚠" -ForegroundColor Yellow -NoNewline
+                            Write-Host " $fileName" -NoNewline
+                            Write-Host " [WEAK]" -ForegroundColor Yellow -NoNewline
+                            if ($Details) { Write-Host " - $Details" -ForegroundColor Gray }
+                            else { Write-Host "" }
+                        }
+                        "NON_COMPLIANT" {
+                            Write-Host "  " -NoNewline
+                            Write-Host "✗" -ForegroundColor Red -NoNewline
+                            Write-Host " $fileName" -NoNewline
+                            Write-Host " [NON-COMPLIANT]" -ForegroundColor Red -NoNewline
+                            if ($Details) { Write-Host " - $Details" -ForegroundColor Gray }
+                            else { Write-Host "" }
+                        }
+                        "SUCCESS" {
+                            Write-Host "  " -NoNewline
+                            Write-Host "✓" -ForegroundColor Green -NoNewline
+                            Write-Host " $fileName" -NoNewline
+                            Write-Host " [CONFIGURED]" -ForegroundColor Green -NoNewline
+                            if ($Details) { Write-Host " - $Details" -ForegroundColor Gray }
+                            else { Write-Host "" }
+                        }
+                    }
                 }
             
                 # Initialize log file
@@ -805,33 +873,17 @@ foreach ($server in $uniqueServers) {
                     $includeSubDomains = $null
                     $preload = $null
                 
-                    # Try to find init-param elements
-                    $initParams = $null
-                    $xpaths = @("init-param", ".//init-param", ".//*[local-name()='init-param']")
-                
-                    foreach ($xpath in $xpaths) {
-                        try {
-                            $initParams = $Filter.SelectNodes($xpath)
-                            if ($initParams -and $initParams.Count -gt 0) {
-                                break
+                    # Robust finding of params using ChildNodes iteration (ignores namespace issues)
+                    foreach ($node in $Filter.ChildNodes) {
+                        if ($node.LocalName -eq "init-param") {
+                            $name = $null
+                            $value = $null
+                            
+                            foreach ($child in $node.ChildNodes) {
+                                if ($child.LocalName -eq "param-name") { $name = $child }
+                                if ($child.LocalName -eq "param-value") { $value = $child }
                             }
-                        }
-                        catch { }
-                    }
-                
-                    if ($initParams) {
-                        foreach ($param in $initParams) {
-                            $name = $null; $value = $null
-                            $nameXpaths = @("param-name", ".//param-name", ".//*[local-name()='param-name']")
-                            $valueXpaths = @("param-value", ".//param-value", ".//*[local-name()='param-value']")
-                        
-                            foreach ($xpath in $nameXpaths) {
-                                try { $name = $param.SelectSingleNode($xpath); if ($name) { break } } catch { }
-                            }
-                            foreach ($xpath in $valueXpaths) {
-                                try { $value = $param.SelectSingleNode($xpath); if ($value) { break } } catch { }
-                            }
-                        
+                            
                             if ($name -and $value) {
                                 if ($name.InnerText -eq "hstsMaxAgeSeconds") { $maxAge = [int64]$value.InnerText }
                                 if ($name.InnerText -eq "hstsIncludeSubDomains") { $includeSubDomains = $value.InnerText -eq "true" }
@@ -1213,6 +1265,10 @@ foreach ($server in $uniqueServers) {
                     if (-not $webApp) {
                         throw "Neither web-app nor Context element found in XML file. The file may use an unsupported XML namespace or structure."
                     }
+                    
+                    # Capture the namespace of the root element to ensure new elements match
+                    $rootNamespace = $webApp.NamespaceURI
+                    if (-not $rootNamespace) { $rootNamespace = "" }
                 
                     # SAFETY: Define exact required values - these are the ONLY values that will be set
                     $requiredFilterName = "HstsHeaderFilter"
@@ -1223,44 +1279,65 @@ foreach ($server in $uniqueServers) {
                     $requiredUrlPattern = "/*"
                 
                     # Create filter element with SAFETY: Only set the exact required values
-                    $filter = $WebXml.CreateElement("filter")
-                    $filterName = $WebXml.CreateElement("filter-name")
+                    # Use the same namespace as the root element to prevent xmlns="" attributes and verification failures
+                    $filter = $WebXml.CreateElement("filter", $rootNamespace)
+                    
+                    $filterName = $WebXml.CreateElement("filter-name", $rootNamespace)
                     $filterName.InnerText = $requiredFilterName
                     $filter.AppendChild($filterName) | Out-Null
                 
-                    $filterClass = $WebXml.CreateElement("filter-class")
+                    $filterClass = $WebXml.CreateElement("filter-class", $rootNamespace)
                     $filterClass.InnerText = $requiredFilterClass
                     $filter.AppendChild($filterClass) | Out-Null
                 
                     # max-age param
-                    $maxAgeParam = $WebXml.CreateElement("init-param")
-                    $maxAgeParam.AppendChild($WebXml.CreateElement("param-name")).InnerText = $requiredMaxAgeParam
-                    $maxAgeParam.AppendChild($WebXml.CreateElement("param-value")).InnerText = $requiredMaxAgeValue
+                    $maxAgeParam = $WebXml.CreateElement("init-param", $rootNamespace)
+                    $pName = $WebXml.CreateElement("param-name", $rootNamespace)
+                    $pName.InnerText = $requiredMaxAgeParam
+                    $maxAgeParam.AppendChild($pName) | Out-Null
+                    
+                    $pValue = $WebXml.CreateElement("param-value", $rootNamespace)
+                    $pValue.InnerText = $requiredMaxAgeValue
+                    $maxAgeParam.AppendChild($pValue) | Out-Null
+                    
                     $filter.AppendChild($maxAgeParam) | Out-Null
                     
                     # includeSubDomains param
                     if ($RequireSubDomains) {
-                        $subDomainsParam = $WebXml.CreateElement("init-param")
-                        $subDomainsParam.AppendChild($WebXml.CreateElement("param-name")).InnerText = $requiredIncludeSubDomainsParam
-                        $subDomainsParam.AppendChild($WebXml.CreateElement("param-value")).InnerText = "true"
+                        $subDomainsParam = $WebXml.CreateElement("init-param", $rootNamespace)
+                        $sdName = $WebXml.CreateElement("param-name", $rootNamespace)
+                        $sdName.InnerText = $requiredIncludeSubDomainsParam
+                        $subDomainsParam.AppendChild($sdName) | Out-Null
+                        
+                        $sdValue = $WebXml.CreateElement("param-value", $rootNamespace)
+                        $sdValue.InnerText = "true"
+                        $subDomainsParam.AppendChild($sdValue) | Out-Null
+                        
                         $filter.AppendChild($subDomainsParam) | Out-Null
                     }
                     
                     # preload param
                     if ($RequirePreload) {
-                        $preloadParam = $WebXml.CreateElement("init-param")
-                        $preloadParam.AppendChild($WebXml.CreateElement("param-name")).InnerText = "hstsPreload"
-                        $preloadParam.AppendChild($WebXml.CreateElement("param-value")).InnerText = "true"
+                        $preloadParam = $WebXml.CreateElement("init-param", $rootNamespace)
+                        $plName = $WebXml.CreateElement("param-name", $rootNamespace)
+                        $plName.InnerText = "hstsPreload"
+                        $preloadParam.AppendChild($plName) | Out-Null
+                        
+                        $plValue = $WebXml.CreateElement("param-value", $rootNamespace)
+                        $plValue.InnerText = "true"
+                        $preloadParam.AppendChild($plValue) | Out-Null
+                        
                         $filter.AppendChild($preloadParam) | Out-Null
                     }
                 
                     # Create filter-mapping with SAFETY: Only set the exact required values
-                    $filterMapping = $WebXml.CreateElement("filter-mapping")
-                    $mappingFilterName = $WebXml.CreateElement("filter-name")
+                    $filterMapping = $WebXml.CreateElement("filter-mapping", $rootNamespace)
+                    
+                    $mappingFilterName = $WebXml.CreateElement("filter-name", $rootNamespace)
                     $mappingFilterName.InnerText = $requiredFilterName
                     $filterMapping.AppendChild($mappingFilterName) | Out-Null
                 
-                    $urlPattern = $WebXml.CreateElement("url-pattern")
+                    $urlPattern = $WebXml.CreateElement("url-pattern", $rootNamespace)
                     $urlPattern.InnerText = $requiredUrlPattern
                     $filterMapping.AppendChild($urlPattern) | Out-Null
                 
@@ -1300,6 +1377,8 @@ foreach ($server in $uniqueServers) {
                         throw "SAFETY CHECK FAILED: Expected exactly one HSTS filter, found $($filters.Count)"
                     }
                 
+                    $result = Test-FilterCompliant -Filter $filters[0]
+
                     if (-not $result.IsCompliant) {
                         throw "SAFETY CHECK FAILED: HSTS filter does not have compliant values (Target: $RecommendedHsts)"
                     }
@@ -1351,24 +1430,97 @@ foreach ($server in $uniqueServers) {
                 function Invoke-WebXmlPatch {
                     param(
                         [string]$WebXmlPath,
-                        [string]$Mode
+                        [string]$Mode,
+                        [ref]$FileStatusRef
                     )
-                    Write-LogMessage ""
-                    Write-LogMessage "========================================="
-                    Write-LogMessage "Processing: $WebXmlPath"
-                    Write-LogMessage "========================================="
+                    
+                    # Only show verbose processing headers if not in Quiet mode
+                    if (-not $Quiet) {
+                        Write-LogMessage "" -Color Gray
+                        Write-LogMessage "Processing: $WebXmlPath" -Color Gray
+                    }
+                    
                     try {
                         $webXml = Import-WebXml -WebXmlPath $WebXmlPath
                         if ($Mode -eq "audit") {
                             $auditResult = Test-HstsHeaders -WebXml $webXml
+                            
+                            # Determine status for concise output
+                            $status = "NOT_CONFIGURED"
+                            $details = ""
+                            
                             if ($auditResult.IsCorrect) {
-                                Write-LogMessage "SUCCESS: $($auditResult.Details)"
+                                $status = "COMPLIANT"
+                                $details = "Security Level: $SecurityLevel"
+                                $FileStatusRef.Value = $status
+                                
+                                if (-not $Quiet) {
+                                    Write-ComplianceStatus -FilePath $WebXmlPath -Status $status -Details $details
+                                }
                                 return 0
                             }
-                            else {
-                                Write-LogMessage "FAILURE: $($auditResult.Details)"
-                                return 1
+                            elseif ($auditResult.HeaderCount -eq 0) {
+                                $status = "NOT_CONFIGURED"
+                                $details = "No HSTS filters found"
                             }
+                            elseif ($auditResult.NonCompliantCount -gt 0) {
+                                if ($auditResult.HeaderCount -gt 1) {
+                                    $status = "NON_COMPLIANT"
+                                    $details = "Multiple HSTS filters found ($($auditResult.HeaderCount))"
+                                }
+                                else {
+                                    $status = "NON_COMPLIANT"
+                                    $details = "Weak or incorrect configuration"
+                                    
+                                    # Extract current HSTS values for non-compliant files
+                                    $filters = $null
+                                    $xpaths = @(
+                                        "//filter[filter-name[text()='HstsHeaderFilter' or text()='HttpHeaderSecurityFilter']]",
+                                        "//*[local-name()='filter'][*[local-name()='filter-name'][text()='HstsHeaderFilter' or text()='HttpHeaderSecurityFilter']]"
+                                    )
+                                    
+                                    foreach ($xpath in $xpaths) {
+                                        try {
+                                            $filters = $webXml.SelectNodes($xpath)
+                                            if ($filters -and $filters.Count -gt 0) {
+                                                break
+                                            }
+                                        }
+                                        catch { }
+                                    }
+                                    
+                                    if ($filters -and $filters.Count -gt 0) {
+                                        $filter = $filters[0]
+                                        $result = Test-FilterCompliant -Filter $filter
+                                        
+                                        $maxAge = if ($null -ne $result.MaxAge) { $result.MaxAge } else { 'not set' }
+                                        $includeSub = if ($null -ne $result.IncludeSubDomains) { $result.IncludeSubDomains } else { 'not set' }
+                                        $preload = if ($null -ne $result.Preload) { $result.Preload } else { 'not set' }
+                                        
+                                        $details = "Current: max-age=$maxAge, includeSubDomains=$includeSub, preload=$preload"
+                                    }
+                                }
+                            }
+                            
+                            $FileStatusRef.Value = $status
+                            
+                            if (-not $Quiet) {
+                                Write-ComplianceStatus -FilePath $WebXmlPath -Status $status -Details $details
+                                
+                                # Show full path and detailed info for non-compliant files
+                                if ($status -ne "COMPLIANT") {
+                                    Write-Host "    Path: $WebXmlPath" -ForegroundColor DarkGray
+                                    
+                                    if ($status -eq "NON_COMPLIANT" -and $details -match "max-age") {
+                                        Write-Host "    Target: max-age=$MinMaxAge" -ForegroundColor DarkGray -NoNewline
+                                        if ($RequireSubDomains) { Write-Host ", includeSubDomains=True" -ForegroundColor DarkGray -NoNewline }
+                                        if ($RequirePreload) { Write-Host ", preload=True" -ForegroundColor DarkGray -NoNewline }
+                                        Write-Host ""
+                                    }
+                                }
+                            }
+                            
+                            return 1
                         }
                         elseif ($Mode -eq "configure") {
                             if ($DryRun) {
@@ -1394,7 +1546,7 @@ foreach ($server in $uniqueServers) {
                             $backupPath = New-ConfigBackup -ConfigPath $WebXmlPath
                         
                             # Apply compliant HSTS configuration (only modifies HSTS-related elements)
-                            Invoke-HstsCompliantPatch -WebXml $webXml
+                            $null = Invoke-HstsCompliantPatch -WebXml $webXml
                         
                             if (-not $DryRun) {
                                 # SAFETY: Save to temporary file first, then validate
@@ -1408,7 +1560,7 @@ foreach ($server in $uniqueServers) {
                             
                                 # SAFETY: Reload and verify the configuration is correct before applying
                                 [xml]$tempXml = Get-Content -Path $tempXmlPath -Raw
-                                Test-HstsConfiguration -WebXml $tempXml
+                                $null = Test-HstsConfiguration -WebXml $tempXml
                             
                                 # SAFETY: Only apply if all checks pass
                                 Copy-Item -Path $tempXmlPath -Destination $WebXmlPath -Force -ErrorAction Stop
@@ -1416,7 +1568,7 @@ foreach ($server in $uniqueServers) {
                             
                                 # SAFETY: Final verification on the saved file
                                 [xml]$finalXml = Get-Content -Path $WebXmlPath -Raw
-                                Test-HstsConfiguration -WebXml $finalXml
+                                $null = Test-HstsConfiguration -WebXml $finalXml
                             
                                 Write-LogMessage "SUCCESS: Compliant HSTS configuration applied successfully with all safety checks passed"
                                 Write-LogMessage "Backup available at: $backupPath"
@@ -1425,7 +1577,7 @@ foreach ($server in $uniqueServers) {
                                 Write-LogMessage "DRY RUN: Would apply compliant HSTS configuration"
                                 # In dry run, still verify the configuration would be correct
                                 try {
-                                    Test-HstsConfiguration -WebXml $webXml
+                                    $null = Test-HstsConfiguration -WebXml $webXml
                                     Write-LogMessage "DRY RUN: Configuration verification passed"
                                 }
                                 catch {
@@ -1482,10 +1634,29 @@ foreach ($server in $uniqueServers) {
                 $successCount = 0
                 $failureCount = 0
                 $failedPaths = @()
+                $compliantCount = 0
+                $notConfiguredCount = 0
+                $nonCompliantCount = 0
+                
+                # Show header for audit mode
+                if ($Mode -eq "audit" -and -not $Quiet) {
+                    Write-Host ""
+                    Write-Host "Scanning files for HSTS compliance..." -ForegroundColor Cyan
+                    Write-Host ""
+                }
             
                 foreach ($webXml in $webXmlFiles) {
-                    $result = Invoke-WebXmlPatch -WebXmlPath $webXml -Mode $Mode
+                    $fileStatus = "UNKNOWN"
+                    $result = Invoke-WebXmlPatch -WebXmlPath $webXml -Mode $Mode -FileStatusRef ([ref]$fileStatus)
                     $processedCount++
+                    
+                    # Track compliance status
+                    switch ($fileStatus) {
+                        "COMPLIANT" { $compliantCount++ }
+                        "NOT_CONFIGURED" { $notConfiguredCount++ }
+                        "NON_COMPLIANT" { $nonCompliantCount++ }
+                    }
+                    
                     if ($result -eq 0) {
                         $successCount++
                     }
@@ -1496,60 +1667,90 @@ foreach ($server in $uniqueServers) {
                     }
                 }
             
-                Write-LogMessage ""
-                Write-LogMessage "========================================="
-                Write-LogMessage "Summary"
-                Write-LogMessage "========================================="
-                Write-LogMessage "Total files processed: $processedCount"
-                Write-LogMessage "Successful: $successCount"
-                Write-LogMessage "Failed: $failureCount"
-
-                if ($failedPaths.Count -gt 0 -and $Mode -eq "audit") {
-                    Write-LogMessage ""
-                    Write-LogMessage "========================================="
-                    Write-LogMessage "CONFIGURATION COMMANDS FOR FAILED PATHS"
-                    Write-LogMessage "========================================="
-                    Write-LogMessage ""
-                    Write-LogMessage "Copy and run the appropriate command for each installation:"
-                    Write-LogMessage ""
+                # Summary - Beautiful formatted output
+                if (-not $Quiet) {
+                    Write-Host ""
+                    Write-Host "╔══════════════════════════════════════════════════════╗" -ForegroundColor Cyan
+                    Write-Host "║            HSTS COMPLIANCE SUMMARY                   ║" -ForegroundColor Cyan
+                    Write-Host "╠══════════════════════════════════════════════════════╣" -ForegroundColor Cyan
                     
-                    $pathNum = 1
-                    foreach ($failedPath in $failedPaths) {
-                        Write-LogMessage "--- Installation $pathNum`: $failedPath ---"
-                        Write-LogMessage ""
-                        Write-LogMessage "  [1] BASIC (max-age=31536000):"
-                        Write-LogMessage "      .\Remote_UpdateTomcatHstsWin.ps1 -ServerName $env:COMPUTERNAME -Mode configure -SecurityLevel 1 -CustomPaths @('$failedPath')"
-                        Write-LogMessage ""
-                        Write-LogMessage "  [2] HIGH - OWASP Recommended (max-age=31536000; includeSubDomains):"
-                        Write-LogMessage "      .\Remote_UpdateTomcatHstsWin.ps1 -ServerName $env:COMPUTERNAME -Mode configure -SecurityLevel 2 -CustomPaths @('$failedPath')"
-                        Write-LogMessage ""
-                        Write-LogMessage "  [3] VERY HIGH - Preload Ready (max-age=31536000; includeSubDomains; preload):"
-                        Write-LogMessage "      .\Remote_UpdateTomcatHstsWin.ps1 -ServerName $env:COMPUTERNAME -Mode configure -SecurityLevel 3 -CustomPaths @('$failedPath')"
-                        Write-LogMessage ""
-                        Write-LogMessage "  [4] MAXIMUM - Highest Security (max-age=63072000; includeSubDomains; preload):"
-                        Write-LogMessage "      .\Remote_UpdateTomcatHstsWin.ps1 -ServerName $env:COMPUTERNAME -Mode configure -SecurityLevel 4 -CustomPaths @('$failedPath')"
-                        Write-LogMessage ""
-                        $pathNum++
+                    Write-Host "║ Files Scanned:  " -ForegroundColor Cyan -NoNewline
+                    Write-Host ("$processedCount".PadLeft(37)) -ForegroundColor White -NoNewline
+                    Write-Host "║" -ForegroundColor Cyan
+                    
+                    if ($Mode -eq "audit") {
+                        # Calculate percentages
+                        $compliantPct = if ($processedCount -gt 0) { [math]::Round(($compliantCount / $processedCount) * 100) } else { 0 }
+                        $notConfiguredPct = if ($processedCount -gt 0) { [math]::Round(($notConfiguredCount / $processedCount) * 100) } else { 0 }
+                        $nonCompliantPct = if ($processedCount -gt 0) { [math]::Round(($nonCompliantCount / $processedCount) * 100) } else { 0 }
+                        
+                        Write-Host "║ " -ForegroundColor Cyan -NoNewline
+                        Write-Host "✓" -ForegroundColor Green -NoNewline
+                        Write-Host " Compliant:  " -ForegroundColor Cyan -NoNewline
+                        Write-Host ("$compliantCount".PadLeft(8)) -ForegroundColor Green -NoNewline
+                        Write-Host " ($compliantPct%)\" -ForegroundColor Gray -NoNewline
+                        Write-Host (" ".PadLeft(19 - ("  ($compliantPct%)").Length)) -NoNewline
+                        Write-Host "║" -ForegroundColor Cyan
+                        
+                        Write-Host "║ " -ForegroundColor Cyan -NoNewline
+                        Write-Host "✗" -ForegroundColor Red -NoNewline
+                        Write-Host " Not Configured:  " -ForegroundColor Cyan -NoNewline
+                        Write-Host ("$notConfiguredCount".PadLeft(4)) -ForegroundColor Red -NoNewline
+                        Write-Host " ($notConfiguredPct%)\" -ForegroundColor Gray -NoNewline
+                        Write-Host (" ".PadLeft(19 - ("  ($notConfiguredPct%)").Length)) -NoNewline
+                        Write-Host "║" -ForegroundColor Cyan
+                        
+                        Write-Host "║ " -ForegroundColor Cyan -NoNewline
+                        Write-Host "⚠" -ForegroundColor Yellow -NoNewline
+                        Write-Host " Non-Compliant:  " -ForegroundColor Cyan -NoNewline
+                        Write-Host ("$nonCompliantCount".PadLeft(5)) -ForegroundColor Yellow -NoNewline
+                        Write-Host " ($nonCompliantPct%)\" -ForegroundColor Gray -NoNewline
+                        Write-Host (" ".PadLeft(19 - ("  ($nonCompliantPct%)").Length)) -NoNewline
+                        Write-Host "║" -ForegroundColor Cyan
+                    }
+                    else {
+                        Write-Host "║ " -ForegroundColor Cyan -NoNewline
+                        Write-Host "✓" -ForegroundColor Green -NoNewline
+                        Write-Host " Successful:  "  -ForegroundColor Cyan -NoNewline
+                        Write-Host ("$successCount".PadLeft(33)) -ForegroundColor Green -NoNewline
+                        Write-Host "║" -ForegroundColor Cyan
+                        
+                        Write-Host "║ " -ForegroundColor Cyan -NoNewline
+                        Write-Host "✗" -ForegroundColor Red -NoNewline
+                        Write-Host " Failed:  " -ForegroundColor Cyan -NoNewline
+                        Write-Host ("$failureCount".PadLeft(37)) -ForegroundColor Red -NoNewline
+                        Write-Host "║" -ForegroundColor Cyan
                     }
                     
-                    Write-LogMessage ""
-                    Write-LogMessage "========================================="
-                    Write-LogMessage "CONFIGURE ALL FAILED PATHS (QUICK FIX)"
-                    Write-LogMessage "========================================="
-                    Write-LogMessage ""
-                    Write-LogMessage "To configure ALL failed installations at once, run ONE of these commands:"
-                    Write-LogMessage ""
-                    Write-LogMessage "  [1] Apply BASIC to ALL:      .\Remote_UpdateTomcatHstsWin.ps1 -ServerName $env:COMPUTERNAME -Mode configure -SecurityLevel 1"
-                    
-                    Write-LogMessage "  [2] Apply HIGH to ALL:       .\Remote_UpdateTomcatHstsWin.ps1 -ServerName $env:COMPUTERNAME -Mode configure -SecurityLevel 2"
-                    Write-LogMessage "  [3] Apply VERY HIGH to ALL:  .\Remote_UpdateTomcatHstsWin.ps1 -ServerName $env:COMPUTERNAME -Mode configure -SecurityLevel 3"
-                    Write-LogMessage "  [4] Apply MAXIMUM to ALL:    .\Remote_UpdateTomcatHstsWin.ps1 -ServerName $env:COMPUTERNAME -Mode configure -SecurityLevel 4"
-                    Write-LogMessage ""
-                    Write-LogMessage "TIP: Add -DryRun to preview changes without applying"
-                    Write-LogMessage "========================================="
-
-                    # Interactive mode removed per user request.
+                    Write-Host "╚══════════════════════════════════════════════════════╝" -ForegroundColor Cyan
+                    Write-Host ""
                 }
+
+                if ($failedPaths.Count -gt 0 -and $Mode -eq "audit" -and -not $Quiet) {
+                    Write-Host ""
+                    Write-Host "╔══════════════════════════════════════════════════════╗" -ForegroundColor Yellow
+                    Write-Host "║        QUICK FIX - Configure All Non-Compliant       ║" -ForegroundColor Yellow
+                    Write-Host "╚══════════════════════════════════════════════════════╝" -ForegroundColor Yellow
+                    Write-Host ""
+                    Write-Host "Choose a security level and run ONE command:\" -ForegroundColor Cyan
+                    Write-Host ""
+                    Write-Host "  [1] BASIC (1 year):\" -ForegroundColor White
+                    Write-Host "      .\\Remote_UpdateTomcatHstsWin.ps1 -ServerName $env:COMPUTERNAME -Mode configure -SecurityLevel 1\" -ForegroundColor Gray
+                    Write-Host ""
+                    Write-Host "  [2] HIGH - OWASP Recommended (1 year + subdomains):\" -ForegroundColor White
+                    Write-Host "      .\\Remote_UpdateTomcatHstsWin.ps1 -ServerName $env:COMPUTERNAME -Mode configure -SecurityLevel 2\" -ForegroundColor Gray
+                    Write-Host ""
+                    Write-Host "  [3] VERY HIGH (1 year + subdomains + preload):\" -ForegroundColor White
+                    Write-Host "      .\\Remote_UpdateTomcatHstsWin.ps1 -ServerName $env:COMPUTERNAME -Mode configure -SecurityLevel 3\" -ForegroundColor Gray
+                    Write-Host ""
+                    Write-Host "  [4] MAXIMUM (2 years + subdomains + preload):\" -ForegroundColor White
+                    Write-Host "      .\\Remote_UpdateTomcatHstsWin.ps1 -ServerName $env:COMPUTERNAME -Mode configure -SecurityLevel 4\" -ForegroundColor Gray
+                    Write-Host ""
+                    Write-Host "TIP: Add -DryRun to preview changes without applying\" -ForegroundColor Cyan
+                    Write-Host ""
+                }
+            
+                # Return results
             
                 return @{
                     Success        = ($overallSuccess -eq 0)

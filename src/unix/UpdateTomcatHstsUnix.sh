@@ -589,24 +589,31 @@ apply_compliant_hsts() {
             printf '%s\n' "$filter_block" > "$temp_filter"
             
             if echo "$cleaned_content" | grep -q "</web-app>"; then
-                # Use sed to insert before closing tag (more reliable than awk with multi-line)
-                {
-                    # Print everything up to (but not including) the closing tag
-                    echo "$cleaned_content" | sed '/<\/web-app>/,$d' || echo "$cleaned_content"
-                    # Insert the filter block
-                    cat "$temp_filter"
-                    # Print the closing tag and everything after
-                    echo "$cleaned_content" | sed -n '/<\/web-app>/,$p' || echo "</web-app>"
-                } > "$output_file"
+                # Use perl for reliable multi-line insertion before closing tag
+                if command -v perl > /dev/null 2>&1; then
+                    perl -pe "s|</web-app>|$(cat "$temp_filter")\n</web-app>|" <<< "$cleaned_content" > "$output_file"
+                else
+                    # Fallback: build full content manually
+                    local before_tag="${cleaned_content%</web-app>*}"
+                    local after_tag="</web-app>${cleaned_content#*</web-app>}"
+                    {
+                        printf '%s' "$before_tag"
+                        cat "$temp_filter"
+                        printf '\n%s\n' "$after_tag"
+                    } > "$output_file"
+                fi
             elif echo "$cleaned_content" | grep -q "</Context>"; then
-                {
-                    # Print everything up to (but not including) the closing tag
-                    echo "$cleaned_content" | sed '/<\/Context>/,$d' || echo "$cleaned_content"
-                    # Insert the filter block
-                    cat "$temp_filter"
-                    # Print the closing tag and everything after
-                    echo "$cleaned_content" | sed -n '/<\/Context>/,$p' || echo "</Context>"
-                } > "$output_file"
+                if command -v perl > /dev/null 2>&1; then
+                    perl -pe "s|</Context>|$(cat "$temp_filter")\n</Context>|" <<< "$cleaned_content" > "$output_file"
+                else
+                    local before_tag="${cleaned_content%</Context>*}"
+                    local after_tag="</Context>${cleaned_content#*</Context>}"
+                    {
+                        printf '%s' "$before_tag"
+                        cat "$temp_filter"
+                        printf '\n%s\n' "$after_tag"
+                    } > "$output_file"
+                fi
             else
                 # Fallback: append to end
                 {
@@ -757,20 +764,22 @@ configure_hsts_headers() {
         return 1
     fi
     
-    # Verify the configuration was applied
+    # Verify the configuration was applied - use dynamic MIN_MAX_AGE value
     local new_content=$(cat "$temp_file")
-    if ! echo "$new_content" | grep -qi "hstsMaxAgeSeconds" || ! echo "$new_content" | grep -qi "31536000"; then
-        if ! echo "$new_content" | grep -qi "max-age=31536000"; then
-            message="Failed to apply compliant HSTS configuration - verification failed"
+    if ! echo "$new_content" | grep -qi "hstsMaxAgeSeconds" || ! echo "$new_content" | grep -qi "$MIN_MAX_AGE"; then
+        if ! echo "$new_content" | grep -qi "max-age=$MIN_MAX_AGE"; then
+            message="Failed to apply compliant HSTS configuration - verification failed (expected max-age=$MIN_MAX_AGE)"
             CONFIGURE_RESULT="$message"
             return 1
         fi
     fi
     
-    if ! echo "$new_content" | grep -qi "hstsIncludeSubDomains.*true\|includeSubDomains"; then
-        message="Failed to apply compliant HSTS configuration - includeSubDomains not found"
-        CONFIGURE_RESULT="$message"
-        return 1
+    if [[ "$REQUIRE_SUBDOMAINS" == "true" ]]; then
+        if ! echo "$new_content" | grep -qi "hstsIncludeSubDomains.*true\|includeSubDomains"; then
+            message="Failed to apply compliant HSTS configuration - includeSubDomains not found"
+            CONFIGURE_RESULT="$message"
+            return 1
+        fi
     fi
     
     if [[ "$DRY_RUN" == "true" ]]; then
@@ -950,26 +959,9 @@ log_audit_results() {
 
 # Function: Prompt for confirmation
 confirm_configure() {
-    if [[ "$DRY_RUN" == "true" ]]; then
-        return 0
-    fi
-    
-    echo ""
-    echo "WARNING: This will modify the configuration file: $CONFIG_PATH"
-    echo "All existing HSTS configurations will be removed and replaced with one compliant version."
-    echo "A backup will be created before making changes."
-    echo ""
-    read -p "Do you want to continue? (yes/no): " response
-    
-    case "$response" in
-        yes|y|YES|Y)
-            return 0
-            ;;
-        *)
-            log_message "Configuration operation cancelled by user"
-            return 1
-            ;;
-    esac
+    # Non-interactive: Always proceed.
+    # The --dry-run option is the mechanism for safety checks.
+    return 0
 }
 
 # Function: Load custom paths from file
