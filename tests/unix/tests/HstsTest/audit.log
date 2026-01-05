@@ -1,128 +1,138 @@
-[2026-01-05 14:26:13] Checking custom configuration path: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/unix/tests/HstsTest/conf
-[2026-01-05 14:26:13] Found valid Tomcat configuration at custom path: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/unix/tests/HstsTest/conf
-[2026-01-05 14:26:13] Found Tomcat Configuration: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/unix/tests/HstsTest/conf (Version: 9.0.50)
-[2026-01-05 14:26:13] Searching for web.xml files...
-[2026-01-05 14:26:13]   Found: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/unix/tests/HstsTest/conf/web.xml (global configuration)
-[2026-01-05 14:26:13] Found 1 web.xml file(s) to process
-[2026-01-05 14:26:13] === AUDIT: No HSTS Configuration Found ===
-[2026-01-05 14:26:13] No HSTS headers or filters detected in the configuration file.
-[2026-01-05 14:26:13] 
-[2026-01-05 14:26:13] Configuration Context:
-[2026-01-05 14:26:13]   No filters found in configuration
-[2026-01-05 14:26:13] 
-[2026-01-05 14:26:13] === Current HSTS Configuration ===
-[2026-01-05 14:26:13]   Status: NOT CONFIGURED
-[2026-01-05 14:26:13]   Header: (none)
-[2026-01-05 14:26:13] 
-[2026-01-05 14:26:13] === Available Security Levels ===
-[2026-01-05 14:26:13] 
-[2026-01-05 14:26:13]   [1] BASIC - Minimum HSTS protection
-[2026-01-05 14:26:13]       Header: Strict-Transport-Security: max-age=31536000
-[2026-01-05 14:26:13]       Use when: Subdomains should NOT be affected
-[2026-01-05 14:26:13] 
-[2026-01-05 14:26:13]   [2] HIGH - OWASP Recommended (Default)
-[2026-01-05 14:26:13]       Header: Strict-Transport-Security: max-age=31536000; includeSubDomains
-[2026-01-05 14:26:13]       Use when: All subdomains also use HTTPS
-[2026-01-05 14:26:13] 
-[2026-01-05 14:26:13]   [3] VERY HIGH - Preload Ready
-[2026-01-05 14:26:13]       Header: Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
-[2026-01-05 14:26:13]       Use when: Ready for browser preload list submission
-[2026-01-05 14:26:13] 
-[2026-01-05 14:26:13]   [4] MAXIMUM - Highest Security
-[2026-01-05 14:26:13]       Header: Strict-Transport-Security: max-age=63072000; includeSubDomains; preload
-[2026-01-05 14:26:13]       Use when: Maximum protection with 2-year cache
-[2026-01-05 14:26:13] 
-[2026-01-05 14:26:13] === Configure Commands (copy and run) ===
-[2026-01-05 14:26:13] 
-[2026-01-05 14:26:13]   Option 1: sudo /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/unix/../../src/unix/UpdateTomcatHstsUnix.sh --mode configure --security-level basic
-[2026-01-05 14:26:13]   Option 2: sudo /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/unix/../../src/unix/UpdateTomcatHstsUnix.sh --mode configure --security-level high
-[2026-01-05 14:26:13]   Option 3: sudo /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/unix/../../src/unix/UpdateTomcatHstsUnix.sh --mode configure --security-level veryhigh
-[2026-01-05 14:26:13]   Option 4: sudo /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/unix/../../src/unix/UpdateTomcatHstsUnix.sh --mode configure --security-level maximum
-[2026-01-05 14:26:13] 
-[2026-01-05 14:26:13]   Add --dry-run to preview changes without applying
-[2026-01-05 14:26:13] ==========================================
-[2026-01-05 14:26:14] Checking custom configuration path: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/unix/tests/HstsTest/conf
-[2026-01-05 14:26:14] Found valid Tomcat configuration at custom path: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/unix/tests/HstsTest/conf
-[2026-01-05 14:26:14] Found Tomcat Configuration: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/unix/tests/HstsTest/conf (Version: 9.0.50)
-[2026-01-05 14:26:14] Searching for web.xml files...
-[2026-01-05 14:26:14]   Found: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/unix/tests/HstsTest/conf/web.xml (global configuration)
-[2026-01-05 14:26:14] Found 1 web.xml file(s) to process
-[2026-01-05 14:26:14] Found 5 HSTS header definition(s)
-[2026-01-05 14:26:14] === Current Filter-Based HSTS Configuration ===
-[2026-01-05 14:26:14]   hstsMaxAgeSeconds: 86400
-[2026-01-05 14:26:14]   hstsIncludeSubDomains: true
-[2026-01-05 14:26:14] ===============================================
-[2026-01-05 14:26:14] === Audit Result Breakdown ===
-[2026-01-05 14:26:14]   [FAIL] Filter-based HSTS (Target Level: high): max-age=86400; includeSubDomains=true; preload=false
-[2026-01-05 14:26:14] ==============================
-[2026-01-05 14:26:14] Checking custom configuration path: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/unix/tests/HstsTest/conf
-[2026-01-05 14:26:14] Found valid Tomcat configuration at custom path: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/unix/tests/HstsTest/conf
-[2026-01-05 14:26:14] Found Tomcat Configuration: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/unix/tests/HstsTest/conf (Version: 9.0.50)
-[2026-01-05 14:26:14] Searching for web.xml files...
-[2026-01-05 14:26:14]   Found: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/unix/tests/HstsTest/conf/web.xml (global configuration)
-[2026-01-05 14:26:14] Found 1 web.xml file(s) to process
-[2026-01-05 14:26:14] Found 5 HSTS header definition(s)
-[2026-01-05 14:26:14] === Current Filter-Based HSTS Configuration ===
-[2026-01-05 14:26:14]   hstsMaxAgeSeconds: 31536000
-[2026-01-05 14:26:14]   hstsIncludeSubDomains: false
-[2026-01-05 14:26:14] ===============================================
-[2026-01-05 14:26:14] === Audit Result Breakdown ===
-[2026-01-05 14:26:14]   [FAIL] Filter-based HSTS (Target Level: high): max-age=31536000; includeSubDomains=false; preload=false
-[2026-01-05 14:26:14] ==============================
-[2026-01-05 14:26:15] Checking custom configuration path: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/unix/tests/HstsTest/conf
-[2026-01-05 14:26:15] Found valid Tomcat configuration at custom path: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/unix/tests/HstsTest/conf
-[2026-01-05 14:26:15] Found Tomcat Configuration: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/unix/tests/HstsTest/conf (Version: 9.0.50)
-[2026-01-05 14:26:15] Searching for web.xml files...
-[2026-01-05 14:26:15]   Found: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/unix/tests/HstsTest/conf/web.xml (global configuration)
-[2026-01-05 14:26:15] Found 1 web.xml file(s) to process
-[2026-01-05 14:26:15] Found 5 HSTS header definition(s)
-[2026-01-05 14:26:15] === Current Filter-Based HSTS Configuration ===
-[2026-01-05 14:26:15]   hstsMaxAgeSeconds: 31536000
-[2026-01-05 14:26:15]   hstsIncludeSubDomains: true
-[2026-01-05 14:26:15] ===============================================
-[2026-01-05 14:26:15] === Audit Result Breakdown ===
-[2026-01-05 14:26:15]   [PASS] Filter-based HSTS (Level: high): max-age=31536000; includeSubDomains=true; preload=false
-[2026-01-05 14:26:15] ==============================
-[2026-01-05 14:26:15] Checking custom configuration path: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/unix/tests/HstsTest/conf
-[2026-01-05 14:26:15] Found valid Tomcat configuration at custom path: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/unix/tests/HstsTest/conf
-[2026-01-05 14:26:15] Found Tomcat Configuration: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/unix/tests/HstsTest/conf (Version: 11.0.0)
-[2026-01-05 14:26:15] Searching for web.xml files...
-[2026-01-05 14:26:15]   Found: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/unix/tests/HstsTest/conf/web.xml (global configuration)
-[2026-01-05 14:26:15] Found 1 web.xml file(s) to process
-[2026-01-05 14:26:15] === AUDIT: No HSTS Configuration Found ===
-[2026-01-05 14:26:15] No HSTS headers or filters detected in the configuration file.
-[2026-01-05 14:26:15] 
-[2026-01-05 14:26:15] Configuration Context:
-[2026-01-05 14:26:15]   No filters found in configuration
-[2026-01-05 14:26:15] 
-[2026-01-05 14:26:15] === Current HSTS Configuration ===
-[2026-01-05 14:26:15]   Status: NOT CONFIGURED
-[2026-01-05 14:26:15]   Header: (none)
-[2026-01-05 14:26:15] 
-[2026-01-05 14:26:15] === Available Security Levels ===
-[2026-01-05 14:26:15] 
-[2026-01-05 14:26:15]   [1] BASIC - Minimum HSTS protection
-[2026-01-05 14:26:15]       Header: Strict-Transport-Security: max-age=31536000
-[2026-01-05 14:26:15]       Use when: Subdomains should NOT be affected
-[2026-01-05 14:26:15] 
-[2026-01-05 14:26:15]   [2] HIGH - OWASP Recommended (Default)
-[2026-01-05 14:26:15]       Header: Strict-Transport-Security: max-age=31536000; includeSubDomains
-[2026-01-05 14:26:15]       Use when: All subdomains also use HTTPS
-[2026-01-05 14:26:15] 
-[2026-01-05 14:26:15]   [3] VERY HIGH - Preload Ready
-[2026-01-05 14:26:15]       Header: Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
-[2026-01-05 14:26:15]       Use when: Ready for browser preload list submission
-[2026-01-05 14:26:15] 
-[2026-01-05 14:26:15]   [4] MAXIMUM - Highest Security
-[2026-01-05 14:26:15]       Header: Strict-Transport-Security: max-age=63072000; includeSubDomains; preload
-[2026-01-05 14:26:15]       Use when: Maximum protection with 2-year cache
-[2026-01-05 14:26:15] 
-[2026-01-05 14:26:15] === Configure Commands (copy and run) ===
-[2026-01-05 14:26:15] 
-[2026-01-05 14:26:15]   Option 1: sudo /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/unix/../../src/unix/UpdateTomcatHstsUnix.sh --mode configure --security-level basic
-[2026-01-05 14:26:15]   Option 2: sudo /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/unix/../../src/unix/UpdateTomcatHstsUnix.sh --mode configure --security-level high
-[2026-01-05 14:26:15]   Option 3: sudo /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/unix/../../src/unix/UpdateTomcatHstsUnix.sh --mode configure --security-level veryhigh
-[2026-01-05 14:26:15]   Option 4: sudo /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/unix/../../src/unix/UpdateTomcatHstsUnix.sh --mode configure --security-level maximum
-[2026-01-05 14:26:15] 
-[2026-01-05 14:26:15]   Add --dry-run to preview changes without applying
-[2026-01-05 14:26:15] ==========================================
+[2026-01-05 15:08:06] Checking custom configuration path: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/unix/tests/HstsTest/conf
+[2026-01-05 15:08:06] Found valid Tomcat configuration at custom path: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/unix/tests/HstsTest/conf
+[2026-01-05 15:08:06] Found Tomcat Configuration: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/unix/tests/HstsTest/conf (Version: 9.0.50)
+[2026-01-05 15:08:06] Searching for web.xml files...
+[2026-01-05 15:08:06]   Found: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/unix/tests/HstsTest/conf/web.xml (global configuration)
+[2026-01-05 15:08:06] Found 1 web.xml file(s) to process
+[2026-01-05 15:08:06] === AUDIT: No HSTS Configuration Found ===
+[2026-01-05 15:08:06] No HSTS headers or filters detected in the configuration file.
+[2026-01-05 15:08:06] 
+[2026-01-05 15:08:06] Configuration Context:
+[2026-01-05 15:08:06]   No filters found in configuration
+[2026-01-05 15:08:06] 
+[2026-01-05 15:08:06] === Current HSTS Configuration ===
+[2026-01-05 15:08:06]   Status: NOT CONFIGURED
+[2026-01-05 15:08:06]   Header: (none)
+[2026-01-05 15:08:06] 
+[2026-01-05 15:08:06] === Available Security Levels ===
+[2026-01-05 15:08:06] 
+[2026-01-05 15:08:06]   [1] BASIC - Minimum HSTS protection
+[2026-01-05 15:08:06]       Header: Strict-Transport-Security: max-age=31536000
+[2026-01-05 15:08:06]       Use when: Subdomains should NOT be affected
+[2026-01-05 15:08:06] 
+[2026-01-05 15:08:06]   [2] HIGH - OWASP Recommended (Default)
+[2026-01-05 15:08:06]       Header: Strict-Transport-Security: max-age=31536000; includeSubDomains
+[2026-01-05 15:08:06]       Use when: All subdomains also use HTTPS
+[2026-01-05 15:08:06] 
+[2026-01-05 15:08:06]   [3] VERY HIGH - Preload Ready
+[2026-01-05 15:08:06]       Header: Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
+[2026-01-05 15:08:06]       Use when: Ready for browser preload list submission
+[2026-01-05 15:08:06] 
+[2026-01-05 15:08:06]   [4] MAXIMUM - Highest Security
+[2026-01-05 15:08:06]       Header: Strict-Transport-Security: max-age=63072000; includeSubDomains; preload
+[2026-01-05 15:08:06]       Use when: Maximum protection with 2-year cache
+[2026-01-05 15:08:06] 
+[2026-01-05 15:08:06] === Configure Commands (copy and run) ===
+[2026-01-05 15:08:06] 
+[2026-01-05 15:08:06]   Option 1: sudo ./../../src/unix/UpdateTomcatHstsUnix.sh --mode configure --security-level basic
+[2026-01-05 15:08:06]   Option 2: sudo ./../../src/unix/UpdateTomcatHstsUnix.sh --mode configure --security-level high
+[2026-01-05 15:08:06]   Option 3: sudo ./../../src/unix/UpdateTomcatHstsUnix.sh --mode configure --security-level veryhigh
+[2026-01-05 15:08:06]   Option 4: sudo ./../../src/unix/UpdateTomcatHstsUnix.sh --mode configure --security-level maximum
+[2026-01-05 15:08:06] 
+[2026-01-05 15:08:06]   Add --dry-run to preview changes without applying
+[2026-01-05 15:08:06] ==========================================
+[2026-01-05 15:08:06] FAILURE: No HSTS header definitions found in configuration
+[2026-01-05 15:08:06] HSTS configuration needs to be updated.
+[2026-01-05 15:08:07] Checking custom configuration path: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/unix/tests/HstsTest/conf
+[2026-01-05 15:08:07] Found valid Tomcat configuration at custom path: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/unix/tests/HstsTest/conf
+[2026-01-05 15:08:07] Found Tomcat Configuration: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/unix/tests/HstsTest/conf (Version: 9.0.50)
+[2026-01-05 15:08:07] Searching for web.xml files...
+[2026-01-05 15:08:07]   Found: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/unix/tests/HstsTest/conf/web.xml (global configuration)
+[2026-01-05 15:08:07] Found 1 web.xml file(s) to process
+[2026-01-05 15:08:07] Found 5 HSTS header definition(s)
+[2026-01-05 15:08:07] === Current Filter-Based HSTS Configuration ===
+[2026-01-05 15:08:07]   hstsMaxAgeSeconds: 86400
+[2026-01-05 15:08:07]   hstsIncludeSubDomains: true
+[2026-01-05 15:08:07] ===============================================
+[2026-01-05 15:08:07] === Audit Result Breakdown ===
+[2026-01-05 15:08:07]   [FAIL] Filter-based HSTS (Target Level: high): max-age=86400; includeSubDomains=true; preload=false
+[2026-01-05 15:08:07] ==============================
+[2026-01-05 15:08:07] FAILURE: Non-compliant HSTS configuration found: 1 failed issues.
+[2026-01-05 15:08:07] HSTS configuration needs to be updated.
+[2026-01-05 15:08:07] Checking custom configuration path: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/unix/tests/HstsTest/conf
+[2026-01-05 15:08:07] Found valid Tomcat configuration at custom path: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/unix/tests/HstsTest/conf
+[2026-01-05 15:08:07] Found Tomcat Configuration: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/unix/tests/HstsTest/conf (Version: 9.0.50)
+[2026-01-05 15:08:07] Searching for web.xml files...
+[2026-01-05 15:08:07]   Found: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/unix/tests/HstsTest/conf/web.xml (global configuration)
+[2026-01-05 15:08:07] Found 1 web.xml file(s) to process
+[2026-01-05 15:08:07] Found 5 HSTS header definition(s)
+[2026-01-05 15:08:07] === Current Filter-Based HSTS Configuration ===
+[2026-01-05 15:08:07]   hstsMaxAgeSeconds: 31536000
+[2026-01-05 15:08:07]   hstsIncludeSubDomains: false
+[2026-01-05 15:08:07] ===============================================
+[2026-01-05 15:08:07] === Audit Result Breakdown ===
+[2026-01-05 15:08:07]   [FAIL] Filter-based HSTS (Target Level: high): max-age=31536000; includeSubDomains=false; preload=false
+[2026-01-05 15:08:07] ==============================
+[2026-01-05 15:08:07] FAILURE: Non-compliant HSTS configuration found: 1 failed issues.
+[2026-01-05 15:08:07] HSTS configuration needs to be updated.
+[2026-01-05 15:08:08] Checking custom configuration path: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/unix/tests/HstsTest/conf
+[2026-01-05 15:08:08] Found valid Tomcat configuration at custom path: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/unix/tests/HstsTest/conf
+[2026-01-05 15:08:08] Found Tomcat Configuration: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/unix/tests/HstsTest/conf (Version: 9.0.50)
+[2026-01-05 15:08:08] Searching for web.xml files...
+[2026-01-05 15:08:08]   Found: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/unix/tests/HstsTest/conf/web.xml (global configuration)
+[2026-01-05 15:08:08] Found 1 web.xml file(s) to process
+[2026-01-05 15:08:08] Found 5 HSTS header definition(s)
+[2026-01-05 15:08:08] === Current Filter-Based HSTS Configuration ===
+[2026-01-05 15:08:08]   hstsMaxAgeSeconds: 31536000
+[2026-01-05 15:08:08]   hstsIncludeSubDomains: true
+[2026-01-05 15:08:08] ===============================================
+[2026-01-05 15:08:08] === Audit Result Breakdown ===
+[2026-01-05 15:08:08]   [PASS] Filter-based HSTS (Level: high): max-age=31536000; includeSubDomains=true; preload=false
+[2026-01-05 15:08:08] ==============================
+[2026-01-05 15:08:08] SUCCESS: HSTS is correctly configured with exactly one compliant definition.
+[2026-01-05 15:08:08] HSTS configuration is compliant.
+[2026-01-05 15:08:08] Checking custom configuration path: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/unix/tests/HstsTest/conf
+[2026-01-05 15:08:08] Found valid Tomcat configuration at custom path: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/unix/tests/HstsTest/conf
+[2026-01-05 15:08:08] Found Tomcat Configuration: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/unix/tests/HstsTest/conf (Version: 11.0.0)
+[2026-01-05 15:08:08] Searching for web.xml files...
+[2026-01-05 15:08:08]   Found: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/unix/tests/HstsTest/conf/web.xml (global configuration)
+[2026-01-05 15:08:08] Found 1 web.xml file(s) to process
+[2026-01-05 15:08:08] === AUDIT: No HSTS Configuration Found ===
+[2026-01-05 15:08:08] No HSTS headers or filters detected in the configuration file.
+[2026-01-05 15:08:08] 
+[2026-01-05 15:08:08] Configuration Context:
+[2026-01-05 15:08:08]   No filters found in configuration
+[2026-01-05 15:08:08] 
+[2026-01-05 15:08:08] === Current HSTS Configuration ===
+[2026-01-05 15:08:08]   Status: NOT CONFIGURED
+[2026-01-05 15:08:08]   Header: (none)
+[2026-01-05 15:08:08] 
+[2026-01-05 15:08:08] === Available Security Levels ===
+[2026-01-05 15:08:08] 
+[2026-01-05 15:08:08]   [1] BASIC - Minimum HSTS protection
+[2026-01-05 15:08:08]       Header: Strict-Transport-Security: max-age=31536000
+[2026-01-05 15:08:08]       Use when: Subdomains should NOT be affected
+[2026-01-05 15:08:08] 
+[2026-01-05 15:08:08]   [2] HIGH - OWASP Recommended (Default)
+[2026-01-05 15:08:08]       Header: Strict-Transport-Security: max-age=31536000; includeSubDomains
+[2026-01-05 15:08:08]       Use when: All subdomains also use HTTPS
+[2026-01-05 15:08:08] 
+[2026-01-05 15:08:08]   [3] VERY HIGH - Preload Ready
+[2026-01-05 15:08:08]       Header: Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
+[2026-01-05 15:08:08]       Use when: Ready for browser preload list submission
+[2026-01-05 15:08:08] 
+[2026-01-05 15:08:08]   [4] MAXIMUM - Highest Security
+[2026-01-05 15:08:08]       Header: Strict-Transport-Security: max-age=63072000; includeSubDomains; preload
+[2026-01-05 15:08:08]       Use when: Maximum protection with 2-year cache
+[2026-01-05 15:08:08] 
+[2026-01-05 15:08:08] === Configure Commands (copy and run) ===
+[2026-01-05 15:08:08] 
+[2026-01-05 15:08:08]   Option 1: sudo ./../../src/unix/UpdateTomcatHstsUnix.sh --mode configure --security-level basic
+[2026-01-05 15:08:08]   Option 2: sudo ./../../src/unix/UpdateTomcatHstsUnix.sh --mode configure --security-level high
+[2026-01-05 15:08:08]   Option 3: sudo ./../../src/unix/UpdateTomcatHstsUnix.sh --mode configure --security-level veryhigh
+[2026-01-05 15:08:08]   Option 4: sudo ./../../src/unix/UpdateTomcatHstsUnix.sh --mode configure --security-level maximum
+[2026-01-05 15:08:08] 
+[2026-01-05 15:08:08]   Add --dry-run to preview changes without applying
+[2026-01-05 15:08:08] ==========================================
+[2026-01-05 15:08:08] FAILURE: No HSTS header definitions found in configuration
+[2026-01-05 15:08:08] HSTS configuration needs to be updated.

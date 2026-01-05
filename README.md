@@ -97,10 +97,7 @@ cd tests
 
 **Tomcat Audit:**
 
-```powershell
-# Windows - Audit Tomcat installation
-.\src\windows\UpdateTomcatHstsWin.ps1 -Mode audit
-
+```bash
 # Linux - Audit Tomcat installation
 sudo ./src/unix/UpdateTomcatHstsUnix.sh --mode audit
 
@@ -108,6 +105,67 @@ sudo ./src/unix/UpdateTomcatHstsUnix.sh --mode audit
 # [PASS] web.xml [COMPLIANT] - max-age=31536000, includeSubDomains=true
 # [WARN] web.xml [WEAK] - max-age=31536000 (missing includeSubDomains)
 # [FAIL] web.xml [NON-COMPLIANT] - max-age=86400 (too short)
+```
+
+**Example Output - Apache Tomcat Audit (Linux/Unix):**
+
+```text
+Checking Tomcat HSTS Configuration...
+############################server-hostname############################
+Execution Time: 2026-01-05 15:06:54
+HOSTNAME: server-hostname
+===========================
+
+HSTS Compliance Results:
+File                                     | Status          | Details
+-----------------------------------------+-----------------+-----------------------------------------
+web.xml                                  | Not Configured  | No HSTS filters found
+
+===========================
+Overall Status: Non-Compliant (0 Compliant, 0 Non-Compliant, 1 Not Configured)
+Audit completed. Log: /var/log/tomcat-hsts-20260105_150654.log
+```
+
+**Example Output - Apache Tomcat Configure (Linux/Unix):**
+
+```text
+Checking Tomcat HSTS Configuration...
+############################server-hostname############################
+Execution Time: 2026-01-05 15:07:20
+HOSTNAME: server-hostname
+===========================
+
+Found Tomcat Configuration: /opt/tomcat/conf (Version: 9.0.50)
+Searching for web.xml files...
+  Found: /opt/tomcat/conf/web.xml (global configuration)
+Found 1 web.xml file(s) to process
+
+=========================================
+Processing: /opt/tomcat/conf/web.xml
+=========================================
+Found 1 HSTS header definition(s)
+=== Current Filter-Based HSTS Configuration ===
+  hstsMaxAgeSeconds: 86400
+  hstsIncludeSubDomains: false
+===============================================
+=== Audit Result Breakdown ===
+  [FAIL] Filter-based HSTS (Target Level: high): max-age=86400; includeSubDomains=false; preload=false
+==============================
+Current state: Non-compliant HSTS configuration found: 1 failed issues.
+Configuration required: Ensuring exactly one compliant HSTS definition exists
+Running pre-flight checks...
+Pre-flight checks passed
+Backup created: /opt/tomcat/conf/web.xml.backup.20260105_150720
+Compliant HSTS configuration applied successfully. All duplicate/non-compliant headers removed.
+
+=========================================
+Summary
+=========================================
+Total files processed: 1
+Successful: 1
+Failed: 0
+Overall Status: SUCCESS
+Log file: /var/log/tomcat-hsts-20260105_150720.log
 ```
 
 **Configuration with Verification:**
@@ -146,6 +204,120 @@ $creds = Get-Credential
 # 4. Batch processing with server list file
 # Create servers.txt with one server name per line
 .\src\windows\Remote_UpdateIisHstsWin.ps1 -ServerListFile "servers.txt" -Mode audit -Credential $creds
+```
+
+**Example Output - Remote Tomcat Audit:**
+
+```text
+Executing on remote server: App01
+========================================
+
+Tomcat Configuration Directory: C:\Program Files\Apache Software Foundation\Tomcat 9.0\conf (Version: 9.0.50)
+Found 1 web.xml file(s) to process
+
+Scanning files for HSTS compliance...
+
+  [PASS] web.xml [COMPLIANT] - max-age=31536000, includeSubDomains=true
+
++------------------------------------------------------+
+|            HSTS COMPLIANCE SUMMARY                   |
++------------------------------------------------------+
+| Files Scanned:                                     1 |
+| [PASS] Compliant:        1 (100%)                    |
+| [FAIL] Not Configured:   0 (0%)                      |
+| [WARN] Non-Compliant:    0 (0%)                      |
++------------------------------------------------------+
+
+Remote execution completed successfully
+```
+
+**Example Output - Remote Tomcat Configure:**
+
+```text
+Executing on remote server: App01
+========================================
+
+Tomcat Configuration Directory: C:\Program Files\Apache Software Foundation\Tomcat 9.0\conf (Version: 9.0.50)
+Found 1 web.xml file(s) to process
+
+Processing: C:\Program Files\Apache Software Foundation\Tomcat 9.0\conf\web.xml
+Current state: Non-compliant HSTS configuration found: 1 failed issues.
+Configuration required: Ensuring exactly one compliant HSTS definition exists
+Backup created: C:\Program Files\Apache Software Foundation\Tomcat 9.0\conf\web.xml.backup.20260105_150245
+Compliant HSTS configuration applied successfully. All duplicate/non-compliant headers removed.
+
++------------------------------------------------------+
+|            HSTS COMPLIANCE SUMMARY                   |
++------------------------------------------------------+
+| Files Scanned:                                     1 |
+| [+] Successful:                                    1 |
+| [-] Failed:                                        0 |
++------------------------------------------------------+
+
+[PASS] Overall Status: SUCCESS
+Remote execution completed successfully
+```
+
+**Example Output - Remote IIS Audit:**
+
+```text
+Executing on remote server: Web01
+========================================
+
+IIS Version: 10.0
+Found 3 IIS site(s) to process
+
+Scanning files for HSTS compliance...
+
+  [PASS] Default Web Site\web.config [COMPLIANT] - max-age=31536000, includeSubDomains=true
+  [FAIL] App1\web.config [NOT CONFIGURED] - No HSTS headers found
+  [WARN] App2\web.config [WEAK] - max-age=31536000 (missing includeSubDomains)
+
++------------------------------------------------------+
+|            HSTS COMPLIANCE SUMMARY                   |
++------------------------------------------------------+
+| Files Scanned:                                     3 |
+| [PASS] Compliant:        1 (33%)                     |
+| [FAIL] Not Configured:   1 (33%)                     |
+| [WARN] Non-Compliant:    1 (33%)                     |
++------------------------------------------------------+
+
+Remote execution completed successfully
+```
+
+**Example Output - Remote IIS Configure:**
+
+```text
+Executing on remote server: Web01
+========================================
+
+IIS Version: 10.0
+Found 3 IIS site(s) to process
+
+Processing: C:\inetpub\wwwroot\web.config
+Current state: HSTS is correctly configured with exactly one compliant definition.
+SUCCESS: HSTS is already correctly configured
+
+Processing: C:\inetpub\App1\web.config
+Current state: No HSTS header definitions found in configuration
+Backup created: C:\inetpub\App1\web.config.backup.20260105_150430
+Compliant HSTS configuration applied successfully
+
+Processing: C:\inetpub\App2\web.config
+Current state: Non-compliant HSTS configuration found: 1 failed issues.
+Backup created: C:\inetpub\App2\web.config.backup.20260105_150431
+Compliant HSTS configuration applied successfully
+
++------------------------------------------------------+
+|            HSTS COMPLIANCE SUMMARY                   |
++------------------------------------------------------+
+| Files Scanned:                                     3 |
+| [+] Successful:                                    3 |
+| [-] Failed:                                        0 |
++------------------------------------------------------+
+
+[PASS] Overall Status: SUCCESS
+Remote execution completed successfully
 ```
 
 ---

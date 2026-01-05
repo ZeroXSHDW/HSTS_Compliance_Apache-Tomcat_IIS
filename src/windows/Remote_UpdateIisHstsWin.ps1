@@ -853,8 +853,8 @@ foreach ($server in $uniqueServers) {
                             if ($customHeaders.Count -gt 0) {
                                 Write-LogMessage "Custom headers found in configuration:"
                                 foreach ($h in ($customHeaders | Select-Object -First 10)) {
-                                    $hName = $h.name ?? "(unnamed)"
-                                    $hValue = $h.value ?? "(no value)"
+                                    $hName = if ($h.name) { $h.name } else { "(unnamed)" }
+                                    $hValue = if ($h.value) { $h.value } else { "(no value)" }
                                     Write-LogMessage "  - ${hName}: ${hValue}"
                                 }
                             }
