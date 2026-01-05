@@ -513,7 +513,7 @@ audit_hsts_headers() {
     log_message "=============================="
     
     # Update total header count to reflect all detected configurations
-    header_count=$((compliant_count + non_compliant_count))
+    # Note: header_count already set from find_all_hsts_headers, do not reset
     
     # Determine overall status
     if [[ $header_count -gt 1 ]]; then
