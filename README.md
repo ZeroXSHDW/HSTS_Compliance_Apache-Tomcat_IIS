@@ -15,15 +15,14 @@ The complete reference for auditing and configuring HSTS across your infrastruct
 
 | Component | standard (OWASP High) | Indicators | Quick Command (Audit/Fix) |
 | :--- | :--- | :--- | :--- |
-| **Windows IIS** | `max-age=31536000;` | `[PASS]` Compliant | `.\src\windows\UpdateIisHstsWin.ps1 -Mode audit` |
-| (Local/Remote) | `includeSubDomains` | `[WARN]` Weak | `.\src\windows\UpdateIisHstsWin.ps1 -Mode configure -All` |
-| **Windows Tomcat** | `max-age=31536000;` | `[FAIL]` Non-Compliant | `.\src\windows\UpdateTomcatHstsWin.ps1 -Mode audit` |
-| (Local/Remote) | `includeSubDomains` | `[FAIL]` Missing / Conflict | `.\src\windows\UpdateTomcatHstsWin.ps1 -Mode configure -All` |
-| **Linux Tomcat** | `max-age=31536000;` | `[PASS]` / `[FAIL]` | `sudo ./src/unix/UpdateTomcatHstsUnix.sh --mode audit` |
-| (Local Only) | `includeSubDomains` | Standard Indicators | `sudo ./src/unix/UpdateTomcatHstsUnix.sh --mode configure --all` |
+| **Windows IIS** | `max-age=31536000;` | `[PASS]` Compliant | **Local:** `.\src\windows\UpdateIisHstsWin.ps1` <br> **Remote:** `.\src\windows\Remote_UpdateIisHstsWin.ps1` |
+| (Local/Remote) | `includeSubDomains` | `[WARN]` Weak | *Args: `-Mode audit` or `-Mode configure -All`* |
+| **Windows Tomcat** | `max-age=31536000;` | `[FAIL]` Non-Compliant | **Local:** `.\src\windows\UpdateTomcatHstsWin.ps1` <br> **Remote:** `.\src\windows\Remote_UpdateTomcatHstsWin.ps1` |
+| (Local/Remote) | `includeSubDomains` | `[FAIL]` Missing / Conflict | *Args: `-Mode audit` or `-Mode configure -All`* |
+| **Linux Tomcat** | `max-age=31536000;` | `[PASS]` / `[FAIL]` | **Local:** `sudo ./src/unix/UpdateTomcatHstsUnix.sh` <br> **Remote:** N/A (Local Only) |
+| (Local Only) | `includeSubDomains` | Standard Indicators | *Args: `--mode audit` or `--mode configure --all`* |
 
 ---
-
 
 ### 🛡️ Security Levels
 
@@ -32,13 +31,17 @@ The complete reference for auditing and configuring HSTS across your infrastruct
 * **Very High**: `max-age=1 Year` + `includeSubDomains` + `preload`
 * **Maximum**: `max-age=2 Years` + `includeSubDomains` + `preload`
 
-### 🌐 Remote Fleet Management
+### 🔑 Remote Prerequisites
 
-Audit or configure multiple servers via WinRM:
+For fleet management, ensure WinRM is configured and target hosts are trusted:
 
 ```powershell
-.\src\windows\Remote_UpdateIisHstsWin.ps1 -ServerName "Web01","Web02" -Mode audit
-.\src\windows\Remote_UpdateTomcatHstsWin.ps1 -ServerName "App01","App02" -Mode configure -SecurityLevel maximum
+# 1. Add servers to TrustedHosts (Required for non-domain environments)
+Set-Item WSMan:\localhost\Client\TrustedHosts -Value "Web01,App02" -Force
+
+# 2. Audit remote fleet with credentials
+$creds = Get-Credential
+.\src\windows\Remote_UpdateIisHstsWin.ps1 -ServerName "Web01" -Mode audit -Credential $creds
 ```
 
 ---
