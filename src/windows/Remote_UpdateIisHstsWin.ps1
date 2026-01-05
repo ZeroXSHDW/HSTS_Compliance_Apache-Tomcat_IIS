@@ -188,6 +188,59 @@ foreach ($server in $uniqueServers) {
                     param([string]$Message)
                     Write-LogMessage "ERROR: $Message"
                 }
+
+                function Write-ComplianceStatus {
+                    param(
+                        [string]$FilePath,
+                        [string]$Status,
+                        [string]$Details = ""
+                    )
+                    
+                    $fileName = Split-Path $FilePath -Leaf
+                    
+                    switch ($Status) {
+                        "COMPLIANT" {
+                            Write-Host "  " -NoNewline
+                            Write-Host "[PASS]" -ForegroundColor Green -NoNewline
+                            Write-Host " $fileName" -NoNewline
+                            Write-Host " [COMPLIANT]" -ForegroundColor Green -NoNewline
+                            if ($Details) { Write-Host " - $Details" -ForegroundColor Gray }
+                            else { Write-Host "" }
+                        }
+                        "NOT_CONFIGURED" {
+                            Write-Host "  " -NoNewline
+                            Write-Host "[FAIL]" -ForegroundColor Red -NoNewline
+                            Write-Host " $fileName" -NoNewline
+                            Write-Host " [NOT CONFIGURED]" -ForegroundColor Red -NoNewline
+                            if ($Details) { Write-Host " - $Details" -ForegroundColor Gray }
+                            else { Write-Host "" }
+                        }
+                        "WEAK" {
+                            Write-Host "  " -NoNewline
+                            Write-Host "[WARN]" -ForegroundColor Yellow -NoNewline
+                            Write-Host " $fileName" -NoNewline
+                            Write-Host " [WEAK]" -ForegroundColor Yellow -NoNewline
+                            if ($Details) { Write-Host " - $Details" -ForegroundColor Gray }
+                            else { Write-Host "" }
+                        }
+                        "NON_COMPLIANT" {
+                            Write-Host "  " -NoNewline
+                            Write-Host "[FAIL]" -ForegroundColor Red -NoNewline
+                            Write-Host " $fileName" -NoNewline
+                            Write-Host " [NON-COMPLIANT]" -ForegroundColor Red -NoNewline
+                            if ($Details) { Write-Host " - $Details" -ForegroundColor Gray }
+                            else { Write-Host "" }
+                        }
+                        "SUCCESS" {
+                            Write-Host "  " -NoNewline
+                            Write-Host "[PASS]" -ForegroundColor Green -NoNewline
+                            Write-Host " $fileName" -NoNewline
+                            Write-Host " [CONFIGURED]" -ForegroundColor Green -NoNewline
+                            if ($Details) { Write-Host " - $Details" -ForegroundColor Gray }
+                            else { Write-Host "" }
+                        }
+                    }
+                }
             
                 try {
                     $null = New-Item -Path $LogFile -ItemType File -Force -ErrorAction Stop

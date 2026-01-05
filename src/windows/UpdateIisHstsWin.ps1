@@ -209,7 +209,7 @@ function Write-ComplianceStatus {
     switch ($Status) {
         "COMPLIANT" {
             Write-Host "  " -NoNewline
-            Write-Host "✓" -ForegroundColor Green -NoNewline
+            Write-Host "[PASS]" -ForegroundColor Green -NoNewline
             Write-Host " $fileName" -NoNewline
             Write-Host " [COMPLIANT]" -ForegroundColor Green -NoNewline
             if ($Details) { Write-Host " - $Details" -ForegroundColor Gray }
@@ -217,7 +217,7 @@ function Write-ComplianceStatus {
         }
         "NOT_CONFIGURED" {
             Write-Host "  " -NoNewline
-            Write-Host "✗" -ForegroundColor Red -NoNewline
+            Write-Host "[FAIL]" -ForegroundColor Red -NoNewline
             Write-Host " $fileName" -NoNewline
             Write-Host " [NOT CONFIGURED]" -ForegroundColor Red -NoNewline
             if ($Details) { Write-Host " - $Details" -ForegroundColor Gray }
@@ -225,7 +225,7 @@ function Write-ComplianceStatus {
         }
         "WEAK" {
             Write-Host "  " -NoNewline
-            Write-Host "⚠" -ForegroundColor Yellow -NoNewline
+            Write-Host "[WARN]" -ForegroundColor Yellow -NoNewline
             Write-Host " $fileName" -NoNewline
             Write-Host " [WEAK]" -ForegroundColor Yellow -NoNewline
             if ($Details) { Write-Host " - $Details" -ForegroundColor Gray }
@@ -233,7 +233,7 @@ function Write-ComplianceStatus {
         }
         "NON_COMPLIANT" {
             Write-Host "  " -NoNewline
-            Write-Host "✗" -ForegroundColor Red -NoNewline
+            Write-Host "[FAIL]" -ForegroundColor Red -NoNewline
             Write-Host " $fileName" -NoNewline
             Write-Host " [NON-COMPLIANT]" -ForegroundColor Red -NoNewline
             if ($Details) { Write-Host " - $Details" -ForegroundColor Gray }
@@ -241,7 +241,7 @@ function Write-ComplianceStatus {
         }
         "SUCCESS" {
             Write-Host "  " -NoNewline
-            Write-Host "✓" -ForegroundColor Green -NoNewline
+            Write-Host "[PASS]" -ForegroundColor Green -NoNewline
             Write-Host " $fileName" -NoNewline
             Write-Host " [CONFIGURED]" -ForegroundColor Green -NoNewline
             if ($Details) { Write-Host " - $Details" -ForegroundColor Gray }

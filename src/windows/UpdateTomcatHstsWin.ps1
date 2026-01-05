@@ -211,35 +211,35 @@ function Write-ComplianceStatus {
     switch ($Status) {
         "COMPLIANT" {
             Write-Host "  " -NoNewline
-            Write-Host "✓" -ForegroundColor Green -NoNewline
+            Write-Host "[PASS]" -ForegroundColor Green -NoNewline
             Write-Host " $fileName" -NoNewline
             Write-Host " [COMPLIANT]" -ForegroundColor Green -NoNewline
             if ($Details) { Write-Host " - $Details" -ForegroundColor Gray } else { Write-Host "" }
         }
         "NOT_CONFIGURED" {
             Write-Host "  " -NoNewline
-            Write-Host "✗" -ForegroundColor Red -NoNewline
+            Write-Host "[FAIL]" -ForegroundColor Red -NoNewline
             Write-Host " $fileName" -NoNewline
             Write-Host " [NOT CONFIGURED]" -ForegroundColor Red -NoNewline
             if ($Details) { Write-Host " - $Details" -ForegroundColor Gray } else { Write-Host "" }
         }
         "WEAK" {
             Write-Host "  " -NoNewline
-            Write-Host "⚠" -ForegroundColor Yellow -NoNewline
+            Write-Host "[WARN]" -ForegroundColor Yellow -NoNewline
             Write-Host " $fileName" -NoNewline
             Write-Host " [WEAK]" -ForegroundColor Yellow -NoNewline
             if ($Details) { Write-Host " - $Details" -ForegroundColor Gray } else { Write-Host "" }
         }
         "NON_COMPLIANT" {
             Write-Host "  " -NoNewline
-            Write-Host "✗" -ForegroundColor Red -NoNewline
+            Write-Host "[FAIL]" -ForegroundColor Red -NoNewline
             Write-Host " $fileName" -NoNewline
             Write-Host " [NON-COMPLIANT]" -ForegroundColor Red -NoNewline
             if ($Details) { Write-Host " - $Details" -ForegroundColor Gray } else { Write-Host "" }
         }
         "SUCCESS" {
             Write-Host "  " -NoNewline
-            Write-Host "✓" -ForegroundColor Green -NoNewline
+            Write-Host "[PASS]" -ForegroundColor Green -NoNewline
             Write-Host " $fileName" -NoNewline
             Write-Host " [CONFIGURED]" -ForegroundColor Green -NoNewline
             if ($Details) { Write-Host " - $Details" -ForegroundColor Gray } else { Write-Host "" }
@@ -1869,60 +1869,76 @@ try {
         else {
             # Verbose mode for configure
             Write-Host ""
-            Write-Host "╔══════════════════════════════════════════════════════╗" -ForegroundColor Cyan
-            Write-Host "║            HSTS COMPLIANCE SUMMARY                   ║" -ForegroundColor Cyan
-            Write-Host "╠══════════════════════════════════════════════════════╣" -ForegroundColor Cyan
+            Write-LogMessage "+------------------------------------------------------------------------------+" -Color Cyan
+            Write-LogMessage "|                      TOMCAT HSTS COMPLIANCE TOOL                             |" -Color Cyan
+            Write-LogMessage "+------------------------------------------------------------------------------+" -Color Cyan
+            Write-LogMessage "| Hostname: $Hostname" -Color Cyan -NoNewline
+            Write-LogMessage ("| ".PadLeft(80 - 12 - $Hostname.Length)) -Color Cyan
+            Write-LogMessage "| Time:     $timestamp" -Color Cyan -NoNewline
+            Write-LogMessage ("| ".PadLeft(80 - 12 - $timestamp.Length)) -Color Cyan
             
-            Write-Host "║ Files Scanned:  " -ForegroundColor Cyan -NoNewline
+            if ($TomcatVersion) {
+                Write-LogMessage "| Version:  $TomcatVersion" -Color Cyan -NoNewline
+                Write-LogMessage ("| ".PadLeft(80 - 11 - $TomcatVersion.Length)) -Color Cyan
+            }
+            
+            if ($ConfigPath) {
+                Write-LogMessage "| Path:     $ConfigPath" -Color Cyan -NoNewline
+                Write-LogMessage ("| ".PadLeft(80 - 8 - $ConfigPath.Length)) -Color Cyan
+            }
+            
+            Write-LogMessage "+------------------------------------------------------------------------------+" -Color Cyan
+            
+            Write-Host " Files Scanned:  " -ForegroundColor Cyan -NoNewline
             Write-Host ("$processedCount".PadLeft(37)) -ForegroundColor White -NoNewline
-            Write-Host "║" -ForegroundColor Cyan
+            Write-Host "|" -ForegroundColor Cyan
             
-            Write-Host "║ " -ForegroundColor Cyan -NoNewline
-            Write-Host "✓" -ForegroundColor Green -NoNewline
+            Write-Host "| " -ForegroundColor Cyan -NoNewline
+            Write-Host "[+]" -ForegroundColor Green -NoNewline
             Write-Host " Compliant:  " -ForegroundColor Cyan -NoNewline
             Write-Host ("$compliantCount".PadLeft(8)) -ForegroundColor Green -NoNewline
             Write-Host " ($compliantPct%)" -ForegroundColor Gray -NoNewline
             Write-Host (" ".PadLeft(19 - (" ($compliantPct%)").Length)) -NoNewline
-            Write-Host "║" -ForegroundColor Cyan
+            Write-Host "|" -ForegroundColor Cyan
             
-            Write-Host "║ " -ForegroundColor Cyan -NoNewline
-            Write-Host "✗" -ForegroundColor Red -NoNewline
+            Write-Host "| " -ForegroundColor Cyan -NoNewline
+            Write-Host "[-]" -ForegroundColor Red -NoNewline
             Write-Host " Not Configured:  " -ForegroundColor Cyan -NoNewline
             Write-Host ("$notConfiguredCount".PadLeft(4)) -ForegroundColor Red -NoNewline
             Write-Host " ($notConfiguredPct%)" -ForegroundColor Gray -NoNewline
             Write-Host (" ".PadLeft(19 - (" ($notConfiguredPct%)").Length)) -NoNewline
-            Write-Host "║" -ForegroundColor Cyan
+            Write-Host "|" -ForegroundColor Cyan
             
-            Write-Host "║ " -ForegroundColor Cyan -NoNewline
-            Write-Host "⚠" -ForegroundColor Yellow -NoNewline
+            Write-Host "| " -ForegroundColor Cyan -NoNewline
+            Write-Host "[!]" -ForegroundColor Yellow -NoNewline
             Write-Host " Non-Compliant:  " -ForegroundColor Cyan -NoNewline
             Write-Host ("$nonCompliantCount".PadLeft(5)) -ForegroundColor Yellow -NoNewline
             Write-Host " ($nonCompliantPct%)" -ForegroundColor Gray -NoNewline
             Write-Host (" ".PadLeft(19 - (" ($nonCompliantPct%)").Length)) -NoNewline
-            Write-Host "║" -ForegroundColor Cyan
+            Write-Host "|" -ForegroundColor Cyan
             
-            Write-Host "╠══════════════════════════════════════════════════════╣" -ForegroundColor Cyan
+            Write-Host "+------------------------------------------------------+" -ForegroundColor Cyan
             
-            Write-Host "║ " -ForegroundColor Cyan -NoNewline
-            Write-Host "✓" -ForegroundColor Green -NoNewline
+            Write-Host "| " -ForegroundColor Cyan -NoNewline
+            Write-Host "[+]" -ForegroundColor Green -NoNewline
             Write-Host " Successful:  "  -ForegroundColor Cyan -NoNewline
             Write-Host ("$successCount".PadLeft(33)) -ForegroundColor Green -NoNewline
-            Write-Host "║" -ForegroundColor Cyan
+            Write-Host "|" -ForegroundColor Cyan
             
-            Write-Host "║ " -ForegroundColor Cyan -NoNewline
-            Write-Host "✗" -ForegroundColor Red -NoNewline
+            Write-Host "| " -ForegroundColor Cyan -NoNewline
+            Write-Host "[-]" -ForegroundColor Red -NoNewline
             Write-Host " Failed:  " -ForegroundColor Cyan -NoNewline
             Write-Host ("$failureCount".PadLeft(37)) -ForegroundColor Red -NoNewline
-            Write-Host "║" -ForegroundColor Cyan
+            Write-Host "|" -ForegroundColor Cyan
             
-            Write-Host "╚══════════════════════════════════════════════════════╝" -ForegroundColor Cyan
+            Write-Host "+------------------------------------------------------+" -ForegroundColor Cyan
             Write-Host ""
         }
     }
     
     if ($overallSuccess -eq 0 -and $Mode -ne "audit") {
         if (-not $Quiet) {
-            Write-Host "✓ Overall Status: SUCCESS" -ForegroundColor Green
+            Write-Host "[PASS] Overall Status: SUCCESS" -ForegroundColor Green
         }
     }
     elseif ($Mode -ne "audit") {
@@ -1968,4 +1984,3 @@ catch {
     Write-LogError "An unexpected error occurred: $_"
     exit 2
 }
-
