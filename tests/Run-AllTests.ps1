@@ -30,8 +30,8 @@ Write-Host "Timestamp: $Timestamp"
 Write-Host "Project Root: $ProjectRoot"
 Write-Host ""
 
-# Function to log test results
-function Log-TestResult {
+# Function to write test results
+function Write-TestResult {
     param(
         [string]$TestName,
         [string]$Result,
@@ -76,18 +76,18 @@ foreach ($script in $psScripts) {
             $errors = $null
             $null = [System.Management.Automation.PSParser]::Tokenize((Get-Content $scriptPath -Raw), [ref]$errors)
             if ($errors.Count -eq 0) {
-                Log-TestResult "PS_Syntax_$(Split-Path $script -Leaf)" "PASS" "Syntax is valid"
+                Write-TestResult "PS_Syntax_$(Split-Path $script -Leaf)" "PASS" "Syntax is valid"
             }
             else {
-                Log-TestResult "PS_Syntax_$(Split-Path $script -Leaf)" "FAIL" "Syntax errors found: $($errors.Count)"
+                Write-TestResult "PS_Syntax_$(Split-Path $script -Leaf)" "FAIL" "Syntax errors found: $($errors.Count)"
             }
         }
         catch {
-            Log-TestResult "PS_Syntax_$(Split-Path $script -Leaf)" "FAIL" "Failed to parse: $_"
+            Write-TestResult "PS_Syntax_$(Split-Path $script -Leaf)" "FAIL" "Failed to parse: $_"
         }
     }
     else {
-        Log-TestResult "PS_Syntax_$(Split-Path $script -Leaf)" "FAIL" "Script not found"
+        Write-TestResult "PS_Syntax_$(Split-Path $script -Leaf)" "FAIL" "Script not found"
     }
 }
 
@@ -101,18 +101,18 @@ if (Test-Path $windowsTestScript) {
         $testLog = Join-Path $TestResultsDir "windows_tests_$Timestamp.log"
         & $windowsTestScript *> $testLog
         if ($LASTEXITCODE -eq 0 -or $null -eq $LASTEXITCODE) {
-            Log-TestResult "Windows_Test_Suite" "PASS" "All Windows tests completed"
+            Write-TestResult "Windows_Test_Suite" "PASS" "All Windows tests completed"
         }
         else {
-            Log-TestResult "Windows_Test_Suite" "FAIL" "Tests failed - check log: $testLog"
+            Write-TestResult "Windows_Test_Suite" "FAIL" "Tests failed - check log: $testLog"
         }
     }
     catch {
-        Log-TestResult "Windows_Test_Suite" "FAIL" "Test execution failed: $_"
+        Write-TestResult "Windows_Test_Suite" "FAIL" "Test execution failed: $_"
     }
 }
 else {
-    Log-TestResult "Windows_Test_Suite" "FAIL" "Test script not found"
+    Write-TestResult "Windows_Test_Suite" "FAIL" "Test script not found"
 }
 
 # Test 3: Example Files Validation
@@ -129,8 +129,8 @@ foreach ($file in $exampleFiles.GetEnumerator()) {
     $filePath = Join-Path $ProjectRoot $file.Value
     if (Test-Path $filePath) {
         try {
-            [xml]$xmlContent = Get-Content $filePath
-            Log-TestResult "Example_$($file.Key)" "PASS" "Valid XML"
+            $null = [xml]::new().LoadXml((Get-Content $filePath -Raw))
+            Write-TestResult "Example_$($file.Key)" "PASS" "Valid XML"
         }
         catch {
             Log-TestResult "Example_$($file.Key)" "FAIL" "Invalid XML: $_"
@@ -150,10 +150,10 @@ $requiredDocs = @("README.md", "CHANGELOG.md", "CONTRIBUTING.md", "SECURITY.md",
 foreach ($doc in $requiredDocs) {
     $docPath = Join-Path $ProjectRoot $doc
     if (Test-Path $docPath) {
-        Log-TestResult "Doc_$doc" "PASS" "Document exists"
+        Write-TestResult "Doc_$doc" "PASS" "Document exists"
     }
     else {
-        Log-TestResult "Doc_$doc" "FAIL" "Document missing"
+        Write-TestResult "Doc_$doc" "FAIL" "Document missing"
     }
 }
 
@@ -166,10 +166,10 @@ $requiredDirs = @("src", "tests", "examples", "docs", "install", ".github")
 foreach ($dir in $requiredDirs) {
     $dirPath = Join-Path $ProjectRoot $dir
     if (Test-Path $dirPath) {
-        Log-TestResult "Dir_$dir" "PASS" "Directory exists"
+        Write-TestResult "Dir_$dir" "PASS" "Directory exists"
     }
     else {
-        Log-TestResult "Dir_$dir" "FAIL" "Directory missing"
+        Write-TestResult "Dir_$dir" "FAIL" "Directory missing"
     }
 }
 
@@ -177,7 +177,11 @@ foreach ($dir in $requiredDirs) {
 Write-Host ""
 Write-Host "Running Test 6: HSTS Compliance Validation (Tomcat)..." -ForegroundColor Yellow
 
-$tempDir = Join-Path $env:TEMP "HSTSTest_$Timestamp"
+# Determine temp directory cross-platform
+$TempRoot = if ($IsWindows) { $env:TEMP } else { [System.IO.Path]::GetTempPath() }
+if (-not $TempRoot) { $TempRoot = "/tmp" }
+
+$tempDir = Join-Path $TempRoot "HSTSTest_$Timestamp"
 $tempConfDir = Join-Path $tempDir "conf"
 New-Item -ItemType Directory -Path $tempConfDir -Force | Out-Null
 
@@ -200,18 +204,18 @@ if (Test-Path $tomcatScript) {
         & $tomcatScript -Mode audit -CustomPaths @($tempConfDir) -ErrorAction SilentlyContinue | Out-Null
         # Exit code 1 is expected for non-compliant configs
         if ($LASTEXITCODE -eq 1 -or $LASTEXITCODE -eq 0) {
-            Log-TestResult "HSTS_Tomcat_Audit" "PASS" "Audit mode executes correctly"
+            Write-TestResult "HSTS_Tomcat_Audit" "PASS" "Audit mode executes correctly"
         }
         else {
-            Log-TestResult "HSTS_Tomcat_Audit" "FAIL" "Unexpected exit code: $LASTEXITCODE"
+            Write-TestResult "HSTS_Tomcat_Audit" "FAIL" "Unexpected exit code: $LASTEXITCODE"
         }
     }
     catch {
-        Log-TestResult "HSTS_Tomcat_Audit" "FAIL" "Audit failed: $_"
+        Write-TestResult "HSTS_Tomcat_Audit" "FAIL" "Audit failed: $_"
     }
 }
 else {
-    Log-TestResult "HSTS_Tomcat_Audit" "FAIL" "Tomcat script not found"
+    Write-TestResult "HSTS_Tomcat_Audit" "FAIL" "Tomcat script not found"
 }
 
 # Cleanup
@@ -221,7 +225,7 @@ Remove-Item -Path $tempDir -Recurse -Force -ErrorAction SilentlyContinue
 Write-Host ""
 Write-Host "Running Test 7: HSTS Compliance Validation (IIS)..." -ForegroundColor Yellow
 
-$tempDir2 = Join-Path $env:TEMP "HSTSTestIIS_$Timestamp"
+$tempDir2 = Join-Path $TempRoot "HSTSTestIIS_$Timestamp"
 New-Item -ItemType Directory -Path $tempDir2 -Force | Out-Null
 
 # Create minimal web.config
@@ -246,18 +250,18 @@ if (Test-Path $iisScript) {
         & $iisScript -Mode audit -ConfigPath $webConfigPath -ErrorAction SilentlyContinue | Out-Null
         # Exit code 1 is expected for non-compliant configs
         if ($LASTEXITCODE -eq 1 -or $LASTEXITCODE -eq 0) {
-            Log-TestResult "HSTS_IIS_Audit" "PASS" "Audit mode executes correctly"
+            Write-TestResult "HSTS_IIS_Audit" "PASS" "Audit mode executes correctly"
         }
         else {
-            Log-TestResult "HSTS_IIS_Audit" "FAIL" "Unexpected exit code: $LASTEXITCODE"
+            Write-TestResult "HSTS_IIS_Audit" "FAIL" "Unexpected exit code: $LASTEXITCODE"
         }
     }
     catch {
-        Log-TestResult "HSTS_IIS_Audit" "FAIL" "Audit failed: $_"
+        Write-TestResult "HSTS_IIS_Audit" "FAIL" "Audit failed: $_"
     }
 }
 else {
-    Log-TestResult "HSTS_IIS_Audit" "FAIL" "IIS script not found"
+    Write-TestResult "HSTS_IIS_Audit" "FAIL" "IIS script not found"
 }
 
 # Cleanup

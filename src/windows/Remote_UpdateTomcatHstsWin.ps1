@@ -176,6 +176,12 @@ foreach ($server in $uniqueServers) {
                 if ($RequireSubDomains) { $RecommendedHsts += "; includeSubDomains" }
                 if ($RequirePreload) { $RecommendedHsts += "; preload" }
                 
+                # Global variables for compliance tracking (table output)
+                $script:ComplianceTableRows = @()
+                $script:CompliantCount = 0
+                $script:NonCompliantCount = 0
+                $script:NotConfiguredCount = 0
+                
                 $LogFile = "$env:LOCALAPPDATA\Temp\TomcatHsts.log"
             
                 # Function: Log message

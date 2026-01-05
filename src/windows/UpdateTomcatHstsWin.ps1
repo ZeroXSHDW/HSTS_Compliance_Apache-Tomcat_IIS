@@ -68,6 +68,9 @@ if (-not $isAdmin) {
 }
 
 $Timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+$Hostname = $env:COMPUTERNAME
+if ($IsMacOS -or $IsLinux) { $Hostname = hostname }
+if (-not $Hostname) { $Hostname = "localhost" }
 
 # Security Level Definitions
 $MinMaxAge = 31536000
@@ -124,6 +127,12 @@ switch ($SecurityLevel.ToLower()) {
 $RecommendedHsts = "max-age=$MinMaxAge"
 if ($RequireSubDomains) { $RecommendedHsts += "; includeSubDomains" }
 if ($RequirePreload) { $RecommendedHsts += "; preload" }
+
+# Global variables for compliance tracking (table output)
+$script:ComplianceTableRows = @()
+$script:CompliantCount = 0
+$script:NonCompliantCount = 0
+$script:NotConfiguredCount = 0
 
 # Initialize log file
 if ($LogFile -eq "" -or $null -eq $LogFile) {
@@ -205,53 +214,124 @@ function Write-ComplianceStatus {
             Write-Host "✓" -ForegroundColor Green -NoNewline
             Write-Host " $fileName" -NoNewline
             Write-Host " [COMPLIANT]" -ForegroundColor Green -NoNewline
-            if ($Details) { Write-Host " - $Details" -ForegroundColor Gray }
-            else { Write-Host "" }
+            if ($Details) { Write-Host " - $Details" -ForegroundColor Gray } else { Write-Host "" }
         }
         "NOT_CONFIGURED" {
             Write-Host "  " -NoNewline
             Write-Host "✗" -ForegroundColor Red -NoNewline
             Write-Host " $fileName" -NoNewline
             Write-Host " [NOT CONFIGURED]" -ForegroundColor Red -NoNewline
-            if ($Details) { Write-Host " - $Details" -ForegroundColor Gray }
-            else { Write-Host "" }
+            if ($Details) { Write-Host " - $Details" -ForegroundColor Gray } else { Write-Host "" }
         }
         "WEAK" {
             Write-Host "  " -NoNewline
             Write-Host "⚠" -ForegroundColor Yellow -NoNewline
             Write-Host " $fileName" -NoNewline
             Write-Host " [WEAK]" -ForegroundColor Yellow -NoNewline
-            if ($Details) { Write-Host " - $Details" -ForegroundColor Gray }
-            else { Write-Host "" }
+            if ($Details) { Write-Host " - $Details" -ForegroundColor Gray } else { Write-Host "" }
         }
         "NON_COMPLIANT" {
             Write-Host "  " -NoNewline
             Write-Host "✗" -ForegroundColor Red -NoNewline
             Write-Host " $fileName" -NoNewline
             Write-Host " [NON-COMPLIANT]" -ForegroundColor Red -NoNewline
-            if ($Details) { Write-Host " - $Details" -ForegroundColor Gray }
-            else { Write-Host "" }
+            if ($Details) { Write-Host " - $Details" -ForegroundColor Gray } else { Write-Host "" }
         }
         "SUCCESS" {
             Write-Host "  " -NoNewline
             Write-Host "✓" -ForegroundColor Green -NoNewline
             Write-Host " $fileName" -NoNewline
             Write-Host " [CONFIGURED]" -ForegroundColor Green -NoNewline
-            if ($Details) { Write-Host " - $Details" -ForegroundColor Gray }
-            else { Write-Host "" }
+            if ($Details) { Write-Host " - $Details" -ForegroundColor Gray } else { Write-Host "" }
         }
     }
 }
 
-Write-LogMessage "========================================="
-Write-LogMessage "Tomcat HSTS Configuration Tool"
-Write-LogMessage "Hostname: $Hostname"
-Write-LogMessage "Execution Time: $Timestamp"
-Write-LogMessage "Mode: $Mode"
-if ($Force) {
-    Write-LogMessage "Force Mode: Enabled (auto-approve all changes)"
+# Function: Print header for output
+function Print-Header {
+    param(
+        [string]$TomcatVersion = "",
+        [string]$ConfigPath = ""
+    )
+    
+    $hostnameLength = $Hostname.Length
+    $padding = [Math]::Max(0, 80 - $hostnameLength)
+    $leftPad = [Math]::Floor($padding / 2)
+    $rightPad = $padding - $leftPad
+    $headerLine = ('#' * $leftPad) + $Hostname + ('#' * $rightPad)
+    
+    Write-Host "Checking Tomcat HSTS Configuration..."
+    Write-Host $headerLine
+    Write-Host "Execution Time: $Timestamp"
+    Write-Host "HOSTNAME: $Hostname"
+    if ($TomcatVersion) { Write-Host "Tomcat Version: $TomcatVersion" }
+    if ($ConfigPath) { Write-Host "Config Path: $ConfigPath" }
+    Write-Host "==========================="
 }
-Write-LogMessage "========================================="
+
+# Function: Add row to compliance table
+function Add-TableRow {
+    param(
+        [string]$File,
+        [string]$Status,
+        [string]$Details
+    )
+    
+    $script:ComplianceTableRows += [PSCustomObject]@{
+        File    = $File
+        Status  = $Status
+        Details = $Details
+    }
+    
+    switch ($Status) {
+        "Compliant" { $script:CompliantCount++ }
+        "Non-Compliant" { $script:NonCompliantCount++ }
+        "Not Configured" { $script:NotConfiguredCount++ }
+    }
+}
+
+# Function: Print compliance table
+function Print-ComplianceTable {
+    if ($script:ComplianceTableRows.Count -eq 0) {
+        return
+    }
+    
+    Write-Host ""
+    Write-Host "HSTS Compliance Results:"
+    Write-Host ("{0,-40} | {1,-15} | {2}" -f "File", "Status", "Details")
+    Write-Host ("{0,-40}-+-{1,-15}-+-{2}" -f ('-' * 40), ('-' * 15), ('-' * 40))
+    
+    foreach ($row in $script:ComplianceTableRows) {
+        $fileName = Split-Path $row.File -Leaf
+        if ($fileName.Length -gt 40) { $fileName = $fileName.Substring(0, 37) + "..." }
+        $status = $row.Status
+        if ($status.Length -gt 15) { $status = $status.Substring(0, 12) + "..." }
+        $details = $row.Details
+        if ($details.Length -gt 40) { $details = $details.Substring(0, 37) + "..." }
+        
+        Write-Host ("{0,-40} | {1,-15} | {2}" -f $fileName, $status, $details)
+    }
+    
+    Write-Host ""
+    Write-Host "==========================="
+}
+
+# Print header based on mode
+if ($Mode -eq "audit" -and -not $Quiet) {
+    # Will print clean header after detecting Tomcat
+}
+else {
+    # Verbose mode for configure
+    Write-LogMessage "========================================="
+    Write-LogMessage "Tomcat HSTS Configuration Tool"
+    Write-LogMessage "Hostname: $Hostname"
+    Write-LogMessage "Execution Time: $Timestamp"
+    Write-LogMessage "Mode: $Mode"
+    if ($Force) {
+        Write-LogMessage "Force Mode: Enabled (auto-approve all changes)"
+    }
+    Write-LogMessage "========================================="
+}
 
 # Function: Load custom paths from file
 function Get-CustomPathsFromFile {
@@ -733,9 +813,9 @@ function Test-HstsSupport {
     $cleanVersion = $Version -replace '^[^0-9]*', ''
     
     $parts = $cleanVersion.Split(".")
-    $major = if ($parts.Count -gt 0) { [int]$parts[0] } else { 0 }
-    $minor = if ($parts.Count -gt 1) { [int]$parts[1] } else { 0 }
-    $patch = if ($parts.Count -gt 2) { [int]($parts[2] -replace '[^0-9].*', '') } else { 0 }
+    $major = $(if ($parts.Count -gt 0) { [int]$parts[0] } else { 0 })
+    $minor = $(if ($parts.Count -gt 1) { [int]$parts[1] } else { 0 })
+    $patch = $(if ($parts.Count -gt 2) { [int]($parts[2] -replace '[^0-9].*', '') } else { 0 })
     
     # Support added in:
     # 9.0.0.M6, 8.5.1, 8.0.35, 7.0.69
@@ -1013,9 +1093,9 @@ function Test-HstsHeaders {
         }
         catch { }
         
-        $maxAge = if ($null -ne $result.MaxAge) { $result.MaxAge } else { 'not found' }
-        $includeSub = if ($null -ne $result.IncludeSubDomains) { $result.IncludeSubDomains } else { 'not found' }
-        $preload = if ($null -ne $result.Preload) { $result.Preload } else { 'not found' }
+        $maxAge = $(if ($null -ne $result.MaxAge) { $result.MaxAge } else { 'not found' })
+        $includeSub = $(if ($null -ne $result.IncludeSubDomains) { $result.IncludeSubDomains } else { 'not found' })
+        $preload = $(if ($null -ne $result.Preload) { $result.Preload } else { 'not found' })
 
         if ($result.IsCompliant) {
             $compliantCount++
@@ -1475,14 +1555,19 @@ function Invoke-WebXmlPatch {
         if ($Mode -eq "audit") {
             $auditResult = Test-HstsHeaders -WebXml $webXml
             
-            # Determine status for concise output
+            # Determine status and details for table
             $status = "NOT_CONFIGURED"
             $details = ""
             
             if ($auditResult.IsCorrect) {
-                $status = "COMPLIANT"
-                $details = "Security Level: $SecurityLevel"
+                $status = "Compliant"
+                $details = "max-age=$MinMaxAge"
+                if ($RequireSubDomains) { $details += ", includeSubDomains=true" }
+                if ($RequirePreload) { $details += ", preload=true" }
                 $FileStatusRef.Value = $status
+                
+                # Add to table
+                Add-TableRow -File $WebXmlPath -Status $status -Details $details
                 
                 if (-not $Quiet) {
                     Write-ComplianceStatus -FilePath $WebXmlPath -Status $status -Details $details
@@ -1490,19 +1575,19 @@ function Invoke-WebXmlPatch {
                 return 0
             }
             elseif ($auditResult.HeaderCount -eq 0) {
-                $status = "NOT_CONFIGURED"
+                $status = "Not Configured"
                 $details = "No HSTS filters found"
             }
             elseif ($auditResult.NonCompliantCount -gt 0) {
                 if ($auditResult.HeaderCount -gt 1) {
-                    $status = "NON_COMPLIANT"
+                    $status = "Non-Compliant"
                     $details = "Multiple HSTS filters found ($($auditResult.HeaderCount))"
                 }
                 else {
-                    $status = "NON_COMPLIANT"
+                    $status = "Non-Compliant"
                     $details = "Weak or incorrect configuration"
                     
-                    # Extract current HSTS values for non-compliant files
+                    # Extract current HSTS values for non-compliant files (simplified)
                     $filters = $null
                     $xpaths = @(
                         "//filter[filter-name[text()='HstsHeaderFilter' or text()='HttpHeaderSecurityFilter']]",
@@ -1523,30 +1608,25 @@ function Invoke-WebXmlPatch {
                         $filter = $filters[0]
                         $result = Test-FilterCompliant -Filter $filter
                         
-                        $maxAge = if ($null -ne $result.MaxAge) { $result.MaxAge } else { 'not set' }
-                        $includeSub = if ($null -ne $result.IncludeSubDomains) { $result.IncludeSubDomains } else { 'not set' }
-                        $preload = if ($null -ne $result.Preload) { $result.Preload } else { 'not set' }
+                        $maxAge = $(if ($null -ne $result.MaxAge) { $result.MaxAge } else { 'not set' })
+                        $includeSub = $(if ($null -ne $result.IncludeSubDomains) { $result.IncludeSubDomains } else { 'not set' })
                         
-                        $details = "Current: max-age=$maxAge, includeSubDomains=$includeSub, preload=$preload"
+                        $details = "max-age=$maxAge, includeSubDomains=$includeSub"
                     }
                 }
             }
             
             $FileStatusRef.Value = $status
             
+            # Add to table
+            Add-TableRow -File $WebXmlPath -Status $status -Details $details
+            
             if (-not $Quiet) {
                 Write-ComplianceStatus -FilePath $WebXmlPath -Status $status -Details $details
                 
                 # Show full path and detailed info for non-compliant files
-                if ($status -ne "COMPLIANT") {
+                if ($status -ne "Compliant") {
                     Write-Host "    Path: $WebXmlPath" -ForegroundColor DarkGray
-                    
-                    if ($status -eq "NON_COMPLIANT" -and $details -match "max-age") {
-                        Write-Host "    Target: max-age=$MinMaxAge" -ForegroundColor DarkGray -NoNewline
-                        if ($RequireSubDomains) { Write-Host ", includeSubDomains=True" -ForegroundColor DarkGray -NoNewline }
-                        if ($RequirePreload) { Write-Host ", preload=True" -ForegroundColor DarkGray -NoNewline }
-                        Write-Host ""
-                    }
                 }
             }
             
@@ -1678,14 +1758,28 @@ try {
     
     # Collect all web.xml files from all configuration directories
     $webXmlFiles = @()
+    $firstConfPath = ""
+    $firstTomcatVersion = ""
+    
     foreach ($confPath in $confPaths) {
         $tomcatVersion = Get-TomcatVersion -ConfPath $confPath
-        Write-LogMessage "Found Tomcat Configuration: $confPath (Version: $tomcatVersion)"
+        
+        # Store first for header
+        if (-not $firstConfPath) {
+            $firstConfPath = $confPath
+            $firstTomcatVersion = $tomcatVersion
+        }
+        
+        if ($Mode -ne "audit" -or $Quiet) {
+            Write-LogMessage "Found Tomcat Configuration: $confPath (Version: $tomcatVersion)"
+        }
         
         if (-not (Test-HstsSupport -Version $tomcatVersion)) {
-            Write-LogMessage "WARNING: Tomcat version $tomcatVersion may not natively support HttpHeaderSecurityFilter."
-            Write-LogMessage "  - Supported versions: 7.0.69+, 8.0.35+, 8.5.1+, 9.0.0.M6+"
-            Write-LogMessage "  - If this is an older version, HSTS configuration may not take effect."
+            if ($Mode -ne "audit" -or $Quiet) {
+                Write-LogMessage "WARNING: Tomcat version $tomcatVersion may not natively support HttpHeaderSecurityFilter."
+                Write-LogMessage "  - Supported versions: 7.0.69+, 8.0.35+, 8.5.1+, 9.0.0.M6+"
+                Write-LogMessage "  - If this is an older version, HSTS configuration may not take effect."
+            }
         }
         $files = Find-WebXmlFiles -ConfPath $confPath
         foreach ($file in $files) {
@@ -1693,6 +1787,11 @@ try {
                 $webXmlFiles += $file
             }
         }
+    }
+    
+    # Print clean header for audit mode now that we have Tomcat info
+    if ($Mode -eq "audit" -and -not $Quiet) {
+        Print-Header -TomcatVersion $firstTomcatVersion -ConfigPath $firstConfPath
     }
     
     if ($webXmlFiles.Count -eq 0) {
@@ -1729,7 +1828,7 @@ try {
             "NON_COMPLIANT" { $nonCompliantCount++ }
         }
         
-        $status = if ($result -eq 0) { "SUCCESS" } else { "FAILURE" }
+        $status = $(if ($result -eq 0) { "SUCCESS" } else { "FAILURE" })
         $reportEntries += [PSCustomObject]@{
             FileName         = $webXml
             Status           = $status
@@ -1750,48 +1849,60 @@ try {
         }
     }
     
-    # Summary - Beautiful formatted output
+    # Summary - Clean table output for audit, verbose for configure
     if (-not $Quiet) {
-        Write-Host ""
-        Write-Host "╔══════════════════════════════════════════════════════╗" -ForegroundColor Cyan
-        Write-Host "║            HSTS COMPLIANCE SUMMARY                   ║" -ForegroundColor Cyan
-        Write-Host "╠══════════════════════════════════════════════════════╣" -ForegroundColor Cyan
-        
-        Write-Host "║ Files Scanned:  " -ForegroundColor Cyan -NoNewline
-        Write-Host ("$processedCount".PadLeft(37)) -ForegroundColor White -NoNewline
-        Write-Host "║" -ForegroundColor Cyan
-        
         if ($Mode -eq "audit") {
-            # Calculate percentages
-            $compliantPct = if ($processedCount -gt 0) { [math]::Round(($compliantCount / $processedCount) * 100) } else { 0 }
-            $notConfiguredPct = if ($processedCount -gt 0) { [math]::Round(($notConfiguredCount / $processedCount) * 100) } else { 0 }
-            $nonCompliantPct = if ($processedCount -gt 0) { [math]::Round(($nonCompliantCount / $processedCount) * 100) } else { 0 }
+            # Print compliance table
+            Print-ComplianceTable
+            
+            # Simple overall status
+            $total = $script:CompliantCount + $script:NonCompliantCount + $script:NotConfiguredCount
+            if ($script:CompliantCount -eq $total -and $total -gt 0) {
+                Write-Host "Overall Status: Compliant ($($script:CompliantCount) Compliant)"
+            }
+            else {
+                Write-Host "Overall Status: Non-Compliant ($($script:CompliantCount) Compliant, $($script:NonCompliantCount) Non-Compliant, $($script:NotConfiguredCount) Not Configured)"
+            }
+            
+            Write-Host "Audit completed. Log: $LogFile"
+        }
+        else {
+            # Verbose mode for configure
+            Write-Host ""
+            Write-Host "╔══════════════════════════════════════════════════════╗" -ForegroundColor Cyan
+            Write-Host "║            HSTS COMPLIANCE SUMMARY                   ║" -ForegroundColor Cyan
+            Write-Host "╠══════════════════════════════════════════════════════╣" -ForegroundColor Cyan
+            
+            Write-Host "║ Files Scanned:  " -ForegroundColor Cyan -NoNewline
+            Write-Host ("$processedCount".PadLeft(37)) -ForegroundColor White -NoNewline
+            Write-Host "║" -ForegroundColor Cyan
             
             Write-Host "║ " -ForegroundColor Cyan -NoNewline
             Write-Host "✓" -ForegroundColor Green -NoNewline
             Write-Host " Compliant:  " -ForegroundColor Cyan -NoNewline
             Write-Host ("$compliantCount".PadLeft(8)) -ForegroundColor Green -NoNewline
-            Write-Host " ($compliantPct%)\" -ForegroundColor Gray -NoNewline
-            Write-Host (" ".PadLeft(19 - ("  ($compliantPct%)").Length)) -NoNewline
+            Write-Host " ($compliantPct%)" -ForegroundColor Gray -NoNewline
+            Write-Host (" ".PadLeft(19 - (" ($compliantPct%)").Length)) -NoNewline
             Write-Host "║" -ForegroundColor Cyan
             
             Write-Host "║ " -ForegroundColor Cyan -NoNewline
             Write-Host "✗" -ForegroundColor Red -NoNewline
             Write-Host " Not Configured:  " -ForegroundColor Cyan -NoNewline
             Write-Host ("$notConfiguredCount".PadLeft(4)) -ForegroundColor Red -NoNewline
-            Write-Host " ($notConfiguredPct%)\" -ForegroundColor Gray -NoNewline
-            Write-Host (" ".PadLeft(19 - ("  ($notConfiguredPct%)").Length)) -NoNewline
+            Write-Host " ($notConfiguredPct%)" -ForegroundColor Gray -NoNewline
+            Write-Host (" ".PadLeft(19 - (" ($notConfiguredPct%)").Length)) -NoNewline
             Write-Host "║" -ForegroundColor Cyan
             
             Write-Host "║ " -ForegroundColor Cyan -NoNewline
             Write-Host "⚠" -ForegroundColor Yellow -NoNewline
             Write-Host " Non-Compliant:  " -ForegroundColor Cyan -NoNewline
             Write-Host ("$nonCompliantCount".PadLeft(5)) -ForegroundColor Yellow -NoNewline
-            Write-Host " ($nonCompliantPct%)\" -ForegroundColor Gray -NoNewline
-            Write-Host (" ".PadLeft(19 - ("  ($nonCompliantPct%)").Length)) -NoNewline
+            Write-Host " ($nonCompliantPct%)" -ForegroundColor Gray -NoNewline
+            Write-Host (" ".PadLeft(19 - (" ($nonCompliantPct%)").Length)) -NoNewline
             Write-Host "║" -ForegroundColor Cyan
-        }
-        else {
+            
+            Write-Host "╠══════════════════════════════════════════════════════╣" -ForegroundColor Cyan
+            
             Write-Host "║ " -ForegroundColor Cyan -NoNewline
             Write-Host "✓" -ForegroundColor Green -NoNewline
             Write-Host " Successful:  "  -ForegroundColor Cyan -NoNewline
@@ -1803,46 +1914,19 @@ try {
             Write-Host " Failed:  " -ForegroundColor Cyan -NoNewline
             Write-Host ("$failureCount".PadLeft(37)) -ForegroundColor Red -NoNewline
             Write-Host "║" -ForegroundColor Cyan
-        }
-        
-        Write-Host "╚══════════════════════════════════════════════════════╝" -ForegroundColor Cyan
-        Write-Host ""
-    }    
-    if ($overallSuccess -eq 0) {
-        if (-not $Quiet) {
-            Write-Host "✓ Overall Status: " -ForegroundColor Green -NoNewline
-            Write-Host "SUCCESS" -ForegroundColor Green
+            
+            Write-Host "╚══════════════════════════════════════════════════════╝" -ForegroundColor Cyan
+            Write-Host ""
         }
     }
-    else {
-        Write-LogMessage "Overall Status: FAILURE (some files failed)"
-        
-        # Get failed paths from report entries
-        $failedPaths = $reportEntries | Where-Object { $_.Status -eq "FAILURE" } | Select-Object -ExpandProperty FileName
-        
-        if ($failedPaths -and $failedPaths.Count -gt 0 -and $Mode -eq "audit" -and -not $Quiet) {
-            Write-Host ""
-            Write-Host "╔══════════════════════════════════════════════════════╗" -ForegroundColor Yellow
-            Write-Host "║        QUICK FIX - Configure All Non-Compliant       ║" -ForegroundColor Yellow
-            Write-Host "╚══════════════════════════════════════════════════════╝" -ForegroundColor Yellow
-            Write-Host ""
-            Write-Host "Choose a security level and run ONE command:" -ForegroundColor Cyan
-            Write-Host ""
-            Write-Host "  [1] BASIC (1 year):" -ForegroundColor White
-            Write-Host "      .\UpdateTomcatHstsWin.ps1 -Mode configure -SecurityLevel 1" -ForegroundColor Gray
-            Write-Host ""
-            Write-Host "  [2] HIGH - OWASP Recommended (1 year + subdomains):" -ForegroundColor White
-            Write-Host "      .\UpdateTomcatHstsWin.ps1 -Mode configure -SecurityLevel 2" -ForegroundColor Gray
-            Write-Host ""
-            Write-Host "  [3] VERY HIGH (1 year + subdomains + preload):" -ForegroundColor White
-            Write-Host "      .\UpdateTomcatHstsWin.ps1 -Mode configure -SecurityLevel 3" -ForegroundColor Gray
-            Write-Host ""
-            Write-Host "  [4] MAXIMUM (2 years + subdomains + preload):" -ForegroundColor White
-            Write-Host "      .\UpdateTomcatHstsWin.ps1 -Mode configure -SecurityLevel 4" -ForegroundColor Gray
-            Write-Host ""
-            Write-Host "TIP: Add -DryRun to preview changes without applying" -ForegroundColor Cyan
-            Write-Host ""
+    
+    if ($overallSuccess -eq 0 -and $Mode -ne "audit") {
+        if (-not $Quiet) {
+            Write-Host "✓ Overall Status: SUCCESS" -ForegroundColor Green
         }
+    }
+    elseif ($Mode -ne "audit") {
+        Write-LogMessage "Overall Status: FAILURE (some files failed)"
     }
 
     # Generate Report

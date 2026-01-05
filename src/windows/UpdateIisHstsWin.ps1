@@ -126,6 +126,12 @@ $RecommendedHsts = "max-age=$MinMaxAge"
 if ($RequireSubDomains) { $RecommendedHsts += "; includeSubDomains" }
 if ($RequirePreload) { $RecommendedHsts += "; preload" }
 
+# Global variables for compliance tracking (table output)
+$script:ComplianceTableRows = @()
+$script:CompliantCount = 0
+$script:NonCompliantCount = 0
+$script:NotConfiguredCount = 0
+
 # Initialize log file
 if ($LogFile -eq "" -or $null -eq $LogFile) {
     if ($env:TEMP) {
@@ -244,15 +250,81 @@ function Write-ComplianceStatus {
     }
 }
 
-Write-LogMessage "========================================="
-Write-LogMessage "IIS HSTS Configuration Tool"
-Write-LogMessage "Hostname: $Hostname"
-Write-LogMessage "Execution Time: $Timestamp"
-Write-LogMessage "Mode: $Mode"
-if ($Force) {
-    Write-LogMessage "Force Mode: Enabled (auto-approve all changes)"
+# Function: Print header for output
+function Print-Header {
+    param([string]$IisVersion = "", [string]$ConfigPath = "")
+    
+    $hostnameLength = $Hostname.Length
+    $padding = [Math]::Max(0, 80 - $hostnameLength)
+    $leftPad = [Math]::Floor($padding / 2)
+    $rightPad = $padding - $leftPad
+    $headerLine = ('#' * $leftPad) + $Hostname + ('#' * $rightPad)
+    
+    Write-Host "Checking IIS HSTS Configuration..."
+    Write-Host $headerLine
+    Write-Host "Execution Time: $Timestamp"
+    Write-Host "HOSTNAME: $Hostname"
+    if ($IisVersion) { Write-Host "IIS Version: $IisVersion" }
+    if ($ConfigPath) { Write-Host "Config Path: $ConfigPath" }
+    Write-Host "==========================="
 }
-Write-LogMessage "========================================="
+
+# Function: Add row to compliance table
+function Add-TableRow {
+    param([string]$File, [string]$Status, [string]$Details)
+    
+    $script:ComplianceTableRows += [PSCustomObject]@{
+        File    = $File
+        Status  = $Status
+        Details = $Details
+    }
+    
+    switch ($Status) {
+        "Compliant" { $script:CompliantCount++ }
+        "Non-Compliant" { $script:NonCompliantCount++ }
+        "Not Configured" { $script:NotConfiguredCount++ }
+    }
+}
+
+# Function: Print compliance table
+function Print-ComplianceTable {
+    if ($script:ComplianceTableRows.Count -eq 0) { return }
+    
+    Write-Host ""
+    Write-Host "HSTS Compliance Results:"
+    Write-Host ("{0,-40} | {1,-15} | {2}" -f "File", "Status", "Details")
+    Write-Host ("{0,-40}-+-{1,-15}-+-{2}" -f ('-' * 40), ('-' * 15), ('-' * 40))
+    
+    foreach ($row in $script:ComplianceTableRows) {
+        $fileName = Split-Path $row.File -Leaf
+        if ($fileName.Length -gt 40) { $fileName = $fileName.Substring(0, 37) + "..." }
+        $status = $row.Status
+        if ($status.Length -gt 15) { $status = $status.Substring(0, 12) + "..." }
+        $details = $row.Details
+        if ($details.Length -gt 40) { $details = $details.Substring(0, 37) + "..." }
+        
+        Write-Host ("{0,-40} | {1,-15} | {2}" -f $fileName, $status, $details)
+    }
+    
+    Write-Host ""
+    Write-Host "==========================="
+}
+
+# Print header based on mode
+if ($Mode -eq "audit" -and -not $Quiet) {
+    # Will print clean header after detecting IIS
+}
+else {
+    Write-LogMessage "========================================="
+    Write-LogMessage "IIS HSTS Configuration Tool"
+    Write-LogMessage "Hostname: $Hostname"
+    Write-LogMessage "Execution Time: $Timestamp"
+    Write-LogMessage "Mode: $Mode"
+    if ($Force) {
+        Write-LogMessage "Force Mode: Enabled (auto-approve all changes)"
+    }
+    Write-LogMessage "========================================="
+}
 
 # Function: Load custom paths from file
 function Get-CustomPathsFromFile {
@@ -1383,25 +1455,52 @@ function Invoke-WebConfigPatch {
         [string]$Mode
     )
     
-    Write-LogMessage ""
-    Write-LogMessage "========================================="
-    Write-LogMessage "Processing: $WebConfigPath"
-    Write-LogMessage "========================================="
+    if (-not $Quiet) {
+        Write-LogMessage ""
+        Write-LogMessage "Processing: $WebConfigPath"
+    }
     
     try {
         $parsedConfig = Import-HstsConfig -ConfigPath $WebConfigPath
         
         if ($Mode -eq "audit") {
             $auditResult = Test-HstsHeaders -ParsedConfig $parsedConfig
-            Write-AuditResults -IsCorrect $auditResult.IsCorrect -Details $auditResult.Details -WebConfigPath $WebConfigPath
+            
+            # Determine status and details for table
+            $status = ""
+            $details = ""
+            
+            if ($auditResult.IsCorrect) {
+                $status = "Compliant"
+                $details = "max-age=$MinMaxAge"
+                if ($RequireSubDomains) { $details += ", includeSubDomains=true" }
+                if ($RequirePreload) { $details += ", preload=true" }
+            }
+            elseif ($auditResult.HeaderCount -eq 0) {
+                $status = "Not Configured"
+                $details = "No HSTS headers found"
+            }
+            else {
+                $status = "Non-Compliant"
+                if ($auditResult.HeaderCount -gt 1) {
+                    $details = "Multiple HSTS headers ($($auditResult.HeaderCount))"
+                }
+                else {
+                    $details = "Weak or incorrect configuration"
+                }
+            }
+            
+            # Add to table
+            Add-TableRow -File $WebConfigPath -Status $status -Details $details
+            
+            if (-not $Quiet) {
+                Write-AuditResults -IsCorrect $auditResult.IsCorrect -Details $auditResult.Details -WebConfigPath $WebConfigPath
+            }
             
             if ($auditResult.IsCorrect) {
                 return 0
             }
             else {
-                if ($auditResult.HeaderCount -gt 1) {
-                    Write-LogMessage "ACTION REQUIRED: Remove duplicate HSTS definitions. Only one compliant configuration should exist."
-                }
                 return 1
             }
             
@@ -1501,8 +1600,16 @@ try {
     
     # Detect and log IIS version
     $iisVer = Get-IisVersion
-    Write-LogMessage "Detected IIS Version: $iisVer"
-    Write-LogMessage ""
+    
+    # Print clean header for audit mode
+    if ($Mode -eq "audit" -and -not $Quiet) {
+        $firstConfig = if ($webConfigFiles.Count -gt 0) { $webConfigFiles[0] } else { "" }
+        Print-Header -IisVersion $iisVer -ConfigPath $firstConfig
+    }
+    else {
+        Write-LogMessage "Detected IIS Version: $iisVer"
+        Write-LogMessage ""
+    }
 
     # Process each web.config file
     $overallSuccess = 0
@@ -1536,67 +1643,39 @@ try {
         }
     }
     
-    # Summary
-    Write-LogMessage ""
-    Write-LogMessage "========================================="
-    Write-LogMessage "Summary"
-    Write-LogMessage "========================================="
-    Write-LogMessage "Total files processed: $processedCount"
-    Write-LogMessage "Successful: $successCount"
-    Write-LogMessage "Failed: $failureCount"
-    
-    if ($overallSuccess -eq 0) {
-        Write-LogMessage "Overall Status: SUCCESS"
-    }
-    else {
-        Write-LogMessage "Overall Status: FAILURE (some files failed)"
-        
-        # Get failed paths from report entries
-        $failedPaths = $reportEntries | Where-Object { $_.Status -eq "FAILURE" } | Select-Object -ExpandProperty FileName
-        
-        if ($failedPaths -and $failedPaths.Count -gt 0 -and $Mode -eq "audit") {
-            Write-LogMessage ""
-            Write-LogMessage "========================================="
-            Write-LogMessage "CONFIGURATION COMMANDS FOR FAILED PATHS"
-            Write-LogMessage "========================================="
-            Write-LogMessage ""
-            Write-LogMessage "Copy and run the appropriate command for each installation:"
-            Write-LogMessage ""
+    # Summary - Clean table output for audit, verbose for configure
+    if (-not $Quiet) {
+        if ($Mode -eq "audit") {
+            # Print compliance table
+            Print-ComplianceTable
             
-            $pathNum = 1
-            foreach ($failedPath in $failedPaths) {
-                Write-LogMessage "--- Installation $pathNum`: $failedPath ---"
-                Write-LogMessage ""
-                Write-LogMessage "  [1] BASIC (max-age=31536000):"
-                Write-LogMessage "      .\UpdateIisHstsWin.ps1 -Mode configure -SecurityLevel 1 -CustomPaths @('$failedPath')"
-                Write-LogMessage ""
-                Write-LogMessage "  [2] HIGH - OWASP Recommended (max-age=31536000; includeSubDomains):"
-                Write-LogMessage "      .\UpdateIisHstsWin.ps1 -Mode configure -SecurityLevel 2 -CustomPaths @('$failedPath')"
-                Write-LogMessage ""
-                Write-LogMessage "  [3] VERY HIGH - Preload Ready (max-age=31536000; includeSubDomains; preload):"
-                Write-LogMessage "      .\UpdateIisHstsWin.ps1 -Mode configure -SecurityLevel 3 -CustomPaths @('$failedPath')"
-                Write-LogMessage ""
-                Write-LogMessage "  [4] MAXIMUM - Highest Security (max-age=63072000; includeSubDomains; preload):"
-                Write-LogMessage "      .\UpdateIisHstsWin.ps1 -Mode configure -SecurityLevel 4 -CustomPaths @('$failedPath')"
-                Write-LogMessage ""
-                $pathNum++
+            # Simple overall status
+            $total = $script:CompliantCount + $script:NonCompliantCount + $script:NotConfiguredCount
+            if ($script:CompliantCount -eq $total -and $total -gt 0) {
+                Write-Host "Overall Status: Compliant ($($script:CompliantCount) Compliant)"
             }
+            else {
+                Write-Host "Overall Status: Non-Compliant ($($script:CompliantCount) Compliant, $($script:NonCompliantCount) Non-Compliant, $($script:NotConfiguredCount) Not Configured)"
+            }
+            
+            Write-Host "Audit completed. Log: $LogFile"
+        }
+        else {
+            # Verbose mode for configure
             Write-LogMessage ""
             Write-LogMessage "========================================="
-            Write-LogMessage "CONFIGURE ALL FAILED PATHS (QUICK FIX)"
+            Write-LogMessage "Summary"
             Write-LogMessage "========================================="
-            Write-LogMessage ""
-            Write-LogMessage "To configure ALL failed installations at once, run ONE of these commands:"
-            Write-LogMessage ""
-            Write-LogMessage "  [1] Apply BASIC to ALL:      .\UpdateIisHstsWin.ps1 -Mode configure -SecurityLevel 1"
-            Write-LogMessage "  [2] Apply HIGH to ALL:       .\UpdateIisHstsWin.ps1 -Mode configure -SecurityLevel 2"
-            Write-LogMessage "  [3] Apply VERY HIGH to ALL:  .\UpdateIisHstsWin.ps1 -Mode configure -SecurityLevel 3"
-            Write-LogMessage "  [4] Apply MAXIMUM to ALL:    .\UpdateIisHstsWin.ps1 -Mode configure -SecurityLevel 4"
-            Write-LogMessage ""
-            Write-LogMessage "TIP: Add -DryRun to preview changes without applying"
-            Write-LogMessage "========================================="
-
-            # Interactive mode removed per user request.
+            Write-LogMessage "Total files processed: $processedCount"
+            Write-LogMessage "Successful: $successCount"
+            Write-LogMessage "Failed: $failureCount"
+            
+            if ($overallSuccess -eq 0) {
+                Write-LogMessage "Overall Status: SUCCESS"
+            }
+            else {
+                Write-LogMessage "Overall Status: FAILURE (some files failed)"
+            }
         }
     }
 

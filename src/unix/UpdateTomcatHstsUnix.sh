@@ -36,6 +36,7 @@ LOG_FILE="/var/log/tomcat-hsts-$(date +%Y%m%d_%H%M%S).log"
 REPORT_FILE=""
 JSON_OUTPUT=false
 DRY_RUN=false
+QUIET_MODE=false
 SCRIPT_NAME=$(basename "$0")
 RECOMMENDED_HSTS="max-age=31536000; includeSubDomains"
 RECOMMENDED_HSTS_FULL="Strict-Transport-Security: max-age=31536000; includeSubDomains"
@@ -50,6 +51,12 @@ REQUIRE_PRELOAD=false
 # Global variables for tracking results
 RESULTS_JSON=""
 SUMMARY_ENTRIES=()
+
+# Global variables for compliance tracking (table output)
+COMPLIANCE_TABLE_ROWS=()
+COMPLIANT_COUNT=0
+NON_COMPLIANT_COUNT=0
+NOT_CONFIGURED_COUNT=0
 
 # Global variables for cleanup
 TEMP_FILES=()
@@ -101,11 +108,16 @@ usage() {
 # Function: Log message to console and optionally to file
 log_message() {
     local message="$1"
+    local force="${2:-false}"
     local timestamp=$(date '+%Y-%m-%d %H:%M:%S')
     local log_entry="[$timestamp] $message"
     
-    echo "$log_entry" >&2
+    # Only print to console if not in quiet mode OR force is true
+    if [[ "$QUIET_MODE" != "true" ]] || [[ "$force" == "true" ]]; then
+        echo "$log_entry" >&2
+    fi
     
+    # Always log to file if configured
     if [[ -n "$LOG_FILE" ]]; then
         echo "$log_entry" >> "$LOG_FILE" 2>/dev/null || true
     fi
@@ -113,7 +125,61 @@ log_message() {
 
 # Function: Log error message
 log_error() {
-    log_message "ERROR: $1" >&2
+    log_message "ERROR: $1" true >&2
+}
+
+# Function: Print header for output
+print_header() {
+    local hostname_line=$(printf '#%.0s' {1..80})
+    hostname_line="${hostname_line:0:$((40 - ${#HOSTNAME}/2))}$HOSTNAME${hostname_line:0:$((40 - (${#HOSTNAME}+1)/2))}"
+    
+    echo "Checking Tomcat HSTS Configuration..."
+    echo "$hostname_line"
+    echo "Execution Time: $TIMESTAMP"
+    echo "HOSTNAME: $HOSTNAME"
+    echo "==========================="
+}
+
+# Function: Add row to compliance table
+add_table_row() {
+    local file="$1"
+    local status="$2"
+    local details="$3"
+    
+    COMPLIANCE_TABLE_ROWS+=("$file|$status|$details")
+    
+    case "$status" in
+        "Compliant")
+            COMPLIANT_COUNT=$((COMPLIANT_COUNT + 1))
+            ;;
+        "Non-Compliant")
+            NON_COMPLIANT_COUNT=$((NON_COMPLIANT_COUNT + 1))
+            ;;
+        "Not Configured")
+            NOT_CONFIGURED_COUNT=$((NOT_CONFIGURED_COUNT + 1))
+            ;;
+    esac
+}
+
+# Function: Print compliance table
+print_compliance_table() {
+    if [[ ${#COMPLIANCE_TABLE_ROWS[@]} -eq 0 ]]; then
+        return
+    fi
+    
+    echo ""
+    echo "HSTS Compliance Results:"
+    printf "%-40s | %-15s | %s\n" "File" "Status" "Details"
+    printf "%-40s-+-%-15s-+-%s\n" "$(printf -- '-%.0s' {1..40})" "$(printf -- '-%.0s' {1..15})" "$(printf -- '-%.0s' {1..40})"
+    
+    for row in "${COMPLIANCE_TABLE_ROWS[@]}"; do
+        IFS='|' read -r file status details <<< "$row"
+        local file_basename=$(basename "$file")
+        printf "%-40s | %-15s | %s\n" "${file_basename:0:40}" "${status:0:15}" "${details:0:40}"
+    done
+    
+    echo ""
+    echo "==========================="
 }
 
 # Function: Validate XML file
@@ -467,6 +533,9 @@ audit_hsts_headers() {
     AUDIT_HEADER_COUNT=$header_count
     AUDIT_COMPLIANT_COUNT=$compliant_count
     AUDIT_NON_COMPLIANT_COUNT=$non_compliant_count
+    AUDIT_CURRENT_MAX_AGE="${max_age_val:-}"
+    AUDIT_CURRENT_SUBDOMAINS="${include_subdomains_val:-}"
+    AUDIT_CURRENT_PRELOAD="${preload_val:-}"
     return $is_correct
 }
 
@@ -1452,10 +1521,13 @@ process_web_xml() {
     local web_xml_path="$1"
     local overall_success=0
     
-    log_message ""
-    log_message "========================================="
-    log_message "Processing: $web_xml_path"
-    log_message "========================================="
+    # Only show processing header if not in quiet mode
+    if [[ "$QUIET_MODE" != "true" ]]; then
+        log_message ""
+        log_message "========================================="
+        log_message "Processing: $web_xml_path"
+        log_message "========================================="
+    fi
     
     # Load configuration
     local config_content
@@ -1465,7 +1537,7 @@ process_web_xml() {
     fi
     
     if [[ "$MODE" == "audit" ]]; then
-        # Audit mode
+        # Audit mode - Analyze and add to table
         local audit_result=""
         if ! audit_hsts_headers "$config_content"; then
             local is_correct=1
@@ -1473,7 +1545,37 @@ process_web_xml() {
             local is_correct=0
         fi
         
-        log_audit_results "$is_correct" "$AUDIT_RESULT" "$web_xml_path"
+        # Determine status and details for table
+        local status=""
+        local details=""
+        
+        if [[ $is_correct -eq 0 ]]; then
+            status="Compliant"
+            details="max-age=$MIN_MAX_AGE"
+            [[ "$REQUIRE_SUBDOMAINS" == "true" ]] && details="$details, includeSubDomains=true"
+            [[ "$REQUIRE_PRELOAD" == "true" ]] && details="$details, preload=true"
+        elif [[ $AUDIT_HEADER_COUNT -eq 0 ]]; then
+            status="Not Configured"
+            details="No HSTS filters found"
+        else
+            status="Non-Compliant"
+            # Extract current values for details
+            if [[ -n "$AUDIT_CURRENT_MAX_AGE" ]]; then
+                details="max-age=$AUDIT_CURRENT_MAX_AGE"
+                [[ "$AUDIT_CURRENT_SUBDOMAINS" == "true" ]] && details="$details, includeSubDomains=true" || details="$details, includeSubDomains=false"
+            else
+                details="Weak or incorrect configuration"
+            fi
+        fi
+        
+        # Add row to table
+        add_table_row "$web_xml_path" "$status" "$details"
+        
+        # Don't print results here in quiet mode - table will print at the end
+        if [[ "$QUIET_MODE" != "true" ]]; then
+            log_audit_results "$is_correct" "$AUDIT_RESULT" ""
+        fi
+        
         return $is_correct
         
     elif [[ "$MODE" == "configure" ]]; then
@@ -1675,6 +1777,11 @@ main() {
     [[ "$REQUIRE_PRELOAD" == "true" ]] && RECOMMENDED_HSTS="$RECOMMENDED_HSTS; preload"
     RECOMMENDED_HSTS_FULL="Strict-Transport-Security: $RECOMMENDED_HSTS"
     
+    # Enable quiet mode for audit mode to get clean table output
+    if [[ "$MODE" == "audit" ]] && [[ "$JSON_OUTPUT" != "true" ]]; then
+        QUIET_MODE=true
+    fi
+    
     # Validate mode
     if [[ -n "$LOG_FILE" ]]; then
         # Check if we can write to the log file or its directory
@@ -1685,18 +1792,23 @@ main() {
                 log_error "Cannot create log file in /tmp either. Continuing without file logging."
                 LOG_FILE=""
             else
-                log_message "Logging to fallback location: $LOG_FILE"
+                log_message "Logging to fallback location: $LOG_FILE" true
             fi
         fi
     fi
     
-    # Log start
-    log_message "========================================="
-    log_message "Tomcat HSTS Configuration Tool"
-    log_message "Hostname: $HOSTNAME"
-    log_message "Execution Time: $TIMESTAMP"
-    log_message "Mode: $MODE"
-    log_message "========================================="
+    # Print clean header if in quiet (audit) mode
+    if [[ "$QUIET_MODE" == "true" ]]; then
+        print_header
+    else
+        # Log start (verbose mode)
+        log_message "========================================="
+        log_message "Tomcat HSTS Configuration Tool"
+        log_message "Hostname: $HOSTNAME"
+        log_message "Execution Time: $TIMESTAMP"
+        log_message "Mode: $MODE"
+        log_message "========================================="
+    fi
     
     # Collect all custom paths
     local all_custom_paths=(${CUSTOM_CONF_PATHS[@]+"${CUSTOM_CONF_PATHS[@]}"})
@@ -1796,70 +1908,38 @@ main() {
     
     # Summary
     if [[ "$JSON_OUTPUT" == "false" ]]; then
-        log_message ""
-        log_message "========================================="
-        log_message "Summary"
-        log_message "========================================="
-        log_message "Total files processed: $processed_count"
-        log_message "Successful: $success_count"
-        log_message "Failed: $failure_count"
-        
-        if [[ $overall_success -eq 0 ]]; then
-            log_message "Overall Status: SUCCESS"
-        else
-            log_message "Overall Status: FAILURE (some files failed)"
+        if [[ "$QUIET_MODE" == "true" ]]; then
+            # Print compliance table for audit mode
+            print_compliance_table
             
-            # Show comprehensive configure commands for failed paths
-            if [[ ${#failed_paths[@]} -gt 0 ]] && [[ "$MODE" == "audit" ]]; then
-                log_message ""
-                log_message "========================================="
-                log_message "CONFIGURATION COMMANDS FOR FAILED PATHS"
-                log_message "========================================="
-                log_message ""
-                log_message "Copy and run the appropriate command for each installation:"
-                log_message ""
-                
-                local path_num=1
-                for failed_path in "${failed_paths[@]}"; do
-                    local conf_dir=$(dirname "$failed_path")
-                    log_message "--- Installation $path_num: $conf_dir ---"
-                    log_message ""
-                    log_message "  [1] BASIC (max-age=31536000):"
-                    log_message "      sudo $0 --mode configure --security-level 1 --custom-conf=$conf_dir"
-                    log_message ""
-                    log_message "  [2] HIGH - OWASP Recommended (max-age=31536000; includeSubDomains):"
-                    log_message "      sudo $0 --mode configure --security-level 2 --custom-conf=$conf_dir"
-                    log_message ""
-                    log_message "  [3] VERY HIGH - Preload Ready (max-age=31536000; includeSubDomains; preload):"
-                    log_message "      sudo $0 --mode configure --security-level 3 --custom-conf=$conf_dir"
-                    log_message ""
-                    log_message "  [4] MAXIMUM - Highest Security (max-age=63072000; includeSubDomains; preload):"
-                    log_message "      sudo $0 --mode configure --security-level 4 --custom-conf=$conf_dir"
-                    log_message ""
-                    path_num=$((path_num + 1))
-                done
-                log_message ""
-                log_message "========================================="
-                log_message "CONFIGURE ALL FAILED PATHS (QUICK FIX)"
-                log_message "========================================="
-                log_message ""
-                log_message "To configure ALL failed installations at once, run ONE of these commands:"
-                log_message ""
-                log_message "  [1] Apply BASIC to ALL:      sudo $0 --mode configure --security-level 1"
-                log_message "  [2] Apply HIGH to ALL:       sudo $0 --mode configure --security-level 2"
-                log_message "  [3] Apply VERY HIGH to ALL:  sudo $0 --mode configure --security-level 3"
-                log_message "  [4] Apply MAXIMUM to ALL:    sudo $0 --mode configure --security-level 4"
-                log_message ""
-                log_message "TIP: Add --dry-run to preview changes without applying"
-                log_message "========================================="
-
-                # Interactive mode removed per user request.
-                # Recommendations are printed above.
+            # Simple overall status
+            local total=$((COMPLIANT_COUNT + NON_COMPLIANT_COUNT + NOT_CONFIGURED_COUNT))
+            if [[ $COMPLIANT_COUNT -eq $total ]] && [[ $total -gt 0 ]]; then
+                echo "Overall Status: Compliant ($COMPLIANT_COUNT Compliant)"
+            else
+                echo "Overall Status: Non-Compliant ($COMPLIANT_COUNT Compliant, $NON_COMPLIANT_COUNT Non-Compliant, $NOT_CONFIGURED_COUNT Not Configured)"
             fi
-        fi
-        
-        if [[ -n "$LOG_FILE" ]]; then
-            log_message "Log file: $LOG_FILE"
+            
+            echo "Audit completed. Log: ${LOG_FILE:-None}"
+        else
+            # Verbose mode (configure mode)
+            log_message ""
+            log_message "========================================="
+            log_message "Summary"
+            log_message "========================================="
+            log_message "Total files processed: $processed_count"
+            log_message "Successful: $success_count"
+            log_message "Failed: $failure_count"
+            
+            if [[ $overall_success -eq 0 ]]; then
+                log_message "Overall Status: SUCCESS"
+            else
+                log_message "Overall Status: FAILURE (some files failed)"
+            fi
+            
+            if [[ -n "$LOG_FILE" ]]; then
+                log_message "Log file: $LOG_FILE"
+            fi
         fi
     fi
 
