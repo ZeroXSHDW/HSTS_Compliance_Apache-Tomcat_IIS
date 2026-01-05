@@ -218,11 +218,11 @@ validate_file_path() {
         return 1
     fi
     
-    # Check for null bytes
-    if [[ "$file_path" =~ $'\0' ]]; then
-        log_error "Invalid path: contains null byte"
-        return 1
-    fi
+#     # Check for null bytes
+#     if [[ "$file_path" =~ $'\0' ]]; then
+#         log_error "Invalid path: contains null byte"
+#         return 1
+#     fi
     
     # Warn if path is not absolute (recommended for security, but allow relative paths)
     if [[ ! "$file_path" =~ ^/ ]]; then

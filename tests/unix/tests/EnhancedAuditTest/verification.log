@@ -31,3 +31,10 @@
 [2026-01-05 14:37:05] --- Testing Scenario: Multiple_Headers ---
 [2026-01-05 14:37:06] SUCCESS: Multiple direct headers scenario output verified.
 [2026-01-05 14:37:06] === All Unix Enhanced Audit Verifications Passed ===
+[2026-01-05 17:36:50] --- Testing Scenario: No_HSTS ---
+[2026-01-05 17:36:50] SUCCESS: No HSTS scenario output verified.
+[2026-01-05 17:36:50] --- Testing Scenario: Non_Compliant ---
+[2026-01-05 17:36:50] SUCCESS: Non-compliant filter scenario output verified.
+[2026-01-05 17:36:50] --- Testing Scenario: Multiple_Headers ---
+[2026-01-05 17:36:50] SUCCESS: Multiple direct headers scenario output verified.
+[2026-01-05 17:36:50] === All Unix Enhanced Audit Verifications Passed ===
