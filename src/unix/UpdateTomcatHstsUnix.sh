@@ -170,7 +170,7 @@ print_compliance_table() {
     echo ""
     echo "HSTS Compliance Results:"
     printf "%-40s | %-15s | %s\n" "File" "Status" "Details"
-    printf "%-40s-+-%-15s-+-%s\n" "$(printf -- '-%.0s' {1..40})" "$(printf -- '-%.0s' {1..15})" "$(printf -- '-%.0s' {1..40})"
+    echo "-----------------------------------------+-----------------+-----------------------------------------"
     
     for row in "${COMPLIANCE_TABLE_ROWS[@]}"; do
         IFS='|' read -r file status details <<< "$row"
