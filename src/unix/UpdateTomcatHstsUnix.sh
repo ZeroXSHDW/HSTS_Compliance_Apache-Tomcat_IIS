@@ -414,6 +414,12 @@ audit_hsts_headers() {
     
     log_message "Found $header_count HSTS header definition(s)"
     
+    # Initialize counts
+    local compliant_count=0
+    local non_compliant_count=0
+    local is_correct=1
+    local details=""
+    
     # Check each header for compliance
     local compliant_headers=()
     local non_compliant_headers=()
@@ -1571,8 +1577,8 @@ process_web_xml() {
         # Add row to table
         add_table_row "$web_xml_path" "$status" "$details"
         
-        # Don't print results here in quiet mode - table will print at the end
-        if [[ "$QUIET_MODE" != "true" ]]; then
+        # Log results if not in quiet mode OR if a log file is configured for traceability
+        if [[ "$QUIET_MODE" != "true" ]] || [[ -n "$LOG_FILE" ]]; then
             log_audit_results "$is_correct" "$AUDIT_RESULT" ""
         fi
         

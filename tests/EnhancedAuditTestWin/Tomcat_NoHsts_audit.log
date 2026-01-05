@@ -1,35 +1,7 @@
-[2026-01-02 13:54:03] =========================================
-[2026-01-02 13:54:03] Tomcat HSTS Configuration Tool
-[2026-01-02 13:54:03] Hostname: 
-[2026-01-02 13:54:03] Execution Time: 2026-01-02 13:54:03
-[2026-01-02 13:54:03] Mode: audit
-[2026-01-02 13:54:03] =========================================
-[2026-01-02 13:54:03] Found Tomcat configuration at custom path: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTestWin/Tomcat_NoHsts/conf
-[2026-01-02 13:54:03] Found Tomcat Configuration: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTestWin/Tomcat_NoHsts/conf (Version: 9.0.0)
-[2026-01-02 13:54:03] Found: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTestWin/Tomcat_NoHsts/conf/web.xml (global configuration)
-[2026-01-02 13:54:03] Found 1 web.xml file(s) to process
-[2026-01-02 13:54:03] 
-[2026-01-02 13:54:03] =========================================
-[2026-01-02 13:54:03] Processing: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTestWin/Tomcat_NoHsts/conf/web.xml
-[2026-01-02 13:54:03] =========================================
-[2026-01-02 13:54:03] === AUDIT: No HSTS Configuration Found ===
-[2026-01-02 13:54:03] No HSTS filters detected in the configuration file.
-[2026-01-02 13:54:03] 
-[2026-01-02 13:54:03] Configuration Context:
-[2026-01-02 13:54:03] Other filters found in configuration:
-[2026-01-02 13:54:03]   - SomeOtherFilter
-[2026-01-02 13:54:03] 
-[2026-01-02 13:54:03] Recommended Action:
-[2026-01-02 13:54:03]   Add HSTS configuration with: hstsMaxAgeSeconds=31536000; hstsIncludeSubDomains=true
-[2026-01-02 13:54:03] ==========================================
-[2026-01-02 13:54:03] FAILURE: No HSTS header definitions found in configuration
-[2026-01-02 13:54:03] HSTS configuration needs to be updated.
-[2026-01-02 13:54:03] 
-[2026-01-02 13:54:03] =========================================
-[2026-01-02 13:54:03] Summary
-[2026-01-02 13:54:03] =========================================
-[2026-01-02 13:54:03] Total files processed: 1
-[2026-01-02 13:54:03] Successful: 0
-[2026-01-02 13:54:03] Failed: 1
-[2026-01-02 13:54:03] Overall Status: FAILURE (some files failed)
-[2026-01-02 13:54:03] Log file: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTestWin\Tomcat_NoHsts_audit.log
+[2026-01-05 14:37:32] Found Tomcat configuration at custom path: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTestWin/Tomcat_NoHsts/conf
+[2026-01-05 14:37:32] Found: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTestWin/Tomcat_NoHsts/conf/web.xml (global configuration)
+[2026-01-05 14:37:32] Found 1 web.xml file(s) to process
+[2026-01-05 14:37:32] 
+[2026-01-05 14:37:32] Processing: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTestWin/Tomcat_NoHsts/conf/web.xml
+[2026-01-05 14:37:32] === AUDIT: No HSTS Configuration Found ===
+[2026-01-05 14:37:32] Log file: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTestWin\Tomcat_NoHsts_audit.log

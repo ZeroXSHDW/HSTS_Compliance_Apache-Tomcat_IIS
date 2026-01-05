@@ -1,36 +1,52 @@
-[2026-01-02 13:54:03] =========================================
-[2026-01-02 13:54:03] IIS HSTS Configuration Tool
-[2026-01-02 13:54:04] Hostname: 
-[2026-01-02 13:54:04] Execution Time: 2026-01-02 13:54:03
-[2026-01-02 13:54:04] Mode: audit
-[2026-01-02 13:54:04] =========================================
-[2026-01-02 13:54:04] Found: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTestWin/Iis_NoHsts\web.config (custom file path)
-[2026-01-02 13:54:04] Found 1 web.config file(s) to process
-[2026-01-02 13:54:04] Detected IIS Version: Unknown
-[2026-01-02 13:54:04] 
-[2026-01-02 13:54:04] 
-[2026-01-02 13:54:04] =========================================
-[2026-01-02 13:54:04] Processing: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTestWin/Iis_NoHsts\web.config
-[2026-01-02 13:54:04] =========================================
-[2026-01-02 13:54:04] === AUDIT: No HSTS Configuration Found ===
-[2026-01-02 13:54:04] No HSTS headers or native IIS HSTS settings detected.
-[2026-01-02 13:54:04] 
-[2026-01-02 13:54:04] Configuration Context:
-[2026-01-02 13:54:04] Custom headers found in configuration:
-[2026-01-02 13:54:04]   - X-Other: test
-[2026-01-02 13:54:04]   <httpProtocol> section exists
-[2026-01-02 13:54:04] 
-[2026-01-02 13:54:04] Recommended Action:
-[2026-01-02 13:54:04]   Add HSTS header: Strict-Transport-Security: max-age=31536000; includeSubDomains
-[2026-01-02 13:54:04] ==========================================
-[2026-01-02 13:54:04] FAILURE: No HSTS header definitions found in configuration
-[2026-01-02 13:54:04] HSTS configuration needs to be updated.
-[2026-01-02 13:54:04] 
-[2026-01-02 13:54:04] =========================================
-[2026-01-02 13:54:04] Summary
-[2026-01-02 13:54:04] =========================================
-[2026-01-02 13:54:04] Total files processed: 1
-[2026-01-02 13:54:04] Successful: 0
-[2026-01-02 13:54:04] Failed: 1
-[2026-01-02 13:54:04] Overall Status: FAILURE (some files failed)
-[2026-01-02 13:54:04] Log file: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTestWin\Iis_NoHsts_audit.log
+[2026-01-05 14:37:32] Found: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTestWin/Iis_NoHsts\web.config (custom file path)
+[2026-01-05 14:37:32] Found 1 web.config file(s) to process
+[2026-01-05 14:37:32] 
+[2026-01-05 14:37:32] Processing: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTestWin/Iis_NoHsts\web.config
+[2026-01-05 14:37:32] === AUDIT: No HSTS Configuration Found ===
+[2026-01-05 14:37:32] No HSTS headers or native IIS HSTS settings detected.
+[2026-01-05 14:37:32] 
+[2026-01-05 14:37:32] Configuration Context:
+[2026-01-05 14:37:32] Custom headers found in configuration:
+[2026-01-05 14:37:32]   - X-Other: test
+[2026-01-05 14:37:32]   <httpProtocol> section exists
+[2026-01-05 14:37:32] 
+[2026-01-05 14:37:32] === Current HSTS Configuration ===
+[2026-01-05 14:37:32]   Status: NOT CONFIGURED
+[2026-01-05 14:37:32]   Header: (none)
+[2026-01-05 14:37:32] 
+[2026-01-05 14:37:32] === Available Security Levels ===
+[2026-01-05 14:37:32] 
+[2026-01-05 14:37:32]   [1] BASIC - Minimum HSTS protection
+[2026-01-05 14:37:32]       Header: Strict-Transport-Security: max-age=31536000
+[2026-01-05 14:37:32]       Use when: Subdomains should NOT be affected
+[2026-01-05 14:37:32] 
+[2026-01-05 14:37:32]   [2] HIGH - OWASP Recommended (Default)
+[2026-01-05 14:37:32]       Header: Strict-Transport-Security: max-age=31536000; includeSubDomains
+[2026-01-05 14:37:32]       Use when: All subdomains also use HTTPS
+[2026-01-05 14:37:32] 
+[2026-01-05 14:37:32]   [3] VERY HIGH - Preload Ready
+[2026-01-05 14:37:32]       Header: Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
+[2026-01-05 14:37:32]       Use when: Ready for browser preload list submission
+[2026-01-05 14:37:32] 
+[2026-01-05 14:37:32]   [4] MAXIMUM - Highest Security
+[2026-01-05 14:37:32]       Header: Strict-Transport-Security: max-age=63072000; includeSubDomains; preload
+[2026-01-05 14:37:32]       Use when: Maximum protection with 2-year cache
+[2026-01-05 14:37:32] 
+[2026-01-05 14:37:32] === Configure Commands (copy and run) ===
+[2026-01-05 14:37:32] 
+[2026-01-05 14:37:32]   Option 1: .\UpdateIisHstsWin.ps1 -Mode configure -SecurityLevel basic
+[2026-01-05 14:37:32]   Option 2: .\UpdateIisHstsWin.ps1 -Mode configure -SecurityLevel high
+[2026-01-05 14:37:32]   Option 3: .\UpdateIisHstsWin.ps1 -Mode configure -SecurityLevel veryhigh
+[2026-01-05 14:37:32]   Option 4: .\UpdateIisHstsWin.ps1 -Mode configure -SecurityLevel maximum
+[2026-01-05 14:37:32] 
+[2026-01-05 14:37:32]   Add -DryRun to preview changes without applying
+[2026-01-05 14:37:32] ==========================================
+[2026-01-05 14:37:32] FAILURE: No HSTS header definitions found in configuration
+[2026-01-05 14:37:32] HSTS configuration needs to be updated.
+[2026-01-05 14:37:32] 
+[2026-01-05 14:37:32] To configure THIS installation, run one of:
+[2026-01-05 14:37:32]   Option 1: .\UpdateIisHstsWin.ps1 -Mode configure -SecurityLevel basic -CustomPaths @('/Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTestWin/Iis_NoHsts\web.config')
+[2026-01-05 14:37:32]   Option 2: .\UpdateIisHstsWin.ps1 -Mode configure -SecurityLevel high -CustomPaths @('/Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTestWin/Iis_NoHsts\web.config')
+[2026-01-05 14:37:32]   Option 3: .\UpdateIisHstsWin.ps1 -Mode configure -SecurityLevel veryhigh -CustomPaths @('/Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTestWin/Iis_NoHsts\web.config')
+[2026-01-05 14:37:32]   Option 4: .\UpdateIisHstsWin.ps1 -Mode configure -SecurityLevel maximum -CustomPaths @('/Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTestWin/Iis_NoHsts\web.config')
+[2026-01-05 14:37:32] Log file: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTestWin\Iis_NoHsts_audit.log

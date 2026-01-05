@@ -1,0 +1,14 @@
+[2026-01-05 14:35:31] Checking custom configuration path: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/unix/tests/EnhancedAuditTest/conf
+[2026-01-05 14:35:31] Found valid Tomcat configuration at custom path: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/unix/tests/EnhancedAuditTest/conf
+[2026-01-05 14:35:31] Found Tomcat Configuration: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/unix/tests/EnhancedAuditTest/conf (Version: 9.0.50)
+[2026-01-05 14:35:31] Searching for web.xml files...
+[2026-01-05 14:35:31]   Found: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/unix/tests/EnhancedAuditTest/conf/web.xml (global configuration)
+[2026-01-05 14:35:31] Found 1 web.xml file(s) to process
+[2026-01-05 14:35:31] Found 4 HSTS header definition(s)
+[2026-01-05 14:35:31] === Current Filter-Based HSTS Configuration ===
+[2026-01-05 14:35:31]   hstsMaxAgeSeconds: 86400
+[2026-01-05 14:35:31]   hstsIncludeSubDomains: false
+[2026-01-05 14:35:31] ===============================================
+[2026-01-05 14:35:31] === Audit Result Breakdown ===
+[2026-01-05 14:35:31]   [FAIL] Filter-based HSTS (Target Level: high): max-age=86400; includeSubDomains=false; preload=false
+[2026-01-05 14:35:31] ==============================

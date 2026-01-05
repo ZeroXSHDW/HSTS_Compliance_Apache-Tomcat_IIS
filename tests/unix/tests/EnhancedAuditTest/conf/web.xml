@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app>
+    Strict-Transport-Security "max-age=31536000; includeSubDomains"
+    Header set Strict-Transport-Security "max-age=60"
+</web-app>

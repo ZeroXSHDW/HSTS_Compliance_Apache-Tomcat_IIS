@@ -1738,21 +1738,21 @@ foreach ($server in $uniqueServers) {
                     Write-Host "|        QUICK FIX - Configure All Non-Compliant       |" -ForegroundColor Yellow
                     Write-Host "+------------------------------------------------------+" -ForegroundColor Yellow
                     Write-Host ""
-                    Write-Host "Choose a security level and run ONE command:\" -ForegroundColor Cyan
+                    Write-Host "Choose a security level and run ONE command:" -ForegroundColor Cyan
                     Write-Host ""
-                    Write-Host "  [1] BASIC (1 year):\" -ForegroundColor White
-                    Write-Host "      .\\Remote_UpdateTomcatHstsWin.ps1 -ServerName $env:COMPUTERNAME -Mode configure -SecurityLevel 1\" -ForegroundColor Gray
+                    Write-Host "  [1] BASIC (1 year):" -ForegroundColor White
+                    Write-Host "      .\\Remote_UpdateTomcatHstsWin.ps1 -ServerName $env:COMPUTERNAME -Mode configure -SecurityLevel 1" -ForegroundColor Gray
                     Write-Host ""
-                    Write-Host "  [2] HIGH - OWASP Recommended (1 year + subdomains):\" -ForegroundColor White
-                    Write-Host "      .\\Remote_UpdateTomcatHstsWin.ps1 -ServerName $env:COMPUTERNAME -Mode configure -SecurityLevel 2\" -ForegroundColor Gray
+                    Write-Host "  [2] HIGH - OWASP Recommended (1 year + subdomains):" -ForegroundColor White
+                    Write-Host "      .\\Remote_UpdateTomcatHstsWin.ps1 -ServerName $env:COMPUTERNAME -Mode configure -SecurityLevel 2" -ForegroundColor Gray
                     Write-Host ""
-                    Write-Host "  [3] VERY HIGH (1 year + subdomains + preload):\" -ForegroundColor White
-                    Write-Host "      .\\Remote_UpdateTomcatHstsWin.ps1 -ServerName $env:COMPUTERNAME -Mode configure -SecurityLevel 3\" -ForegroundColor Gray
+                    Write-Host "  [3] VERY HIGH (1 year + subdomains + preload):" -ForegroundColor White
+                    Write-Host "      .\\Remote_UpdateTomcatHstsWin.ps1 -ServerName $env:COMPUTERNAME -Mode configure -SecurityLevel 3" -ForegroundColor Gray
                     Write-Host ""
-                    Write-Host "  [4] MAXIMUM (2 years + subdomains + preload):\" -ForegroundColor White
-                    Write-Host "      .\\Remote_UpdateTomcatHstsWin.ps1 -ServerName $env:COMPUTERNAME -Mode configure -SecurityLevel 4\" -ForegroundColor Gray
+                    Write-Host "  [4] MAXIMUM (2 years + subdomains + preload):" -ForegroundColor White
+                    Write-Host "      .\\Remote_UpdateTomcatHstsWin.ps1 -ServerName $env:COMPUTERNAME -Mode configure -SecurityLevel 4" -ForegroundColor Gray
                     Write-Host ""
-                    Write-Host "TIP: Add -DryRun to preview changes without applying\" -ForegroundColor Cyan
+                    Write-Host "TIP: Add -DryRun to preview changes without applying" -ForegroundColor Cyan
                     Write-Host ""
                 }
             

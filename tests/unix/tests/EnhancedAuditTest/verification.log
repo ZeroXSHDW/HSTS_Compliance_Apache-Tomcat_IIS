@@ -1,0 +1,33 @@
+[2026-01-05 14:26:22] --- Testing Scenario: No_HSTS ---
+[2026-01-05 14:26:22] FAILURE: No HSTS scenario output mismatch.
+[2026-01-05 14:31:10] --- Testing Scenario: No_HSTS ---
+[2026-01-05 14:31:10] FAILURE: No HSTS scenario output mismatch.
+[2026-01-05 14:32:09] --- Testing Scenario: No_HSTS ---
+[2026-01-05 14:32:10] SUCCESS: No HSTS scenario output verified.
+[2026-01-05 14:32:10] --- Testing Scenario: Non_Compliant ---
+[2026-01-05 14:32:10] MISSING: \[FAIL\] Filter-based HSTS: max-age=86400 in /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/unix/tests/EnhancedAuditTest/Non_Compliant_audit.log
+[2026-01-05 14:32:10] FAILURE: Non-compliant filter scenario output mismatch.
+[2026-01-05 14:32:22] --- Testing Scenario: No_HSTS ---
+[2026-01-05 14:32:22] SUCCESS: No HSTS scenario output verified.
+[2026-01-05 14:32:22] --- Testing Scenario: Non_Compliant ---
+[2026-01-05 14:32:23] MISSING: FAILURE: HSTS header(s) found but none are compliant. Found 1 non-compliant definition(s). in /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/unix/tests/EnhancedAuditTest/Non_Compliant_audit.log
+[2026-01-05 14:32:23] FAILURE: Non-compliant filter scenario output mismatch.
+[2026-01-05 14:33:08] --- Testing Scenario: No_HSTS ---
+[2026-01-05 14:33:08] SUCCESS: No HSTS scenario output verified.
+[2026-01-05 14:33:08] --- Testing Scenario: Non_Compliant ---
+[2026-01-05 14:33:08] MISSING: FAILURE: Non-compliant HSTS configuration found: 1 failed issues. in /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/unix/tests/EnhancedAuditTest/Non_Compliant_audit.log
+[2026-01-05 14:33:08] FAILURE: Non-compliant filter scenario output mismatch.
+[2026-01-05 14:36:35] --- Testing Scenario: No_HSTS ---
+[2026-01-05 14:36:35] SUCCESS: No HSTS scenario output verified.
+[2026-01-05 14:36:35] --- Testing Scenario: Non_Compliant ---
+[2026-01-05 14:36:36] SUCCESS: Non-compliant filter scenario output verified.
+[2026-01-05 14:36:36] --- Testing Scenario: Multiple_Headers ---
+[2026-01-05 14:36:36] MISSING: \[FAIL\] Direct header (non-compliant):.*Header set Strict-Transport-Security "max-age=60" in /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/unix/tests/EnhancedAuditTest/Multiple_Headers_audit.log
+[2026-01-05 14:36:36] FAILURE: Multiple direct headers scenario output mismatch.
+[2026-01-05 14:37:05] --- Testing Scenario: No_HSTS ---
+[2026-01-05 14:37:05] SUCCESS: No HSTS scenario output verified.
+[2026-01-05 14:37:05] --- Testing Scenario: Non_Compliant ---
+[2026-01-05 14:37:05] SUCCESS: Non-compliant filter scenario output verified.
+[2026-01-05 14:37:05] --- Testing Scenario: Multiple_Headers ---
+[2026-01-05 14:37:06] SUCCESS: Multiple direct headers scenario output verified.
+[2026-01-05 14:37:06] === All Unix Enhanced Audit Verifications Passed ===

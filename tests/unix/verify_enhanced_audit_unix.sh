@@ -36,7 +36,7 @@ audit_log=$(run_audit "No_HSTS" '<?xml version="1.0" encoding="UTF-8"?><web-app>
 if grep -q "=== AUDIT: No HSTS Configuration Found ===" "$audit_log" && \
    grep -q "Configuration Context:" "$audit_log" && \
    grep -q "SomeOtherFilter" "$audit_log" && \
-   grep -q "Recommended Action:" "$audit_log"; then
+   grep -q "Available Security Levels" "$audit_log"; then
     write_log "SUCCESS: No HSTS scenario output verified."
 else
     write_log "FAILURE: No HSTS scenario output mismatch."
@@ -71,8 +71,8 @@ check_grep() {
 
 if check_grep "=== Audit Result Breakdown ===" "$audit_log" && \
    check_grep "hstsMaxAgeSeconds: 86400" "$audit_log" && \
-   check_grep "\[FAIL\] Filter-based HSTS: max-age=86400" "$audit_log" && \
-   check_grep "FAILURE: HSTS header(s) found but none are compliant. Found 1 non-compliant definition(s)." "$audit_log"; then
+   check_grep "\[FAIL\] Filter-based HSTS (Target Level: high): max-age=86400" "$audit_log" && \
+   check_grep "FAILURE: Non-compliant HSTS configuration found: 1 failed issues." "$audit_log"; then
     write_log "SUCCESS: Non-compliant filter scenario output verified."
 else
     write_log "FAILURE: Non-compliant filter scenario output mismatch."
@@ -88,8 +88,8 @@ audit_log=$(run_audit "Multiple_Headers" '<?xml version="1.0" encoding="UTF-8"?>
 </web-app>')
 
 if check_grep "=== Audit Result Breakdown ===" "$audit_log" && \
-   check_grep "\[FAIL\] Direct header (non-compliant):.*Header set Strict-Transport-Security \"max-age=60\"" "$audit_log" && \
-   check_grep "\[PASS\] Direct header:.*Strict-Transport-Security \"max-age=31536000; includeSubDomains\"" "$audit_log"; then
+   check_grep "\[FAIL\] Direct header (Target Level: high):.*Header set Strict-Transport-Security \"max-age=60\"" "$audit_log" && \
+   check_grep "\[PASS\] Direct header (Level: high):.*Strict-Transport-Security \"max-age=31536000; includeSubDomains\"" "$audit_log"; then
     write_log "SUCCESS: Multiple direct headers scenario output verified."
 else
     write_log "FAILURE: Multiple direct headers scenario output mismatch."
