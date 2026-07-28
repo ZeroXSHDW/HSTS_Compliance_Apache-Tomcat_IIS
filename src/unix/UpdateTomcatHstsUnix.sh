@@ -14,10 +14,13 @@
 #
 # The recommended HSTS value is: Strict-Transport-Security: max-age=31536000; includeSubDomains
 #
+# SAFETY: Default mode is audit (read-only). Configure/remediate only when
+# explicitly requested with --mode configure. Prefer --dry-run before applying.
+#
 # Usage: sudo ./UpdateTomcatHstsUnix.sh [--mode audit|configure] [--custom-conf=/path/to/conf] [--dry-run]
-#   --mode: audit (check only) or configure (audit + patch). Default: configure
+#   --mode: audit (check only, DEFAULT) or configure (audit + patch)
 #   --custom-conf: Optional custom Tomcat conf directory path
-#   --dry-run: Preview changes without applying (configure mode only)
+#   --dry-run: Preview changes without applying (configure mode only; strongly recommended first)
 #
 # Exit codes:
 #   0 - Success (audit: correctly configured, configure: patch applied successfully)
@@ -27,7 +30,7 @@
 set -euo pipefail
 
 # Default values
-MODE="configure"  # Default to configure mode
+MODE="audit"  # Default to read-only audit (safe). Use --mode configure to remediate.
 CONFIG_PATH=""
 CUSTOM_CONF_PATH=""
 CUSTOM_CONF_PATHS=()  # Array for multiple custom paths
@@ -81,10 +84,13 @@ trap cleanup_temp_files EXIT ERR INT TERM
 usage() {
     echo "Usage: sudo $SCRIPT_NAME [--mode audit|configure] [--custom-conf=/path/to/conf] [--custom-paths-file=/path/to/file] [--json] [--report-file=path] [--dry-run]"
     echo ""
+    echo "SAFETY: Default mode is audit (read-only). Configure remediates web.xml;"
+    echo "        always preview with --dry-run before applying writes."
+    echo ""
     echo "Options:"
-    echo "  --mode <audit|configure>     Operation mode (default: configure)"
-    echo "                               audit: Check HSTS configuration compliance"
-    echo "                               configure: Fix HSTS configuration to be compliant"
+    echo "  --mode <audit|configure>     Operation mode (default: audit)"
+    echo "                               audit: Check HSTS configuration compliance (default, safe)"
+    echo "                               configure: Fix HSTS configuration to be compliant (writes files)"
     echo "  --custom-conf <path>         Optional: Custom Tomcat conf directory path (can be specified multiple times)"
     echo "                               If not provided, script will auto-detect Tomcat installation"
     echo "  --custom-paths-file <file>   Optional: File containing custom paths (one path per line)"
@@ -98,10 +104,11 @@ usage() {
     echo "                               maximum:  max-age=2yr, includeSubDomains, preload"
     echo ""
     echo "Examples:"
-    echo "  sudo $SCRIPT_NAME                                    # Auto-detect and configure"
-    echo "  sudo $SCRIPT_NAME --mode audit                       # Auto-detect and audit only"
+    echo "  sudo $SCRIPT_NAME                                    # Auto-detect and audit (default, safe)"
+    echo "  sudo $SCRIPT_NAME --mode audit                       # Explicit audit only"
     echo "  sudo $SCRIPT_NAME --json --report-file=report.json   # Generate enterprise reports"
-    echo "  sudo $SCRIPT_NAME --mode configure --dry-run         # Preview changes"
+    echo "  sudo $SCRIPT_NAME --mode configure --dry-run         # Preview remediation (no writes)"
+    echo "  sudo $SCRIPT_NAME --mode configure                   # Apply remediation (writes web.xml)"
     exit 2
 }
 
@@ -290,7 +297,7 @@ find_all_hsts_headers() {
         if echo "$line" | grep -qi "HstsHeaderFilter\|httpHeaderSecurity"; then
             headers+=("$line_num:$line")
         fi
-        ((line_num++))
+        line_num=$((line_num + 1))
     done <<< "$config_content"
     
     if [[ ${#headers[@]} -gt 0 ]]; then
@@ -743,20 +750,20 @@ pre_flight_checks() {
     
     if [[ ! -r "$config_path" ]]; then
         log_error "Configuration file is not readable: $config_path"
-        ((issues++))
+        issues=$((issues + 1))
     fi
     
     # Check if file is writable
     if [[ ! -w "$config_path" ]]; then
         log_error "Configuration file is not writable: $config_path"
-        ((issues++))
+        issues=$((issues + 1))
     fi
     
     # Check if backup directory is writable
     local backup_dir=$(dirname "$config_path")
     if [[ ! -w "$backup_dir" ]]; then
         log_error "Backup directory is not writable: $backup_dir"
-        ((issues++))
+        issues=$((issues + 1))
     fi
     
     # Check available disk space (warn if less than 100MB)
@@ -1628,32 +1635,36 @@ process_web_xml() {
             CONFIRMED=1
         fi
         
-        # PRE-FLIGHT: Check system state before making changes
+        # PRE-FLIGHT: Check system state before making changes (skip for dry-run)
         if [[ "$DRY_RUN" != "true" ]]; then
             log_message "Running pre-flight checks..."
             if ! pre_flight_checks "$web_xml_path"; then
                 log_error "Pre-flight checks failed - skipping: $web_xml_path"
                 return 2
             fi
+
+            # Create backup only when we will write (not dry-run)
+            if ! backup_config "$web_xml_path"; then
+                log_error "Failed to create backup - skipping: $web_xml_path"
+                return 1
+            fi
+        else
+            log_message "DRY RUN: Skipping backup and pre-flight write checks"
         fi
         
-        # Create backup
-        local backup_path=""
-        if ! backup_config "$web_xml_path"; then
-            log_error "Failed to create backup - skipping: $web_xml_path"
-            return 1
-        fi
-        
-        # Apply configuration
-        local configure_result=""
+        # Apply configuration (or preview under dry-run)
         if ! configure_hsts_headers "$config_content" "$web_xml_path"; then
             log_error "Failed to configure HSTS: $CONFIGURE_RESULT"
-            log_message "Backup available at: $BACKUP_PATH"
+            if [[ -n "${BACKUP_PATH:-}" ]]; then
+                log_message "Backup available at: $BACKUP_PATH"
+            fi
             return 1
         fi
         
         log_message "SUCCESS: $CONFIGURE_RESULT"
-        log_message "Backup available at: $BACKUP_PATH"
+        if [[ -n "${BACKUP_PATH:-}" ]]; then
+            log_message "Backup available at: $BACKUP_PATH"
+        fi
         
         return 0
     fi
@@ -1804,6 +1815,11 @@ main() {
     fi
     
     # Validate mode
+    if [[ "$MODE" != "audit" && "$MODE" != "configure" ]]; then
+        log_error "Invalid mode: $MODE. Must be 'audit' or 'configure'."
+        usage
+    fi
+
     if [[ -n "$LOG_FILE" ]]; then
         # Check if we can write to the log file or its directory
         if ! touch "$LOG_FILE" 2>/dev/null; then
@@ -1817,6 +1833,17 @@ main() {
             fi
         fi
     fi
+
+    # Safety banner for remediating configure runs
+    if [[ "$MODE" == "configure" && "$DRY_RUN" != "true" ]]; then
+        log_message "=========================================" true
+        log_message "WARNING: CONFIGURE MODE WILL MODIFY web.xml" true
+        log_message "Default mode is audit (read-only). You requested remediation." true
+        log_message "Tip: re-run with --dry-run first to preview diffs without writes." true
+        log_message "=========================================" true
+    elif [[ "$MODE" == "configure" && "$DRY_RUN" == "true" ]]; then
+        log_message "Configure + dry-run: preview only; no files will be modified." true
+    fi
     
     # Print clean header if in quiet (audit) mode
     if [[ "$QUIET_MODE" == "true" ]]; then
@@ -1828,6 +1855,9 @@ main() {
         log_message "Hostname: $HOSTNAME"
         log_message "Execution Time: $TIMESTAMP"
         log_message "Mode: $MODE"
+        if [[ "$DRY_RUN" == "true" ]]; then
+            log_message "Dry-run: true (no writes)"
+        fi
         log_message "========================================="
     fi
     

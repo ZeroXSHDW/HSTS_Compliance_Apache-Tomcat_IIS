@@ -22,8 +22,8 @@ The complete reference for auditing and configuring HSTS across your infrastruct
 | **Windows Tomcat** | `max-age=31536000;` | `[PASS]` / `[FAIL]` | **Audit:** `.\src\windows\UpdateTomcatHstsWin.ps1 -Mode audit` |
 | (Local/Remote) | `includeSubDomains` | Standard Indicators | **Configure:** `.\src\windows\UpdateTomcatHstsWin.ps1 -Mode configure -SecurityLevel high` |
 |  |  |  | **Remote:** `.\src\windows\Remote_UpdateTomcatHstsWin.ps1 -ServerName "App01" -Mode audit` |
-| **Linux Tomcat** | `max-age=31536000;` | `[PASS]` / `[FAIL]` | **Audit:** `sudo ./src/unix/UpdateTomcatHstsUnix.sh --mode audit` |
-| (Local Only) | `includeSubDomains` | Standard Indicators | **Configure:** `sudo ./src/unix/UpdateTomcatHstsUnix.sh --mode configure --security-level high` |
+| **Linux Tomcat** | `max-age=31536000;` | `[PASS]` / `[FAIL]` | **Audit (default, safe):** `sudo ./src/unix/UpdateTomcatHstsUnix.sh` |
+| (Local Only) | `includeSubDomains` | Standard Indicators | **Configure:** preview with `--dry-run`, then `sudo ./src/unix/UpdateTomcatHstsUnix.sh --mode configure --security-level high` |
 
 ---
 
@@ -43,13 +43,16 @@ The complete reference for auditing and configuring HSTS across your infrastruct
 # Windows - Configure Tomcat with Maximum security
 .\src\windows\UpdateTomcatHstsWin.ps1 -Mode configure -SecurityLevel maximum
 
-# Linux - Configure Tomcat with Very High security (preload ready)
+# Linux - Preview then configure Tomcat (Unix default mode is audit / read-only)
+sudo ./src/unix/UpdateTomcatHstsUnix.sh --mode configure --security-level veryhigh --dry-run
 sudo ./src/unix/UpdateTomcatHstsUnix.sh --mode configure --security-level veryhigh
 
 # Dry-run mode (preview changes without applying)
 .\src\windows\UpdateIisHstsWin.ps1 -Mode configure -SecurityLevel high -All -DryRun
 sudo ./src/unix/UpdateTomcatHstsUnix.sh --mode configure --security-level high --dry-run
 ```
+
+> **Unix safety:** `UpdateTomcatHstsUnix.sh` defaults to `--mode audit` (no writes). Remediation requires an explicit `--mode configure`. Always use `--dry-run` before applying.
 
 ---
 
