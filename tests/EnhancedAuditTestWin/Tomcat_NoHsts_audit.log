@@ -1,7 +1,0 @@
-[2026-01-05 14:37:32] Found Tomcat configuration at custom path: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTestWin/Tomcat_NoHsts/conf
-[2026-01-05 14:37:32] Found: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTestWin/Tomcat_NoHsts/conf/web.xml (global configuration)
-[2026-01-05 14:37:32] Found 1 web.xml file(s) to process
-[2026-01-05 14:37:32] 
-[2026-01-05 14:37:32] Processing: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTestWin/Tomcat_NoHsts/conf/web.xml
-[2026-01-05 14:37:32] === AUDIT: No HSTS Configuration Found ===
-[2026-01-05 14:37:32] Log file: /Users/admin/Documents/HSTS_Compliance_Apache-Tomcat_IIS/tests/EnhancedAuditTestWin\Tomcat_NoHsts_audit.log

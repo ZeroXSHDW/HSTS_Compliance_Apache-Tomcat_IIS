@@ -1,0 +1,17 @@
+# OS / editor
+.DS_Store
+Thumbs.db
+*~
+.idea/
+.vscode/
+
+# Logs and local backups
+*.log
+*.bak
+*.backup.*
+web.xml.backup.*
+
+# Python / temp
+__pycache__/
+*.py[cod]
+*.tmp
