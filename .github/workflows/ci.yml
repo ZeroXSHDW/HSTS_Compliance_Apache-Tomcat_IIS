@@ -17,3 +17,14 @@ jobs:
             echo "Checking $script"
             bash -n "$script"
           done < <(find src/unix -type f -name '*.sh' -print0)
+
+  unix-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run self-contained Unix HSTS tests
+        run: |
+          set -euo pipefail
+          chmod +x tests/unix/test_hsts_unix.sh src/unix/UpdateTomcatHstsUnix.sh
+          cd tests/unix
+          ./test_hsts_unix.sh
