@@ -355,3 +355,21 @@ cd tests; .\Run-AllTests.ps1; .\windows\verify_enhanced_audit_win.ps1
 <p align="center">
   © 2025 HSTS Compliance Suite • <a href="LICENSE">MIT License</a>
 </p>
+
+## Features
+
+- Audits Apache Tomcat and IIS HSTS configuration with explicit compliance
+  findings and remediation guidance.
+- Keeps Unix and Windows verification paths separate and avoids changing a
+  host during CI validation.
+
+## Prerequisites
+
+Use Bash plus ShellCheck for Unix checks and PowerShell 7 or Windows
+PowerShell for Windows checks. Review the supported server versions and run
+the audit-only path before applying remediation.
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md). Add a fixture or parser regression
+test for every repaired audit contract and run the documented test matrix.
