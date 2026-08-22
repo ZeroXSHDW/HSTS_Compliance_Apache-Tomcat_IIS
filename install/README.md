@@ -200,7 +200,7 @@ The remote installation scripts allow you to install Tomcat or IIS on multiple W
 - PowerShell Remoting (WinRM) enabled on both client and target servers
 - Administrator credentials on target servers
 - Network connectivity to target servers
-- See [INSTALLATION.md](../INSTALLATION.md) for WinRM setup instructions
+- See [INSTALLATION.md](../docs/INSTALLATION.md) for WinRM setup instructions
 
 ### Remote: Remote_TomcatManager.ps1
 
@@ -336,9 +336,8 @@ $cred = Get-Credential
 - Verify credentials are correct
 - Check if account is locked or disabled
 
-For detailed WinRM setup instructions, see [INSTALLATION.md](../INSTALLATION.md).
+For detailed WinRM setup instructions, see [INSTALLATION.md](../docs/INSTALLATION.md).
 
 ---
 
 For more details, see the main [README.md](../README.md) in the project root.
-
