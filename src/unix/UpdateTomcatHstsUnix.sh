@@ -812,7 +812,7 @@ pre_flight_checks() {
 # Returns: Path to backup file
 backup_config() {
     local config_path="$1"
-    local backup_path="${config_path}.backup.$(date +%Y%m%d_%H%M%S)"
+    local backup_path
     
     if [[ ! -f "$config_path" ]]; then
         log_error "Configuration file not found: $config_path"
@@ -824,10 +824,16 @@ backup_config() {
         return 1
     fi
     
-    cp "$config_path" "$backup_path" || {
+    if ! backup_path=$(mktemp "${config_path}.backup.$(date +%Y%m%d_%H%M%S).XXXXXX"); then
+        log_error "Failed to allocate a unique backup path beside: $config_path"
+        return 1
+    fi
+
+    if ! cp "$config_path" "$backup_path"; then
+        rm -f -- "$backup_path"
         log_error "Failed to create backup: $backup_path"
         return 1
-    }
+    fi
     
     log_message "Backup created: $backup_path"
     # Set global backup path
@@ -944,7 +950,11 @@ configure_hsts_headers() {
         
         # ATOMIC OPERATION: Use mv for atomic file replacement
         # Create a temp file in the same directory for atomic move
-        local temp_atomic="${config_path}.tmp.$$"
+        local temp_atomic
+        if ! temp_atomic=$(mktemp "${config_path}.tmp.XXXXXX"); then
+            CONFIGURE_RESULT="Failed to allocate a unique temporary configuration path"
+            return 1
+        fi
         
         if cp "$temp_file" "$temp_atomic" 2>/dev/null; then
             # Restore original permissions before atomic move

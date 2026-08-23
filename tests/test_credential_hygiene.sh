@@ -16,5 +16,10 @@ grep -Fq 'PASSWORD=""' "$ROOT_DIR/install/unix/tomcat_manager.sh"
 grep -Fq -- '--password-stdin' "$ROOT_DIR/install/unix/tomcat_manager.sh"
 grep -Fq -- 'Password is required for install actions' "$ROOT_DIR/install/windows/TomcatManager.ps1"
 grep -Fq -- 'Password is required for install actions' "$ROOT_DIR/install/windows/Remote_TomcatManager.ps1"
+grep -Fq 'mktemp "${config_path}.tmp.XXXXXX"' "$ROOT_DIR/src/unix/UpdateTomcatHstsUnix.sh"
+if grep -Fq 'config_path}.tmp.$$' "$ROOT_DIR/src/unix/UpdateTomcatHstsUnix.sh"; then
+    echo "Configuration write safety check failed: predictable temporary path detected." >&2
+    exit 1
+fi
 
-echo "Credential hygiene contract passed."
+echo "Credential and configuration-write hygiene contracts passed."
