@@ -3,6 +3,22 @@
 set -euo pipefail
 
 ROOT_DIR=$(cd -- "$(dirname -- "$0")/.." && pwd -P)
+README_PATH="$ROOT_DIR/README.md"
+
+for heading in \
+    'Architecture and boundaries' \
+    'Features' \
+    'Configuration reference' \
+    'Verification' \
+    'Pre-publication validation checklist' \
+    'Prerequisites' \
+    'Contributing' \
+    'License'; do
+    grep -Fqx "## $heading" "$README_PATH"
+done
+[[ "$(grep -Fxc '## Features' "$README_PATH")" -eq 1 ]]
+grep -Fiq 'audit-only defaults' "$README_PATH"
+grep -Fq 'CI never changes a production host' "$README_PATH"
 
 if grep -R -n -E 's3cretP@ssw0rd|PASSWORD="s3cret"|default: s3cret|MySecurePass|SecurePass123' \
     "$ROOT_DIR/install" "$ROOT_DIR/docs"; then

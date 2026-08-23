@@ -27,6 +27,34 @@ The complete reference for auditing and configuring HSTS across your infrastruct
 
 ---
 
+## Architecture and boundaries
+
+The suite keeps audit and remediation paths explicit across three target
+surfaces:
+
+| Surface | Boundary |
+|---|---|
+| `src/unix/UpdateTomcatHstsUnix.sh` | Local Tomcat audit by default; configuration writes require explicit configure mode and support dry-run plus backup behavior. |
+| `src/windows/UpdateIisHstsWin.ps1` and `UpdateTomcatHstsWin.ps1` | Local IIS/Tomcat audit or explicit configuration on Windows. |
+| `src/windows/Remote_*.ps1` | Caller-supplied WinRM targets and credentials; the repository does not store credentials or target state. |
+| `tests/` and `.github/workflows/` | Fixture-backed Unix checks, PowerShell parsing, credential/write-path contracts, and immutable CI actions; CI never changes a production host. |
+
+## Features
+
+- Audit-only defaults with explicit configure and dry-run controls.
+- HSTS compliance levels for IIS and Tomcat across Unix and Windows paths.
+- Local and remote fleet audit support with structured findings and logs.
+- Backup, validation, and rollback-oriented write contracts for remediation.
+
+## Configuration reference
+
+| Surface | Configuration contract |
+|---|---|
+| Unix Tomcat | `--mode audit` is the default; use `--mode configure --dry-run` to preview and remove `--dry-run` only after review. |
+| Windows IIS/Tomcat | `-Mode audit` is read-only; `-Mode configure`, `-SecurityLevel`, `-All`, and `-DryRun` scope explicit changes. |
+| Remote Windows | `-ServerName`/`-ServerListFile`, `-Credential`, and the same mode/security-level flags define the target and operation. Never commit credentials or server lists. |
+| HSTS policy | `basic`, `high`, `veryhigh`, and `maximum` select max-age, subdomain, and preload requirements; `high` is the recommended baseline. |
+
 ### 🛡️ Security Levels
 
 * **Basic**: `max-age=1 Year`
@@ -56,9 +84,9 @@ sudo ./src/unix/UpdateTomcatHstsUnix.sh --mode configure --security-level high -
 
 ---
 
-### 🧪 Testing & Validation
+## Verification
 
-#### Automated Test Suites
+### Automated test suites
 
 **Linux/Unix Testing:**
 
@@ -85,7 +113,7 @@ cd tests
 .\version_matrix_test.ps1
 ```
 
-#### Manual Validation Examples
+### Manual validation examples
 
 **IIS Audit:**
 
@@ -189,7 +217,7 @@ Log file: /var/log/tomcat-hsts-20260105_150720.log
 
 ---
 
-### 🔑 Remote Fleet Management
+## Remote fleet management
 
 For managing multiple servers, ensure WinRM is configured and target hosts are trusted:
 
@@ -325,7 +353,7 @@ Remote execution completed successfully
 
 ---
 
-### ✅ Pre-Publication Validation Checklist
+## Pre-publication validation checklist
 
 Before deploying to production, validate all functionality:
 
@@ -356,13 +384,6 @@ cd tests; .\Run-AllTests.ps1; .\windows\verify_enhanced_audit_win.ps1
   © 2025 HSTS Compliance Suite • <a href="LICENSE">MIT License</a>
 </p>
 
-## Features
-
-- Audits Apache Tomcat and IIS HSTS configuration with explicit compliance
-  findings and remediation guidance.
-- Keeps Unix and Windows verification paths separate and avoids changing a
-  host during CI validation.
-
 ## Prerequisites
 
 Use Bash plus ShellCheck for Unix checks and PowerShell 7 or Windows
@@ -373,3 +394,7 @@ the audit-only path before applying remediation.
 
 See [CONTRIBUTING.md](CONTRIBUTING.md). Add a fixture or parser regression
 test for every repaired audit contract and run the documented test matrix.
+
+## License
+
+MIT. See [LICENSE](LICENSE).
