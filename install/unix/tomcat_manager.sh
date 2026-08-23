@@ -166,10 +166,11 @@ HOSTNAME=$(hostname)
 INSTALL_PATH="/opt/tomcat"
 VERSION="9.0"
 USERNAME="tomcat"
-PASSWORD="s3cret"
+PASSWORD=""
 ROLES="manager,admin"
 INSTALL_SERVICE=true
 CONFIGURE_FIREWALL=true
+PASSWORD_FROM_STDIN=false
 
 # Function to display usage
 show_usage() {
@@ -179,7 +180,8 @@ show_usage() {
     echo "  -p, --path PATH            Installation path (default: /opt/tomcat)"
     echo "  -v, --version VERSION      Tomcat version (default: 9.0)"
     echo "  -u, --username USERNAME    Admin username (default: tomcat)"
-    echo "  -w, --password PASSWORD    Admin password (default: s3cret)"
+    echo "  -w, --password PASSWORD    Admin password (discouraged: visible to process listings)"
+    echo "      --password-stdin       Read the admin password from stdin (recommended for automation)"
     echo "  -r, --roles ROLES          Comma-separated roles (default: manager,admin)"
     echo "  -s, --no-service           Skip service installation"
     echo "  -f, --no-firewall          Skip firewall configuration"
@@ -208,8 +210,16 @@ while [[ $# -gt 0 ]]; do
             shift 2
             ;;
         -w|--password)
+            if [ "$#" -lt 2 ]; then
+                echo "Missing value for $1" >&2
+                exit 2
+            fi
             PASSWORD="$2"
             shift 2
+            ;;
+        --password-stdin)
+            PASSWORD_FROM_STDIN=true
+            shift
             ;;
         -r|--roles)
             ROLES="$2"
@@ -229,6 +239,22 @@ while [[ $# -gt 0 ]]; do
             ;;
     esac
 done
+
+if [ "$PASSWORD_FROM_STDIN" = "true" ]; then
+    if ! IFS= read -r -s PASSWORD; then
+        echo "Unable to read admin password from stdin." >&2
+        exit 2
+    fi
+    printf '\n' >&2
+elif [ -z "$PASSWORD" ]; then
+    if [ -t 0 ]; then
+        read -r -s -p "Tomcat admin password: " PASSWORD
+        printf '\n' >&2
+    else
+        echo "An admin password is required. Use --password-stdin for non-interactive runs." >&2
+        exit 2
+    fi
+fi
 
 # Function to write log messages
 write_log() {
@@ -744,4 +770,3 @@ else
     write_log "Tomcat version $test_version installation failed." "ERROR"
     exit 1
 fi
-

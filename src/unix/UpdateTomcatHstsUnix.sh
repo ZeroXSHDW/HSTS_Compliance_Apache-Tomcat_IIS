@@ -348,21 +348,33 @@ is_compliant_header() {
 # Returns: Exit code 0 if correctly configured, 1 if not, plus details
 audit_hsts_headers() {
     local config_content="$1"
-    local all_headers
     local header_count=0
     local compliant_count=0
     local non_compliant_count=0
     local details=""
     local is_correct=1
     
-    # Find all HSTS header definitions (using while loop for legacy Bash compatibility)
-    local all_headers=()
-    while IFS= read -r line; do
-        if [[ -n "$line" ]]; then
-            all_headers+=("$line")
-        fi
-    done <<< "$(find_all_hsts_headers "$config_content")"
-    header_count=${#all_headers[@]}
+    # Count configurations, not every keyword-bearing line. A single Tomcat
+    # filter contains several HSTS keywords (name, class, and init parameters),
+    # so line-counting falsely reported one valid filter as four definitions.
+    local filter_count
+    filter_count=$(awk '
+        /<filter([[:space:]>])/ { in_filter=1; found=0 }
+        in_filter && /HstsHeaderFilter|HttpHeaderSecurityFilter|hstsMaxAgeSeconds|hstsIncludeSubDomains/ { found=1 }
+        in_filter && /<\/filter>/ {
+            if (found) count++
+            in_filter=0
+        }
+        END { print count + 0 }
+    ' <<< "$config_content")
+
+    local direct_headers
+    direct_headers=$(echo "$config_content" | grep -i "Strict-Transport-Security" | grep -v "^#" | grep -v "^[[:space:]]*#" | grep -v "hstsMaxAgeSeconds\|hstsIncludeSubDomains\|HttpHeaderSecurityFilter\|HstsHeaderFilter" || true)
+    local direct_header_count=0
+    if [[ -n "$direct_headers" ]]; then
+        direct_header_count=$(printf '%s\n' "$direct_headers" | grep -c . || true)
+    fi
+    header_count=$((filter_count + direct_header_count))
     
     if [[ $header_count -eq 0 ]]; then
         details="No HSTS header definitions found in configuration"
@@ -419,7 +431,7 @@ audit_hsts_headers() {
         return 1
     fi
     
-    log_message "Found $header_count HSTS header definition(s)"
+    log_message "Found $header_count HSTS configuration definition(s)"
     
     # Initialize counts
     local compliant_count=0
@@ -494,7 +506,6 @@ audit_hsts_headers() {
     
     # Check for direct header definitions (Strict-Transport-Security)
     # Only count direct headers that are NOT part of filter configuration
-    local direct_headers=$(echo "$config_content" | grep -i "Strict-Transport-Security" | grep -v "^#" | grep -v "^[[:space:]]*#" | grep -v "hstsMaxAgeSeconds\|hstsIncludeSubDomains\|HttpHeaderSecurityFilter\|HstsHeaderFilter" || true)
     if [[ -n "$direct_headers" ]]; then
         # Filter out empty lines if any
         direct_headers=$(echo "$direct_headers" | grep . || true)
@@ -2019,4 +2030,3 @@ main() {
 
 # Execute main function with all arguments
 main "$@"
-

@@ -27,7 +27,10 @@ jobs:
           while IFS= read -r -d '' script; do
             echo "Checking $script"
             bash -n "$script"
-          done < <(find src/unix -type f -name '*.sh' -print0)
+          done < <(find src/unix install/unix tests -type f -name '*.sh' -print0)
+
+      - name: Credential hygiene contract
+        run: bash tests/test_credential_hygiene.sh
 
   unix-tests:
     runs-on: ubuntu-latest

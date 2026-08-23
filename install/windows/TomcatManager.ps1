@@ -7,7 +7,7 @@ param(
     [string]$Action = $null,
     [string]$TomcatVersion = $null,
     [string]$Username = "tomcat",
-    [string]$Password = "s3cretP@ssw0rd!",
+    [string]$Password = $null,
     [string]$Roles = "manager-gui,admin-gui",
     [string]$StartMode = "service"  # 'service' (default) or 'bat'
 )
@@ -18,6 +18,11 @@ if (-not $Action -and $args.Count -ge 1) {
 }
 if (-not $TomcatVersion -and $args.Count -ge 2) {
     $TomcatVersion = $args[1]
+}
+
+if ($Action -eq "install" -and [string]::IsNullOrWhiteSpace($Password)) {
+    Write-Error "-Password is required for install actions. Supply it at runtime from a secret store; no default password is provided."
+    exit 2
 }
 
 # Global Variables
@@ -865,4 +870,3 @@ switch ($Action) {
 }
 
 exit 0
-

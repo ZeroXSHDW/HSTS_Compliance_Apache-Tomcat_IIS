@@ -27,15 +27,16 @@ This directory contains cross-platform installation scripts for Apache Tomcat an
 # Run as Administrator in PowerShell
 cd <repo-root>\install\windows
 
-# Example: Install Tomcat 9.0 with a secure user
-.\TomcatManager.ps1 -Action install -TomcatVersion 9 -Username admin -Password MySecurePass! -Roles "manager-gui,admin-gui"
+# Example: Install Tomcat 9.0 with credentials entered at runtime
+$tomcatCredential = Get-Credential -Message "Tomcat admin account"
+.\TomcatManager.ps1 -Action install -TomcatVersion 9 -Username $tomcatCredential.UserName -Password $tomcatCredential.GetNetworkCredential().Password -Roles "manager-gui,admin-gui"
 ```
 
 **Parameters:**
 - `-Action` (required): Action to perform - `install` or `uninstall`
 - `-TomcatVersion` (required for install): Tomcat major version (e.g., `7`, `8.5`, `9`, `10.0`, `10.1`)
 - `-Username` (optional): Admin username (default: `tomcat`)
-- `-Password` (optional): Admin password (default: `s3cretP@ssw0rd!`)
+- `-Password` (required for `install`): Admin password supplied at runtime; no default credential is embedded
 - `-Roles` (optional): Comma-separated roles (default: `manager-gui,admin-gui`)
 - `-StartMode` (optional): Start mode - `service` (default) or `bat`
 
@@ -48,11 +49,12 @@ cd <repo-root>\install\windows
 
 **Examples:**
 ```powershell
-# Install Tomcat 10.1
-.\TomcatManager.ps1 -Action install -TomcatVersion 10.1
+# Install Tomcat 10.1 with a runtime credential
+$tomcatCredential = Get-Credential -Message "Tomcat admin account"
+.\TomcatManager.ps1 -Action install -TomcatVersion 10.1 -Username $tomcatCredential.UserName -Password $tomcatCredential.GetNetworkCredential().Password
 
-# Install Tomcat 9.0 with custom credentials
-.\TomcatManager.ps1 -Action install -TomcatVersion 9 -Username admin -Password SecurePass123! -Roles "manager-gui,admin-gui"
+# Install Tomcat 9.0 with custom credentials from the same prompt
+.\TomcatManager.ps1 -Action install -TomcatVersion 9 -Username $tomcatCredential.UserName -Password $tomcatCredential.GetNetworkCredential().Password -Roles "manager-gui,admin-gui"
 
 # Uninstall Tomcat
 .\TomcatManager.ps1 -Action uninstall
@@ -121,15 +123,18 @@ cd <repo-root>\install\windows
 # Run as root or with sudo
 cd <repo-root>/install/unix
 
-# Example: Install Tomcat 9.0 with a secure user
-sudo ./tomcat_manager.sh -v 9.0 -u admin -w MySecurePass! -r manager,admin
+# Example: Install Tomcat 9.0; enter the password without echoing it
+read -r -s TOMCAT_PASSWORD; printf '\n'
+printf '%s\n' "$TOMCAT_PASSWORD" | sudo ./tomcat_manager.sh --password-stdin -v 9.0 -u admin -r manager,admin
+unset TOMCAT_PASSWORD
 ```
 
 **Options:**
 - `-p, --path` — Installation path (default: `/opt/tomcat`)
 - `-v, --version` — Tomcat major version (e.g., `7.0`, `8.5`, `9.0`, `10.0`, `10.1`)
 - `-u, --username` — Admin username (default: `tomcat`)
-- `-w, --password` — Admin password (default: `s3cret`)
+- `-w, --password` — Admin password (discouraged because process listings can expose it)
+- `--password-stdin` — Read the admin password from stdin (recommended for automation)
 - `-r, --roles` — Comma-separated roles (default: `manager,admin`)
 - `-s, --no-service` — Skip service installation
 - `-f, --no-firewall` — Skip firewall configuration
@@ -143,11 +148,15 @@ sudo ./tomcat_manager.sh -v 9.0 -u admin -w MySecurePass! -r manager,admin
 
 **Examples:**
 ```bash
-# Install Tomcat 10.1
-sudo ./tomcat_manager.sh -v 10.1
+# Install Tomcat 10.1 with a non-echoed runtime password
+read -r -s TOMCAT_PASSWORD; printf '\n'
+printf '%s\n' "$TOMCAT_PASSWORD" | sudo ./tomcat_manager.sh --password-stdin -v 10.1
+unset TOMCAT_PASSWORD
 
 # Install Tomcat 9.0 with custom path and credentials
-sudo ./tomcat_manager.sh -p /opt/tomcat -v 9.0 -u admin -w SecurePass123! -r manager,admin
+read -r -s TOMCAT_PASSWORD; printf '\n'
+printf '%s\n' "$TOMCAT_PASSWORD" | sudo ./tomcat_manager.sh --password-stdin -p /opt/tomcat -v 9.0 -u admin -r manager,admin
+unset TOMCAT_PASSWORD
 
 # Install without service or firewall configuration
 sudo ./tomcat_manager.sh -v 9.0 -s -f
@@ -230,7 +239,7 @@ $cred = Get-Credential
 - `-Action` (required): `install` or `uninstall`
 - `-TomcatVersion` (required for install): Tomcat major version (`7`, `8.5`, `9`, `10.0`, `10.1`)
 - `-Username` (optional): Admin username (default: `tomcat`)
-- `-Password` (optional): Admin password (default: `s3cretP@ssw0rd!`)
+- `-Password` (required for `install`): Admin password supplied at runtime; no default credential is embedded
 - `-Roles` (optional): Comma-separated roles (default: `manager-gui,admin-gui`)
 - `-StartMode` (optional): `service` (default) or `bat`
 - `-Credential` (optional): PSCredential object for authentication (if not provided, uses current user)
@@ -292,7 +301,7 @@ $cred = Get-Credential
     -Action install `
     -TomcatVersion 10.1 `
     -Username admin `
-    -Password SecurePass123! `
+    -Password $tomcatCredential.GetNetworkCredential().Password `
     -Credential $cred
 ```
 
