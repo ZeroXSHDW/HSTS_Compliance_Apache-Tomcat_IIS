@@ -301,4 +301,3 @@ If you have questions about contributing:
 - Open a discussion issue
 
 Thank you for contributing to HSTS Compliance Tools!
-
