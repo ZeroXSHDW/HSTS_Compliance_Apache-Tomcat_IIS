@@ -10,6 +10,7 @@ for heading in \
     'Architecture and boundaries' \
     'Features' \
     'Configuration reference' \
+    'Troubleshooting' \
     'Verification' \
     'Pre-publication validation checklist' \
     'Prerequisites' \
@@ -19,6 +20,9 @@ for heading in \
 done
 [[ "$(grep -Fxc '## Features' "$README_PATH")" -eq 1 ]]
 grep -Fiq 'audit-only defaults' "$README_PATH"
+grep -Fq -- '--mode configure --dry-run' "$README_PATH"
+grep -Fq -- 'last-known-good' "$README_PATH"
+grep -Fq -- 'TrustedHosts' "$README_PATH"
 grep -Fq 'CI never changes a production host' "$README_PATH"
 grep -Fq 'git diff --check' "$README_PATH"
 [[ "$(grep -Fc 'git diff --check' "$WORKFLOW_PATH")" -eq "$(grep -Fc 'uses: actions/checkout@' "$WORKFLOW_PATH")" ]]
