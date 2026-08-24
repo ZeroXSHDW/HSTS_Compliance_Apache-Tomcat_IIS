@@ -25,19 +25,25 @@ This guide provides detailed instructions for installing Apache Tomcat, Microsof
 Use the provided installation script for automated setup:
 
 ```powershell
-# Run as Administrator
+# Run as Administrator; install requires a credential supplied at runtime
 cd install\windows
-.\TomcatManager.ps1 -Action install -TomcatVersion 10.1
+$tomcatCredential = Get-Credential -Message "Tomcat admin account"
+.\TomcatManager.ps1 -Action install -TomcatVersion 10.1 -Username $tomcatCredential.UserName -Password $tomcatCredential.GetNetworkCredential().Password
 ```
 
 **Available Versions:** 7.0, 8.5, 9.0, 10.0, 10.1
 
 **Full Example:**
 ```powershell
-.\TomcatManager.ps1 -Action install -TomcatVersion 9.0 -Username admin -Password MySecurePass! -Roles "manager-gui,admin-gui"
+$tomcatCredential = Get-Credential -Message "Tomcat admin account"
+.\TomcatManager.ps1 -Action install -TomcatVersion 9.0 -Username $tomcatCredential.UserName -Password $tomcatCredential.GetNetworkCredential().Password -Roles "manager-gui,admin-gui"
 ```
 
-See [install/README.md](install/README.md) for complete documentation.
+The scripts intentionally provide no default password. Retrieve credentials at
+runtime from `Get-Credential` or an approved secret manager; never commit a
+password, token, or generated `tomcat-users.xml` to the repository.
+
+See [install/README.md](../install/README.md) for complete documentation.
 
 #### Option 2: Manual Installation
 
@@ -92,10 +98,12 @@ sudo ./tomcat_manager.sh -v 10.1
 
 **Full Example:**
 ```bash
-sudo ./tomcat_manager.sh -p /opt/tomcat -v 9.0 -u admin -w SecurePass123! -r manager,admin
+read -r -s TOMCAT_PASSWORD; printf '\n'
+printf '%s\n' "$TOMCAT_PASSWORD" | sudo ./tomcat_manager.sh --password-stdin -p /opt/tomcat -v 9.0 -u admin -r manager,admin
+unset TOMCAT_PASSWORD
 ```
 
-See [install/README.md](install/README.md) for complete documentation.
+See [install/README.md](../install/README.md) for complete documentation.
 
 #### Option 2: Manual Installation
 
@@ -528,5 +536,4 @@ After installation, you can use the HSTS configuration scripts:
 sudo ./src/unix/UpdateTomcatHstsUnix.sh --mode audit
 ```
 
-For detailed usage instructions, see the main [README.md](README.md).
-
+For detailed usage instructions, see the main [README.md](../README.md).

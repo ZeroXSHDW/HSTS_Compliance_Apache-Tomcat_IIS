@@ -290,9 +290,12 @@ HSTS_Compliance_Apache-Tomcat_IIS/
 
 ---
 
-## ✅ Status: READY FOR PRODUCTION USE
+## 🟡 Status: REVIEW-READY MAINTENANCE BASELINE
 
-All code is fully functional, complete, and properly documented. The project clearly focuses on HSTS security configuration with installation scripts as supporting tools.
+The repository-side feature and contract baseline is locally verified and
+documented. This is not production approval: merge review, current hosted CI,
+Windows execution, and live Tomcat/IIS validation remain external release
+gates.
 
 **Total Scripts:** 12
 - 4 HSTS configuration scripts (primary)
@@ -302,6 +305,5 @@ All code is fully functional, complete, and properly documented. The project cle
 - 2 Test scripts
 
 **Documentation:** Complete and accurate
-**Code Quality:** Production-ready
-**Functionality:** Fully verified
-
+**Code Quality:** Local gates verified; external release gates remain
+**Functionality:** Fixture-backed/local paths verified; live targets remain external

@@ -23,7 +23,7 @@ param(
     [string]$Username = "tomcat",
     
     [Parameter(Mandatory=$false)]
-    [string]$Password = "s3cretP@ssw0rd!",
+    [string]$Password = $null,
     
     [Parameter(Mandatory=$false)]
     [string]$Roles = "manager-gui,admin-gui",
@@ -87,6 +87,11 @@ if ($Action -eq "install" -and -not $TomcatVersion) {
     Write-Host "ERROR: -TomcatVersion is required when -Action is 'install'" -ForegroundColor Red
     Write-Host "  Valid versions: 7, 8.5, 9, 10.0, 10.1" -ForegroundColor Yellow
     exit 1
+}
+
+if ($Action -eq "install" -and [string]::IsNullOrWhiteSpace($Password)) {
+    Write-Host "ERROR: -Password is required for install actions. Supply it at runtime from a secret store; no default password is provided." -ForegroundColor Red
+    exit 2
 }
 
 $uniqueServers = $allServers | Select-Object -Unique
@@ -887,4 +892,3 @@ Write-Host ""
 Write-Host "Remote Tomcat management operation completed."
 Write-Host "Check individual server logs at: \\<server>\C$\Users\<username>\AppData\Local\Temp\TomcatManager.log"
 Write-Host "  (Replace <server> with the server name and <username> with the remote user who ran the script)"
-

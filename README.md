@@ -27,6 +27,38 @@ The complete reference for auditing and configuring HSTS across your infrastruct
 
 ---
 
+## Architecture and boundaries
+
+The suite keeps audit and remediation paths explicit across three target
+surfaces:
+
+| Surface | Boundary |
+|---|---|
+| `src/unix/UpdateTomcatHstsUnix.sh` | Local Tomcat audit by default; configuration writes require explicit configure mode and support dry-run plus backup behavior. |
+| `src/windows/UpdateIisHstsWin.ps1` and `UpdateTomcatHstsWin.ps1` | Local IIS/Tomcat audit or explicit configuration on Windows. |
+| `src/windows/Remote_*.ps1` | Caller-supplied WinRM targets and credentials; the repository does not store credentials or target state. |
+| `tests/` and `.github/workflows/` | Fixture-backed Unix checks, PowerShell parsing, credential/write-path contracts, and immutable CI actions; CI never changes a production host. |
+
+## Features
+
+- Audit-only defaults with explicit configure and dry-run controls.
+- HSTS compliance levels for IIS and Tomcat across Unix and Windows paths.
+- Local and remote fleet audit support with structured findings and logs.
+- Backup, validation, and rollback-oriented write contracts for remediation.
+
+## Configuration reference
+
+| Surface | Configuration contract |
+|---|---|
+| Unix Tomcat | `--mode audit` is the default; use `--mode configure --dry-run` to preview and remove `--dry-run` only after review. |
+| Windows IIS/Tomcat | `-Mode audit` is read-only; `-Mode configure`, `-SecurityLevel`, `-All`, and `-DryRun` scope explicit changes. |
+| Remote Windows | `-ServerName`/`-ServerListFile`, `-Credential`, and the same mode/security-level flags define the target and operation. Never commit credentials or server lists. |
+| HSTS policy | `basic`, `high`, `veryhigh`, and `maximum` select max-age, subdomain, and preload requirements; `high` is the recommended baseline. |
+
+Custom Unix configuration paths are preserved exactly, including paths that
+contain spaces. Prefer the separate-argument form when scripting them:
+`--custom-conf "/srv/tomcat installation/conf"`.
+
 ### 🛡️ Security Levels
 
 * **Basic**: `max-age=1 Year`
@@ -56,9 +88,32 @@ sudo ./src/unix/UpdateTomcatHstsUnix.sh --mode configure --security-level high -
 
 ---
 
-### 🧪 Testing & Validation
 
-#### Automated Test Suites
+## Troubleshooting
+
+- If a Unix audit reports a failure or warning, keep the default audit mode,
+  review the affected `web.xml` paths and log file, and use
+  `--mode configure --dry-run` before any write. Do not edit a production
+  configuration directly to silence a finding.
+- If a configure run fails, stop and inspect the backup and the generated log
+  before retrying. The write path is intended to preserve a last-known-good
+  configuration; verify the resulting HSTS header count and syntax before
+  reloading Tomcat or a reverse proxy.
+- If Windows IIS/Tomcat commands fail, rerun with `-Mode audit`, confirm the
+  PowerShell version and administrator context, and verify the selected
+  `-SecurityLevel`/scope before using `-DryRun` or configure mode.
+- If a remote fleet operation fails, validate WinRM reachability, TrustedHosts,
+  server-list formatting, and the supplied credential without storing any of
+  them in the repository. Retry one target in audit mode before resuming a
+  batch.
+- If the test gate fails, run the Unix fixture suite, enhanced audit checks,
+  PowerShell/version checks, and `git diff --check` separately. Windows live
+  IIS/Tomcat behavior and administrative integration remain target-environment
+  checks, not evidence supplied by a local static run.
+
+## Verification
+
+### Automated test suites
 
 **Linux/Unix Testing:**
 
@@ -69,6 +124,9 @@ bash test_hsts_unix.sh
 
 # Run enhanced audit verification
 bash verify_enhanced_audit_unix.sh
+
+# Reject whitespace errors and unresolved conflict markers
+git diff --check
 ```
 
 **Windows Testing (PowerShell):**
@@ -85,7 +143,7 @@ cd tests
 .\version_matrix_test.ps1
 ```
 
-#### Manual Validation Examples
+### Manual validation examples
 
 **IIS Audit:**
 
@@ -189,7 +247,7 @@ Log file: /var/log/tomcat-hsts-20260105_150720.log
 
 ---
 
-### 🔑 Remote Fleet Management
+## Remote fleet management
 
 For managing multiple servers, ensure WinRM is configured and target hosts are trusted:
 
@@ -325,7 +383,7 @@ Remote execution completed successfully
 
 ---
 
-### ✅ Pre-Publication Validation Checklist
+## Pre-publication validation checklist
 
 Before deploying to production, validate all functionality:
 
@@ -355,3 +413,18 @@ cd tests; .\Run-AllTests.ps1; .\windows\verify_enhanced_audit_win.ps1
 <p align="center">
   © 2025 HSTS Compliance Suite • <a href="LICENSE">MIT License</a>
 </p>
+
+## Prerequisites
+
+Use Bash plus ShellCheck for Unix checks and PowerShell 7 or Windows
+PowerShell for Windows checks. Review the supported server versions and run
+the audit-only path before applying remediation.
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md). Add a fixture or parser regression
+test for every repaired audit contract and run the documented test matrix.
+
+## License
+
+MIT. See [LICENSE](LICENSE).

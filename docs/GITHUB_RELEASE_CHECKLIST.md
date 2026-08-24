@@ -2,6 +2,13 @@
 
 This checklist tracks the tasks required for the final production release of the HSTS Compliance project.
 
+> **Current-status notice (2026-08-24):** The maintenance branch is review-ready
+> but is not itself a production release. Local Unix, PowerShell parsing,
+> contract, patch-hygiene, and actionlint checks pass; merge approval,
+> current hosted validation, Windows execution, and live Tomcat/IIS validation
+> remain release gates. See the repository quality scorecard for the current
+> evidence and score.
+
 ## 1. Code Quality & Standards (✅ Complete)
 - [x] All PowerShell scripts use approved verbs (e.g., `Write-LogMessage` instead of `Log-Message`).
 - [x] PSScriptAnalyzer warnings for unapproved verbs resolved.
@@ -20,7 +27,7 @@ This checklist tracks the tasks required for the final production release of the
 - [x] **README.md**: Updated with new enterprise features, remote WinRM setup guide, and project status.
 - [x] **INSTALLATION.md**: Comprehensive guide for local and remote server installations.
 - [x] **VERIFICATION.md**: Updated with specific verification steps for enterprise and reporting features.
-- [x] **PROJECT_STATUS.md**: Reflects current production-ready state with 100% feature completion.
+- [x] **PROJECT_STATUS.md**: Records the implemented feature baseline and its external release gates.
 - [x] **DEPLOYMENT_EMAIL_TEMPLATE.md**: Professional template for enterprise-wide rollout created.
 
 ## 4. Testing & Reliability (✅ Complete)
@@ -35,8 +42,12 @@ This checklist tracks the tasks required for the final production release of the
 - [x] No hardcoded passwords or sensitive credentials in any scripts.
 
 ## Final Approval Status
-**Current State:** 🚀 **100% Production Ready**
-**Release Target:** Public GitHub Repository
+**Current State:** 🟡 **Review-ready maintenance branch; release approval pending**
+**Release Target:** Public GitHub Repository after the external gates above are verified
+
+The repository must not be described as 100% production-ready until the
+maintenance review is merged, the default-branch gate is green, and Windows
+plus live-target validation has been recorded.
 
 ---
 Created on 2025-12-31

@@ -348,21 +348,33 @@ is_compliant_header() {
 # Returns: Exit code 0 if correctly configured, 1 if not, plus details
 audit_hsts_headers() {
     local config_content="$1"
-    local all_headers
     local header_count=0
     local compliant_count=0
     local non_compliant_count=0
     local details=""
     local is_correct=1
     
-    # Find all HSTS header definitions (using while loop for legacy Bash compatibility)
-    local all_headers=()
-    while IFS= read -r line; do
-        if [[ -n "$line" ]]; then
-            all_headers+=("$line")
-        fi
-    done <<< "$(find_all_hsts_headers "$config_content")"
-    header_count=${#all_headers[@]}
+    # Count configurations, not every keyword-bearing line. A single Tomcat
+    # filter contains several HSTS keywords (name, class, and init parameters),
+    # so line-counting falsely reported one valid filter as four definitions.
+    local filter_count
+    filter_count=$(awk '
+        /<filter([[:space:]>])/ { in_filter=1; found=0 }
+        in_filter && /HstsHeaderFilter|HttpHeaderSecurityFilter|hstsMaxAgeSeconds|hstsIncludeSubDomains/ { found=1 }
+        in_filter && /<\/filter>/ {
+            if (found) count++
+            in_filter=0
+        }
+        END { print count + 0 }
+    ' <<< "$config_content")
+
+    local direct_headers
+    direct_headers=$(echo "$config_content" | grep -i "Strict-Transport-Security" | grep -v "^#" | grep -v "^[[:space:]]*#" | grep -v "hstsMaxAgeSeconds\|hstsIncludeSubDomains\|HttpHeaderSecurityFilter\|HstsHeaderFilter" || true)
+    local direct_header_count=0
+    if [[ -n "$direct_headers" ]]; then
+        direct_header_count=$(printf '%s\n' "$direct_headers" | grep -c . || true)
+    fi
+    header_count=$((filter_count + direct_header_count))
     
     if [[ $header_count -eq 0 ]]; then
         details="No HSTS header definitions found in configuration"
@@ -419,7 +431,7 @@ audit_hsts_headers() {
         return 1
     fi
     
-    log_message "Found $header_count HSTS header definition(s)"
+    log_message "Found $header_count HSTS configuration definition(s)"
     
     # Initialize counts
     local compliant_count=0
@@ -494,7 +506,6 @@ audit_hsts_headers() {
     
     # Check for direct header definitions (Strict-Transport-Security)
     # Only count direct headers that are NOT part of filter configuration
-    local direct_headers=$(echo "$config_content" | grep -i "Strict-Transport-Security" | grep -v "^#" | grep -v "^[[:space:]]*#" | grep -v "hstsMaxAgeSeconds\|hstsIncludeSubDomains\|HttpHeaderSecurityFilter\|HstsHeaderFilter" || true)
     if [[ -n "$direct_headers" ]]; then
         # Filter out empty lines if any
         direct_headers=$(echo "$direct_headers" | grep . || true)
@@ -801,7 +812,7 @@ pre_flight_checks() {
 # Returns: Path to backup file
 backup_config() {
     local config_path="$1"
-    local backup_path="${config_path}.backup.$(date +%Y%m%d_%H%M%S)"
+    local backup_path
     
     if [[ ! -f "$config_path" ]]; then
         log_error "Configuration file not found: $config_path"
@@ -813,10 +824,16 @@ backup_config() {
         return 1
     fi
     
-    cp "$config_path" "$backup_path" || {
+    if ! backup_path=$(mktemp "${config_path}.backup.$(date +%Y%m%d_%H%M%S).XXXXXX"); then
+        log_error "Failed to allocate a unique backup path beside: $config_path"
+        return 1
+    fi
+
+    if ! cp "$config_path" "$backup_path"; then
+        rm -f -- "$backup_path"
         log_error "Failed to create backup: $backup_path"
         return 1
-    }
+    fi
     
     log_message "Backup created: $backup_path"
     # Set global backup path
@@ -933,7 +950,11 @@ configure_hsts_headers() {
         
         # ATOMIC OPERATION: Use mv for atomic file replacement
         # Create a temp file in the same directory for atomic move
-        local temp_atomic="${config_path}.tmp.$$"
+        local temp_atomic
+        if ! temp_atomic=$(mktemp "${config_path}.tmp.XXXXXX"); then
+            CONFIGURE_RESULT="Failed to allocate a unique temporary configuration path"
+            return 1
+        fi
         
         if cp "$temp_file" "$temp_atomic" 2>/dev/null; then
             # Restore original permissions before atomic move
@@ -1159,7 +1180,7 @@ get_tomcat_conf_paths() {
     
     # Check custom paths provided as arguments (deduplicate)
     local seen_paths=()
-    for custom_path in ${custom_conf_paths[@]+"${custom_conf_paths[@]}"}; do
+    for custom_path in "${custom_conf_paths[@]}"; do
         if [[ -n "$custom_path" ]]; then
             local seen=0
             if [[ ${#seen_paths[@]} -gt 0 ]]; then
@@ -1862,7 +1883,8 @@ main() {
     fi
     
     # Collect all custom paths
-    local all_custom_paths=(${CUSTOM_CONF_PATHS[@]+"${CUSTOM_CONF_PATHS[@]}"})
+    local all_custom_paths=()
+    all_custom_paths+=("${CUSTOM_CONF_PATHS[@]}")
     
     # Add legacy single custom path if set
     if [[ -n "$CUSTOM_CONF_PATH" ]]; then
@@ -1884,7 +1906,7 @@ main() {
     
     # Auto-detect Tomcat configuration directories
     local conf_paths_output
-    if ! conf_paths_output=$(get_tomcat_conf_paths ${all_custom_paths[@]+"${all_custom_paths[@]}"}); then
+    if ! conf_paths_output=$(get_tomcat_conf_paths "${all_custom_paths[@]}"); then
         log_error "Failed to locate Tomcat configuration"
         exit 2
     fi
@@ -2019,4 +2041,3 @@ main() {
 
 # Execute main function with all arguments
 main "$@"
-

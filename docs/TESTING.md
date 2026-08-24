@@ -213,5 +213,5 @@ Expected test execution times:
 
 For test failures or questions:
 1. Check test logs in `test-results/`
-2. Review [tests/README.md](README.md)
+2. Review [tests/README.md](../tests/README.md)
 3. Open an issue on GitHub

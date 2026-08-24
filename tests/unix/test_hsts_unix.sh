@@ -6,10 +6,15 @@
 
 set -e
 
-LOG_FILE="$(pwd)/TestHstsUnix.log"
-TEST_DIR="$(pwd)/tests/HstsTest"
-BACKUP_DIR="$(pwd)/tests/HstsTestBackup"
 SCRIPT_PATH="$(dirname "$0")/../../src/unix/UpdateTomcatHstsUnix.sh"
+TEST_DIR=$(mktemp -d "${TMPDIR:-/tmp}/hsts-unix-tests.XXXXXX")
+BACKUP_DIR="$TEST_DIR/backups"
+LOG_FILE="$TEST_DIR/TestHstsUnix.log"
+
+cleanup_test_artifacts() {
+    rm -rf "$TEST_DIR"
+}
+trap cleanup_test_artifacts EXIT
 
 # Function to write log messages
 write_log() {
@@ -32,9 +37,6 @@ fi
 chmod +x "$SCRIPT_PATH"
 
 # Create test directories
-if [ -d "$TEST_DIR" ]; then
-    rm -rf "$TEST_DIR"
-fi
 mkdir -p "$TEST_DIR/conf"
 mkdir -p "$BACKUP_DIR"
 
@@ -186,7 +188,46 @@ test_scenario "Tomcat_11_Jakarta" \
     "Should add compliant HSTS header to Jakarta-style web.xml" \
     "11.0.0"
 
-# Scenario 6: JSON Reporting
+# Scenario 6: Custom configuration path containing spaces
+write_log "Testing scenario: Custom_Path_With_Spaces - preserve an explicit path containing spaces"
+SPACE_ROOT="$TEST_DIR/tomcat installation with spaces"
+SPACE_CONF="$SPACE_ROOT/conf"
+mkdir -p "$SPACE_CONF"
+cat > "$SPACE_CONF/server.xml" <<'EOF'
+<?xml version="1.0" encoding="UTF-8"?><Server></Server>
+EOF
+cat > "$SPACE_ROOT/RELEASE-NOTES" <<'EOF'
+Apache Tomcat Version 9.0.113
+EOF
+cat > "$SPACE_CONF/web.xml" <<'EOF'
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app>
+    <filter>
+        <filter-name>HstsHeaderFilter</filter-name>
+        <filter-class>org.apache.catalina.filters.HttpHeaderSecurityFilter</filter-class>
+        <init-param>
+            <param-name>hstsMaxAgeSeconds</param-name>
+            <param-value>31536000</param-value>
+        </init-param>
+        <init-param>
+            <param-name>hstsIncludeSubDomains</param-name>
+            <param-value>true</param-value>
+        </init-param>
+    </filter>
+    <filter-mapping>
+        <filter-name>HstsHeaderFilter</filter-name>
+        <url-pattern>/*</url-pattern>
+    </filter-mapping>
+</web-app>
+EOF
+if "$SCRIPT_PATH" --mode audit --custom-conf "$SPACE_CONF" --log-file="$TEST_DIR/space_path.log" 2>&1 | grep -q "Overall Status: Compliant"; then
+    write_log "Custom path containing spaces was discovered and audited successfully"
+else
+    write_log "Custom path containing spaces was not preserved" "ERROR"
+    exit 1
+fi
+
+# Scenario 7: JSON Reporting
 write_log "Testing scenario: JSON_Reporting - Verify JSON output format"
 # Create test environment
 web_xml_path="$TEST_DIR/conf/web.xml"
@@ -211,4 +252,3 @@ write_log "=== All HSTS tests completed ==="
 write_log "Test log saved to: $LOG_FILE"
 write_log "Test files saved to: $TEST_DIR"
 write_log "Backups saved to: $BACKUP_DIR"
-
