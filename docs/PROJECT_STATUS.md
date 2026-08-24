@@ -1,4 +1,10 @@
-# Project Status - Ready for GitHub Publication
+# Project Status — Maintenance Baseline
+
+> **Current-status notice (2026-08-24):** This document preserves the
+> publication-preparation inventory below. The current maintenance branch is
+> review-ready, not a production release: merge approval, current hosted CI,
+> Windows execution, and live Tomcat/IIS validation remain external release
+> gates. Use the repository quality scorecard and PR #1 for current evidence.
 
 ## ✅ Project Completion Status
 
@@ -166,7 +172,7 @@ HSTS_Compliance_Apache-Tomcat_IIS/
 - ✅ Troubleshooting guides
 - ✅ Code review summary
 
-## 🚀 Ready for GitHub Publication
+## 🚀 Publication Preparation Inventory
 
 ### Pre-Publication Checklist
 
@@ -235,13 +241,14 @@ Initial commit: HSTS Compliance Tools for Apache Tomcat & IIS
 3. **Flexible:** Auto-detection, custom paths, remote execution
 4. **Well-Documented:** Extensive documentation including I18N and API/SIEM integration
 5. **Tested:** Complete test suite included + Docker environment
-6. **Production-Ready:** All features implemented and verified
+6. **Review-ready:** The local feature baseline is implemented and verified; external release gates remain
 7. **Community-Ready:** Full suite of templates and standards
 8. **Automated:** Full CI/CD with auto-release drafting and dependency management
 
 ---
 
-**Status:** ✅ **READY FOR GITHUB PUBLICATION**
+**Status:** 🟡 **REVIEW-READY MAINTENANCE BASELINE — EXTERNAL RELEASE GATES REMAIN**
 
-All components are complete, functional, and ready for public release.
-
+The repository is suitable for public review. Do not treat this inventory as
+approval for production deployment until the current external release gates
+are verified and the maintenance PR is merged.
