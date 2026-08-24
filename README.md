@@ -88,6 +88,29 @@ sudo ./src/unix/UpdateTomcatHstsUnix.sh --mode configure --security-level high -
 
 ---
 
+
+## Troubleshooting
+
+- If a Unix audit reports a failure or warning, keep the default audit mode,
+  review the affected `web.xml` paths and log file, and use
+  `--mode configure --dry-run` before any write. Do not edit a production
+  configuration directly to silence a finding.
+- If a configure run fails, stop and inspect the backup and the generated log
+  before retrying. The write path is intended to preserve a last-known-good
+  configuration; verify the resulting HSTS header count and syntax before
+  reloading Tomcat or a reverse proxy.
+- If Windows IIS/Tomcat commands fail, rerun with `-Mode audit`, confirm the
+  PowerShell version and administrator context, and verify the selected
+  `-SecurityLevel`/scope before using `-DryRun` or configure mode.
+- If a remote fleet operation fails, validate WinRM reachability, TrustedHosts,
+  server-list formatting, and the supplied credential without storing any of
+  them in the repository. Retry one target in audit mode before resuming a
+  batch.
+- If the test gate fails, run the Unix fixture suite, enhanced audit checks,
+  PowerShell/version checks, and `git diff --check` separately. Windows live
+  IIS/Tomcat behavior and administrative integration remain target-environment
+  checks, not evidence supplied by a local static run.
+
 ## Verification
 
 ### Automated test suites
