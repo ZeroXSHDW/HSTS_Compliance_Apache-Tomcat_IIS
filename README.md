@@ -97,6 +97,9 @@ bash test_hsts_unix.sh
 
 # Run enhanced audit verification
 bash verify_enhanced_audit_unix.sh
+
+# Reject whitespace errors and unresolved conflict markers
+git diff --check
 ```
 
 **Windows Testing (PowerShell):**

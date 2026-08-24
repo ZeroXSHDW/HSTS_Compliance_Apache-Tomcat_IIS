@@ -4,6 +4,7 @@ set -euo pipefail
 
 ROOT_DIR=$(cd -- "$(dirname -- "$0")/.." && pwd -P)
 README_PATH="$ROOT_DIR/README.md"
+WORKFLOW_PATH="$ROOT_DIR/.github/workflows/ci.yml"
 
 for heading in \
     'Architecture and boundaries' \
@@ -19,6 +20,8 @@ done
 [[ "$(grep -Fxc '## Features' "$README_PATH")" -eq 1 ]]
 grep -Fiq 'audit-only defaults' "$README_PATH"
 grep -Fq 'CI never changes a production host' "$README_PATH"
+grep -Fq 'git diff --check' "$README_PATH"
+[[ "$(grep -Fc 'git diff --check' "$WORKFLOW_PATH")" -eq "$(grep -Fc 'uses: actions/checkout@' "$WORKFLOW_PATH")" ]]
 
 if grep -R -n -E 's3cretP@ssw0rd|PASSWORD="s3cret"|default: s3cret|MySecurePass|SecurePass123' \
     "$ROOT_DIR/install" "$ROOT_DIR/docs"; then
