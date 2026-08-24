@@ -1180,7 +1180,7 @@ get_tomcat_conf_paths() {
     
     # Check custom paths provided as arguments (deduplicate)
     local seen_paths=()
-    for custom_path in ${custom_conf_paths[@]+"${custom_conf_paths[@]}"}; do
+    for custom_path in "${custom_conf_paths[@]}"; do
         if [[ -n "$custom_path" ]]; then
             local seen=0
             if [[ ${#seen_paths[@]} -gt 0 ]]; then
@@ -1883,7 +1883,8 @@ main() {
     fi
     
     # Collect all custom paths
-    local all_custom_paths=(${CUSTOM_CONF_PATHS[@]+"${CUSTOM_CONF_PATHS[@]}"})
+    local all_custom_paths=()
+    all_custom_paths+=("${CUSTOM_CONF_PATHS[@]}")
     
     # Add legacy single custom path if set
     if [[ -n "$CUSTOM_CONF_PATH" ]]; then
@@ -1905,7 +1906,7 @@ main() {
     
     # Auto-detect Tomcat configuration directories
     local conf_paths_output
-    if ! conf_paths_output=$(get_tomcat_conf_paths ${all_custom_paths[@]+"${all_custom_paths[@]}"}); then
+    if ! conf_paths_output=$(get_tomcat_conf_paths "${all_custom_paths[@]}"); then
         log_error "Failed to locate Tomcat configuration"
         exit 2
     fi

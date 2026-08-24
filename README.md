@@ -55,6 +55,10 @@ surfaces:
 | Remote Windows | `-ServerName`/`-ServerListFile`, `-Credential`, and the same mode/security-level flags define the target and operation. Never commit credentials or server lists. |
 | HSTS policy | `basic`, `high`, `veryhigh`, and `maximum` select max-age, subdomain, and preload requirements; `high` is the recommended baseline. |
 
+Custom Unix configuration paths are preserved exactly, including paths that
+contain spaces. Prefer the separate-argument form when scripting them:
+`--custom-conf "/srv/tomcat installation/conf"`.
+
 ### 🛡️ Security Levels
 
 * **Basic**: `max-age=1 Year`
