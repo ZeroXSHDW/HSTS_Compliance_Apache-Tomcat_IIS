@@ -355,3 +355,7 @@ cd tests; .\Run-AllTests.ps1; .\windows\verify_enhanced_audit_win.ps1
 <p align="center">
   © 2025 HSTS Compliance Suite • <a href="LICENSE">MIT License</a>
 </p>
+
+## License
+
+MIT — see [LICENSE](LICENSE).
