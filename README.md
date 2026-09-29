@@ -356,6 +356,18 @@ cd tests; .\Run-AllTests.ps1; .\windows\verify_enhanced_audit_win.ps1
   © 2025 HSTS Compliance Suite • <a href="LICENSE">MIT License</a>
 </p>
 
+
+
+## Troubleshooting
+
+| Symptom | What to try |
+|---------|-------------|
+| Local app / site will not start | Confirm runtime versions (Node/Python/macOS) match README requirements; delete stale `node_modules` / caches and reinstall from the lockfile. |
+| Secrets / auth errors | Ensure ignored `.env*` (or Keychain / Secret Store) values are set; never commit real secrets to fix a local failure. |
+| CI / checks failing | Run the same lint/test/validate command locally that CI runs; fix formatting and lockfile drift before pushing. |
+| Path-not-found on a new machine | Replace machine-specific absolute paths with `$HOME` / relative paths, or copy the documented profile layout first. |
+| Unexpected network calls | Prefer local / offline modes when documented; block outbound access if you are reviewing sensitive case material. |
+
 ## License
 
 MIT — see [LICENSE](LICENSE).
