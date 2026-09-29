@@ -11,8 +11,6 @@
 
 # HSTS Compliance (Apache Tomcat & IIS)
 
-> **Private repository.** Owner: [ZeroXSHDW](https://github.com/ZeroXSHDW).
-
 **[HSTS Compliance (Apache Tomcat & IIS)](https://ZeroDevLLC.com)** by [ZeroDev LLC](https://ZeroDevLLC.com) · GitHub: [ZeroXSHDW/HSTS_Compliance_Apache-Tomcat_IIS](https://github.com/ZeroXSHDW/HSTS_Compliance_Apache-Tomcat_IIS)
 
 > Brand: **[https://ZeroDevLLC.com](https://ZeroDevLLC.com)** · Store: **[https://zerodevllc.store](https://zerodevllc.store)**  
@@ -380,7 +378,6 @@ cd tests; .\Run-AllTests.ps1; .\windows\verify_enhanced_audit_win.ps1
 <p align="center">
   © 2025 HSTS Compliance Suite • <a href="LICENSE">MIT License</a>
 </p>
-
 
 
 ## Troubleshooting
