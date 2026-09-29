@@ -5,16 +5,20 @@
   / /|  __/ | | (_) | |_| |  __/\ V / | |___| |__| |___
  /____\___|_|  \___/|____/ \___| \_/  |_____|_____\____|
                     ZeroDev LLC
-             https://ZeroDevLLC.com
+            HSTS Compliance (Apache Tomcat & IIS)
+    https://ZeroDevLLC.com  ·  https://zerodevllc.store
 ```
 
 # HSTS Compliance (Apache Tomcat & IIS)
 
+> **Private repository.** Owner: [ZeroXSHDW](https://github.com/ZeroXSHDW).
+
 **[HSTS Compliance (Apache Tomcat & IIS)](https://ZeroDevLLC.com)** by [ZeroDev LLC](https://ZeroDevLLC.com) · GitHub: [ZeroXSHDW/HSTS_Compliance_Apache-Tomcat_IIS](https://github.com/ZeroXSHDW/HSTS_Compliance_Apache-Tomcat_IIS)
 
-> Store / brand: **[https://ZeroDevLLC.com](https://ZeroDevLLC.com)**  
-> Production releases are published on the public-bound repo `HSTS_Compliance_Apache-Tomcat_IIS`.  
-> Active development uses the private twin [`HSTS_Compliance_Apache-Tomcat_IIS-dev`](https://github.com/ZeroXSHDW/HSTS_Compliance_Apache-Tomcat_IIS-dev).
+> Brand: **[https://ZeroDevLLC.com](https://ZeroDevLLC.com)** · Store: **[https://zerodevllc.store](https://zerodevllc.store)**  
+> Production releases → public-bound `HSTS_Compliance_Apache-Tomcat_IIS`.  
+> Active development → private twin [`HSTS_Compliance_Apache-Tomcat_IIS-dev`](https://github.com/ZeroXSHDW/HSTS_Compliance_Apache-Tomcat_IIS-dev).
+
 
 ## Screenshots
 
@@ -22,8 +26,6 @@
 
 ---
 <div align="center">
-
-<img src="assets/images/banner.png" alt="HSTS Compliance Suite Banner" width="100%" />
 
 # HSTS Compliance Suite
 
